@@ -1,0 +1,102 @@
+# journal
+
+Portal estático de notícias/ciência gerado automaticamente a partir de fontes configuráveis.
+
+## Arquitetura (ports and adapters)
+
+```
+src/journal/
+  domain/    entidades puras, sem dependências externas
+  ports/     interfaces que o core espera (fontes, publicação)
+  adapters/  implementações concretas das ports (RSS, site estático, ...)
+  app/       casos de uso que orquestram ports
+```
+
+O core (`domain`, `ports`, `app`) não conhece nenhum adapter específico.
+
+## Uso
+
+```sh
+cp journal.example.toml journal.toml       # ajuste as fontes
+uv run journal build                       # lê ./journal.toml
+uv run journal build --config journal.example.toml
+```
+
+Busca as fontes configuradas, remove duplicatas, ordena do mais recente ao mais antigo e grava o site em `dist/`:
+
+```
+dist/
+  index.html            lista de notícias
+  articles/<id>.html    uma página por artigo
+  style.css
+  articles.json         os mesmos dados em JSON
+```
+
+Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedagem estática.
+
+- Cada build substitui o site inteiro; se falhar no meio, o site anterior fica intacto.
+- Se nenhuma fonte responder, o comando sai com código 1 e não toca em `dist/`.
+- Por segurança, o build se recusa a escrever num diretório que já tenha outros arquivos e não seja um site do journal.
+
+## Configuração
+
+`journal.toml` declara as fontes (na ordem em que são lidas) e o publisher:
+
+```toml
+[[sources]]
+type = "rss"
+name = "Nature"                             # aparece nos artigos
+url = "https://www.nature.com/nature.rss"
+timeout = 10                                # opcional, segundos
+
+[publisher]
+type = "static-site"
+out = "dist"                                # opcional, relativo ao arquivo de config
+```
+
+Para adicionar outra fonte RSS, basta outro bloco `[[sources]]`. Nenhum código muda.
+
+Tipos embutidos: fonte `rss`, publisher `static-site`. Outros tipos vêm de plugins.
+
+## Escrevendo um plugin
+
+Um plugin é um pacote Python instalado no mesmo ambiente que oferece tipos novos de fonte ou
+publisher, sem alterar este repositório.
+
+1. Implemente o adapter: uma fonte tem `fetch() -> list[Article]` e levanta `SourceError` em
+   falha; um publisher tem `publish(articles)` e levanta `PublishError`.
+2. Exponha um `AdapterType` com as opções aceitas:
+
+   ```python
+   from journal.config import AdapterType
+
+   REDDIT = AdapterType(
+       build=lambda options, config_dir: RedditSource(options["subreddit"]),
+       required={"subreddit": str},
+       optional={"limit": int},
+   )
+   ```
+
+3. Declare o entry point no `pyproject.toml` do plugin; o nome é o `type` usado na config:
+
+   ```toml
+   [project.entry-points."journal.sources"]      # ou "journal.publishers"
+   reddit = "meu_pacote.reddit:REDDIT"
+   ```
+
+O journal valida as opções antes de chamar `build`, só importa o plugin quando a config usa o
+tipo, e recusa um `type` oferecido por mais de um pacote.
+
+API pública para plugins: `journal.config.AdapterType`, `journal.domain.Article`,
+`journal.ports` (`SourcePort`, `PublisherPort`, `SourceError`, `PublishError`).
+
+## Desenvolvimento
+
+Requer [uv](https://docs.astral.sh/uv/).
+
+```sh
+uv sync                     # cria .venv e instala dependências
+uv run pytest               # testes
+uv run ruff check .         # lint
+uv run ruff format --check .
+```

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Fixture Feed</title>
+    <link>https://example.com/</link>
+    <description>Feed used by tests</description>
+    <item>
+      <title>First article</title>
+      <link>https://example.com/first</link>
+      <description><![CDATA[<p>Hello&nbsp;<b>world</b></p>
+<script>x()</script>]]></description>
+      <pubDate>Mon, 02 Nov 2026 10:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>No summary</title>
+      <link>https://example.com/no-summary</link>
+      <pubDate>Mon, 02 Nov 2026 09:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Missing link</title>
+      <description>This entry has no link and must be skipped.</description>
+      <pubDate>Mon, 02 Nov 2026 08:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Only updated date</title>
+      <link>https://example.com/updated-only</link>
+      <atom:updated xmlns:atom="http://www.w3.org/2005/Atom">2026-11-01T12:00:00Z</atom:updated>
+    </item>
+    <item>
+      <title>Offset date</title>
+      <link>https://example.com/offset</link>
+      <pubDate>Sun, 01 Nov 2026 09:00:00 -0300</pubDate>
+    </item>
+  </channel>
+</rss>

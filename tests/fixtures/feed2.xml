@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Second Fixture Feed</title>
+    <link>https://second.example.com/</link>
+    <description>Second feed used by tests</description>
+    <item>
+      <title>First article, seen again</title>
+      <link>https://example.com/first</link>
+      <pubDate>Mon, 02 Nov 2026 10:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Only in the second feed</title>
+      <link>https://second.example.com/only</link>
+      <description>Exclusive to feed two.</description>
+      <pubDate>Mon, 02 Nov 2026 11:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>
