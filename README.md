@@ -101,3 +101,22 @@ uv run pytest               # testes
 uv run ruff check .         # lint
 uv run ruff format --check .
 ```
+
+## Uso responsável
+
+O journal só exibe o que cada feed distribui: título, resumo, nome da fonte e um link para o
+original. Ele não baixa a página do artigo, PDFs nem imagens.
+
+Quem usa o journal é responsável por:
+
+- respeitar os termos de uso de cada fonte (muitos feeds permitem só uso pessoal e não comercial);
+- respeitar a licença de cada artigo (ex.: Creative Commons BY exige crédito, BY-NC proíbe uso
+  comercial) e não republicar texto completo de conteúdo protegido;
+- manter o crédito e o link para a fonte original ao publicar o site;
+- identificar como tal qualquer resumo gerado por IA e não atribuir à fonte o que ela não disse.
+
+Este projeto não é afiliado a nenhuma das fontes citadas na configuração.
+
+## Licença
+
+[MIT](LICENSE).
