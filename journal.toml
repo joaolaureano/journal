@@ -1,4 +1,4 @@
-# Exemplo de configuração. Copie para journal.toml e ajuste as fontes.
+# Fontes deste jornal. Num fork, troque pelas suas.
 # Fontes, na ordem em que são lidas. Em URLs repetidas, vale a primeira fonte.
 [[sources]]
 type = "rss"

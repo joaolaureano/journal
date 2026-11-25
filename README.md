@@ -17,9 +17,8 @@ O core (`domain`, `ports`, `app`) não conhece nenhum adapter específico.
 ## Uso
 
 ```sh
-cp journal.example.toml journal.toml       # ajuste as fontes
 uv run journal build                       # lê ./journal.toml
-uv run journal build --config journal.example.toml
+uv run journal build --config outro.toml
 ```
 
 Busca as fontes configuradas, remove duplicatas, ordena do mais recente ao mais antigo e grava o site em `dist/`:
@@ -39,6 +38,8 @@ Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedag
 - Por segurança, o build se recusa a escrever num diretório que já tenha outros arquivos e não seja um site do journal.
 
 ## Configuração
+
+Para ter o seu próprio jornal, faça um fork e troque as fontes do `journal.toml`.
 
 `journal.toml` declara as fontes (na ordem em que são lidas) e o publisher:
 
