@@ -1,43 +1,96 @@
+/* Jornal sóbrio: papel creme, tinta escura, manchetes serifadas, rótulos em mono. */
 :root {
-  color-scheme: light dark;
-  --fg: #1a1a1a;
-  --bg: #fdfdfc;
-  --muted: #555;
-  --accent: #0b5cad;
+  color-scheme: light;
+  --bg: #efe9dd;
+  --text: #1f1d1a;
+  --muted: #57524b;
+  --border: #d3cbbd;
+  --accent: #0d6b61;
+  --serif: "Iowan Old Style", Charter, "Source Serif Pro", Georgia, serif;
+  --sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root { --fg: #e8e8e6; --bg: #161616; --muted: #a8a8a8; --accent: #7cb6f5; }
-}
+*, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0 auto;
-  max-width: 70ch;
-  padding: 1rem 1.25rem 3rem;
-  font: 1.0625rem/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: var(--fg);
+  max-width: 44rem;
+  padding: 0 1.25rem 4rem;
   background: var(--bg);
+  color: var(--text);
+  font: 1rem/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
 }
-a { color: var(--accent); }
-a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-header.site a { font-weight: 700; text-decoration: none; color: var(--fg); }
-h1 { line-height: 1.25; }
-.meta { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0; }
-ol.articles { list-style: none; padding: 0; }
-ol.articles li { padding: 1rem 0; border-bottom: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); }
-ol.articles h2 { font-size: 1.15rem; margin: 0; }
+a { color: inherit; text-decoration-color: var(--border); text-underline-offset: 3px; }
+a:hover { color: var(--accent); text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+img { max-width: 100%; height: auto; }
+
+/* Nome do jornal entre fios. */
+header.site {
+  padding: 2.5rem 0 0.75rem;
+  border-bottom: 3px double var(--border);
+  text-align: center;
+}
+header.site a {
+  font: 600 2.6rem/1 var(--serif);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+/* Título de seção: rótulo em maiúsculas seguido de um fio. */
+main > h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 2rem 0 0.5rem;
+  font: 600 0.75rem/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+main > h1::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+.meta {
+  margin: 0.2rem 0 0.35rem;
+  font: 0.72rem/1.5 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Lista de notícias. */
+ol.articles { list-style: none; margin: 0; padding: 0; }
+ol.articles li { padding: 1.1rem 0; border-bottom: 1px solid var(--border); }
+ol.articles li::after { content: ""; display: block; clear: both; }
+ol.articles h2 { margin: 0; font: 600 1.25rem/1.3 var(--serif); }
+ol.articles h2 a { text-decoration: none; }
 ol.articles .summary {
-  margin: 0.25rem 0 0;
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-img { max-width: 100%; height: auto; }
-ol.articles li::after { content: ""; display: block; clear: both; }
 ol.articles .thumb {
   float: right;
-  width: 7rem;
+  width: 8.5rem;
   aspect-ratio: 3 / 2;
   object-fit: cover;
-  margin: 0.25rem 0 0.5rem 1rem;
+  margin: 0.2rem 0 0.5rem 1.25rem;
+  border: 1px solid var(--border);
 }
-article .photo { display: block; margin: 1rem 0; }  /* nunca maior que o original */
+
+/* Página da notícia. */
+article { padding-top: 2rem; }
+article h1 { margin: 0.5rem 0 0.75rem; font: 600 2rem/1.2 var(--serif); }
+article p { color: var(--muted); font-size: 1.05rem; }
+article .photo { display: block; margin: 1.25rem 0; border: 1px solid var(--border); } /* nunca maior que o original */
+article p:last-child a,
+main > p a {
+  font: 0.8rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+main > p { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
