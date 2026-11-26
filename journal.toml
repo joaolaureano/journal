@@ -14,7 +14,12 @@ name = "ScienceDaily"
 url = "https://www.sciencedaily.com/rss/top.xml"
 timeout = 15
 
-# --- Brasil ---
+[[sources]]
+type = "rss"
+name = "BBC Science"
+url = "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+
+# --- Brasil e mundo ---
 
 [[sources]]
 type = "rss"
@@ -41,7 +46,17 @@ type = "rss"
 name = "Poder360"
 url = "https://www.poder360.com.br/feed/"
 
+[[sources]]
+type = "rss"
+name = "BBC News World"
+url = "https://feeds.bbci.co.uk/news/world/rss.xml"
+
 # --- Tecnologia ---
+
+[[sources]]
+type = "rss"
+name = "BBC Technology"
+url = "https://feeds.bbci.co.uk/news/technology/rss.xml"
 
 [[sources]]
 type = "rss"
