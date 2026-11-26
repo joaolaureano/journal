@@ -102,13 +102,25 @@ article figcaption .credit {
   text-transform: uppercase;
   white-space: nowrap;
 }
-article p:last-child a,
+article p.source a,
 main > p a {
   font: 0.8rem var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 main > p { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* Texto completo da notícia, quando o feed manda: tinta normal, fotos na largura da coluna. */
+article .body { margin: 1.25rem 0; }
+article .body p, article .body li { color: var(--text); font-size: 1.05rem; }
+article .body h2, article .body h3, article .body h4 { margin: 1.75rem 0 0.5rem; font: 600 1.2rem/1.3 var(--serif); }
+article .body blockquote { margin: 1.25rem 0; padding-left: 1rem; border-left: 2px solid var(--border); }
+article .body blockquote p { color: var(--muted); }
+article .body img { display: block; margin: 1.25rem 0; border: 1px solid var(--border); }
+article .body figure img { margin: 0; }
+article .body pre { overflow-x: auto; padding: 0.75rem; border: 1px solid var(--border); font: 0.85rem/1.5 var(--mono); }
+article .body code { font: 0.9em var(--mono); }
+article .body a { text-decoration-color: var(--accent); }
 
 /* Arquivo de edições e link para ele. */
 ul.editions { list-style: none; padding: 0; margin: 0; }

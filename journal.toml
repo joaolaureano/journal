@@ -33,12 +33,14 @@ type = "rss"
 name = "Agência Brasil"
 section = "Brasil e mundo"
 url = "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "g1"
 section = "Brasil e mundo"
 url = "https://g1.globo.com/rss/g1/"
+full_text = true
 
 [[sources]]
 type = "rss"
@@ -57,12 +59,14 @@ type = "rss"
 name = "Nexo"
 section = "Brasil e mundo"
 url = "https://www.nexojornal.com.br/rss.xml"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Poder360"
 section = "Brasil e mundo"
 url = "https://www.poder360.com.br/feed/"
+full_text = true
 
 [[sources]]
 type = "rss"
@@ -95,24 +99,28 @@ type = "rss"
 name = "LWN"
 section = "Tecnologia"
 url = "https://lwn.net/headlines/rss"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Ars Technica"
 section = "Tecnologia"
 url = "https://feeds.arstechnica.com/arstechnica/index"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Hackaday"
 section = "Tecnologia"
 url = "https://hackaday.com/blog/feed/"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Slashdot"
 section = "Tecnologia"
 url = "https://rss.slashdot.org/Slashdot/slashdotMain"
+full_text = true
 
 [[sources]]
 type = "rss"
@@ -125,6 +133,7 @@ type = "rss"
 name = "Krebs on Security"
 section = "Tecnologia"
 url = "https://krebsonsecurity.com/feed/"
+full_text = true
 
 # --- Blogs técnicos ---
 
@@ -139,18 +148,21 @@ type = "rss"
 name = "Martin Fowler"
 section = "Blogs técnicos"
 url = "https://martinfowler.com/feed.atom"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Simon Willison"
 section = "Blogs técnicos"
 url = "https://simonwillison.net/atom/everything/"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Julia Evans"
 section = "Blogs técnicos"
 url = "https://jvns.ca/atom.xml"
+full_text = true
 
 [[sources]]
 type = "rss"
@@ -163,12 +175,14 @@ type = "rss"
 name = "Cloudflare Blog"
 section = "Blogs técnicos"
 url = "https://blog.cloudflare.com/rss/"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Netflix TechBlog"
 section = "Blogs técnicos"
 url = "https://netflixtechblog.com/feed"
+full_text = true
 
 # --- Rio Grande do Sul ---
 
@@ -177,12 +191,14 @@ type = "rss"
 name = "O Sul"
 section = "Rio Grande do Sul"
 url = "https://www.osul.com.br/feed/"
+full_text = true
 
 [[sources]]
 type = "rss"
 name = "Litoral na Rede"
 section = "Rio Grande do Sul"
 url = "https://litoralnarede.com.br/feed/"
+full_text = true
 
 [[sources]]
 type = "rss"

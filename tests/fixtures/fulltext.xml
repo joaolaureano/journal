@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/">
+<channel>
+<title>Full text</title>
+<link>https://site.example.com/</link>
+<item>
+<title>In content</title>
+<link>https://site.example.com/n/1</link>
+<pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+<description>Teaser curto.</description>
+<media:content url="https://cdn.example.com/a.jpg" medium="image"/>
+<content:encoded><![CDATA[<p><img src="https://cdn.example.com/a.jpg">Primeiro parágrafo com bastante texto sobre o assunto do dia.</p><p>Segundo parágrafo, também com texto suficiente para ficar maior que o resumo.</p><figure><img src="/f/b.jpg" alt="Ponte"><figcaption>A ponte</figcaption></figure><p>Terceiro parágrafo encerra a matéria com mais algumas palavras.</p><p>O post <a href="https://site.example.com/n/1">In content</a> apareceu primeiro em <a href="https://site.example.com/">Site</a>.</p>]]></content:encoded>
+</item>
+<item>
+<title>In summary</title>
+<link>https://site.example.com/n/2</link>
+<pubDate>Mon, 02 Nov 2026 09:00:00 GMT</pubDate>
+<description><![CDATA[<p>palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra palavra</p><p>Fim.</p>]]></description>
+</item>
+<item>
+<title>Short</title>
+<link>https://site.example.com/n/3</link>
+<pubDate>Mon, 02 Nov 2026 08:00:00 GMT</pubDate>
+<description>Só um resumo curto e nada mais.</description>
+</item>
+</channel>
+</rss>

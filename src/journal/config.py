@@ -35,9 +35,11 @@ class AdapterType:
 
 SOURCE_TYPES: dict[str, AdapterType] = {
     "rss": AdapterType(
-        build=lambda o, _dir: RssSource(o["url"], o["name"], _timeout(o)),
+        build=lambda o, _dir: RssSource(
+            o["url"], o["name"], _timeout(o), full_text=o.get("full_text", False)
+        ),
         required={"name": str, "url": str},
-        optional={"timeout": (int, float)},
+        optional={"timeout": (int, float), "full_text": bool},
     ),
 }
 

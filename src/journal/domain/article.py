@@ -17,6 +17,7 @@ class Article:
     image_caption: str | None = None
     image_credit: str | None = None
     section: str | None = None  # e.g. "Ciência"; set from the source's configuration
+    body: str | None = None  # full text as safe HTML, already rebuilt by the source
     id: str = field(init=False)
 
     def __post_init__(self) -> None:

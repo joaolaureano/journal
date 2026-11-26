@@ -47,6 +47,13 @@ Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedag
   Abaixo da data da edição, um índice leva direto a cada seção.
 - Resumos: sem o rodapé "O post … apareceu primeiro em …" do WordPress e com no máximo ~400
   caracteres. Sem imagem nos campos de mídia, vale a primeira do texto completo do feed.
+  Estatísticas do hnrss.org ("Article URL: …", "Points: …") não contam como resumo.
+- Texto completo (`full_text = true` na fonte): a página da notícia mostra o texto mais longo que
+  o feed manda (`content:encoded` ou a descrição), com parágrafos, listas, citações, links e as
+  fotos no lugar. O HTML é remontado por uma lista de tags permitidas: scripts, iframes, vídeos,
+  formulários, estilos, eventos, links `javascript:` e pixels de rastreamento ficam de fora, e a
+  foto de capa não se repete. A lista da edição continua com o resumo.
+- Toda página pede para não ser indexada (`<meta name="robots" content="noindex, nofollow">`).
 - Toda página tem um menu fixo à esquerda com as 30 edições mais recentes (DD/MM/AAAA), a última
   edição e o arquivo. Aberto em telas largas, fechado no celular; o botão ☰ abre e fecha, só com
   CSS. Edições antigas mantêm o menu de quando foram geradas.
@@ -75,6 +82,7 @@ type = "rss"
 name = "Nature"                             # aparece nos artigos
 url = "https://www.nature.com/nature.rss"
 timeout = 10                                # opcional, segundos (> 0)
+full_text = false                           # opcional: mostra o texto completo do feed
 section = "Ciência"                         # opcional, vale para qualquer tipo de fonte
 
 [publisher]
@@ -164,7 +172,7 @@ O GitHub Actions (`.github/workflows/ci.yml`) roda o lint e os testes em todo pu
 ## Uso responsável
 
 O journal só exibe o que cada feed distribui: título, resumo, imagem (quando o feed traz uma),
-nome da fonte e um link para o original. Ele não baixa a página do artigo, PDFs nem imagens: a
+nome da fonte e um link para o original, e o texto completo só nas fontes com `full_text`. Ele não baixa a página do artigo, PDFs nem imagens: a
 imagem é carregada direto do site de origem por quem abre a página, então o site publicado faz
 requisições a esses domínios.
 
@@ -172,7 +180,9 @@ Quem usa o journal é responsável por:
 
 - respeitar os termos de uso de cada fonte (muitos feeds permitem só uso pessoal e não comercial);
 - respeitar a licença de cada artigo (ex.: Creative Commons BY exige crédito, BY-NC proíbe uso
-  comercial) e não republicar texto completo de conteúdo protegido;
+  comercial) e não republicar texto completo de conteúdo protegido: `full_text` vem desligado;
+  num site aberto, ligue só em fontes cuja licença permite (ex.: Agência Brasil, CC BY). O
+  `journal.toml` deste repositório liga em mais fontes, para leitura pessoal;
 - manter o crédito e o link para a fonte original ao publicar o site;
 - identificar como tal qualquer resumo gerado por IA e não atribuir à fonte o que ela não disse.
 

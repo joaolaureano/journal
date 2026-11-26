@@ -5,7 +5,9 @@ import time
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime
+from html import escape
 from html.parser import HTMLParser
+from urllib.parse import urljoin
 
 import feedparser
 
@@ -20,6 +22,23 @@ RETRY_STATUSES = {408, 429}  # plus every 5xx; other 4xx answers are final
 WORDPRESS_FOOTER = re.compile(
     r"\s*(?:O post .+ apareceu primeiro em|The post .+ appeared first on) .+?\.?\s*$"
 )
+# What hnrss.org writes instead of a summary: links and counters, not text.
+HNRSS_STATS = re.compile(
+    r"(?:Article URL|Comments URL): \S+|Points: \d+|# Comments: \d+"
+)
+
+# Body allowlist: everything else is dropped (with its content) or unwrapped.
+BODY_TAGS = {
+    "p", "br", "h2", "h3", "h4", "ul", "ol", "li", "blockquote", "pre", "code",
+    "strong", "em", "b", "i", "sub", "sup", "figure", "figcaption", "a", "img",
+}  # fmt: skip
+BODY_RENAMED = {"h1": "h2", "h5": "h4", "h6": "h4"}  # the page's own h1 is the title
+BODY_DROPPED = {
+    "script", "style", "iframe", "object", "embed", "form", "svg", "video", "audio",
+    "noscript", "template", "button", "select", "textarea",
+}  # fmt: skip
+VOID_TAGS = {"br", "img"}
+PIXEL_MAX = 2  # px; images this small are trackers
 
 
 class _Transient(Exception):
@@ -36,8 +55,10 @@ class RssSource:
         timeout: float = 10,
         retries: int = 2,
         backoff: float = 1,
+        full_text: bool = False,
     ):
         self.location = location
+        self.full_text = full_text
         self.name = name
         self.timeout = timeout
         self.retries = retries
@@ -96,16 +117,28 @@ class RssSource:
             caption = plain_text(entry.get("media_text", "")) or None
             credits = entry.get("media_credit") or [{}]
             credit = credits[0].get("content", "").strip() or None
+        summary = summary_text(entry.get("summary", ""))
         return Article(
             title=entry["title"],
             url=entry["link"],
-            summary=summary_text(entry.get("summary", "")),
+            summary=summary,
             source=self.name,
             published_at=datetime(*when[:6], tzinfo=UTC),
             image=image,
             image_caption=caption,
             image_credit=credit,
+            body=self._body(entry, image, summary) if self.full_text else None,
         )
+
+    def _body(self, entry, image: str | None, summary: str) -> str | None:
+        """The entry's longest text as safe HTML, when it adds to the summary."""
+        texts = [c.get("value", "") for c in entry.get("content", [])]
+        texts.append(entry.get("summary", ""))
+        bodies = [body_html(t, entry["link"], image) for t in texts]
+        body = max(bodies, key=lambda b: len(plain_text(b)))
+        if len(plain_text(body)) > len(summary) or "<img " in body:
+            return body
+        return None
 
 
 def _image(entry) -> str | None:
@@ -164,6 +197,118 @@ class _TextCollector(HTMLParser):
             self.parts.append(data)
 
 
+class _BodyBuilder(HTMLParser):
+    """Writes a new document from the allowlist; input markup is never copied."""
+
+    def __init__(self, base_url: str, skip_src: str | None):
+        super().__init__(convert_charrefs=True)
+        self.base_url = base_url
+        self.skip_src = skip_src
+        self.out: list[str] = []
+        self.open: list[str] = []
+        self._dropped = 0
+        self._paragraph: tuple[int, int] | None = None  # (out index, open depth)
+
+    def handle_starttag(self, tag, attrs):
+        if tag in BODY_DROPPED:
+            self._dropped += 1
+        if self._dropped:
+            return
+        tag = BODY_RENAMED.get(tag, tag)
+        if tag not in BODY_TAGS:
+            return
+        attrs = {k: v or "" for k, v in attrs}
+        if tag == "img":
+            self._img(attrs)
+            return
+        if tag == "br":
+            self.out.append("<br>")
+            return
+        if tag == "a":
+            href = self._url(attrs.get("href", ""))
+            link = f' href="{escape(href)}"' if href else ""
+            self.out.append(f'<a{link} rel="noopener noreferrer">')
+        else:
+            if tag == "p" and self._paragraph is None:
+                self._paragraph = (len(self.out), len(self.open))
+            self.out.append(f"<{tag}>")
+        self.open.append(tag)
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if tag not in VOID_TAGS:
+            self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        if tag in BODY_DROPPED:
+            self._dropped = max(0, self._dropped - 1)
+            return
+        if self._dropped:
+            return
+        tag = BODY_RENAMED.get(tag, tag)
+        if tag in VOID_TAGS or tag not in self.open:
+            return  # stray end tags are ignored
+        while self.open:
+            closed = self.open.pop()
+            self.out.append(f"</{closed}>")
+            if (
+                closed == "p"
+                and self._paragraph
+                and len(self.open) == self._paragraph[1]
+            ):
+                self._end_paragraph()
+            if closed == tag:
+                break
+
+    def handle_data(self, data):
+        if not self._dropped:
+            self.out.append(escape(data, quote=False))
+
+    def close(self):
+        super().close()
+        if self.open:  # unclosed tags must not leak into the page
+            self.handle_endtag(self.open[0])
+
+    def _end_paragraph(self):
+        start, _ = self._paragraph
+        self._paragraph = None
+        if WORDPRESS_FOOTER.match(plain_text("".join(self.out[start:]))):
+            del self.out[start:]
+
+    def _img(self, attrs):
+        src = attrs.get("src", "")
+        if not is_http_url(urljoin(self.base_url, src)):  # e.g. data: placeholders
+            src = attrs.get("data-src", src)  # lazy-loading WordPress themes
+        src = self._url(src)
+        if not src or src == self.skip_src:
+            return
+        for side in ("width", "height"):
+            size = re.match(r"\s*(\d+)", attrs.get(side, ""))
+            if size and int(size.group(1)) <= PIXEL_MAX:
+                return
+        alt = escape(attrs.get("alt", ""))
+        self.out.append(
+            f'<img src="{escape(src)}" alt="{alt}" loading="lazy"'
+            ' referrerpolicy="no-referrer">'
+        )
+
+    def _url(self, value: str) -> str | None:
+        url = urljoin(self.base_url, value.strip())
+        return url if value.strip() and is_http_url(url) else None
+
+
+def body_html(html: str, base_url: str, skip_src: str | None = None) -> str:
+    """Feed HTML rebuilt through the allowlist, with links resolved to `base_url`."""
+    breaks = re.compile(r"\s*(?:\n|<br\s*/?>)\s*", re.I)
+    if not re.search(r"<p[\s>]", html, re.I) and breaks.search(html.strip()):
+        lines = breaks.split(html)  # plain-text feeds: g1, Slashdot
+        html = "".join(f"<p>{line}</p>" for line in lines if line.strip())
+    builder = _BodyBuilder(base_url, skip_src)
+    builder.feed(html)
+    builder.close()
+    return "".join(builder.out).strip()
+
+
 def plain_text(html: str) -> str:
     collector = _TextCollector()
     collector.feed(html)
@@ -174,6 +319,8 @@ def plain_text(html: str) -> str:
 def summary_text(html: str) -> str:
     """Plain text without the WordPress footer, cut at a word near SUMMARY_LIMIT."""
     text = WORDPRESS_FOOTER.sub("", plain_text(html))
+    if "Comments URL: " in text:  # hnrss.org
+        text = " ".join(HNRSS_STATS.sub("", text).split())
     if text.casefold() == "comments":  # Hacker News and Lobsters: only a link
         return ""
     if len(text) <= SUMMARY_LIMIT:

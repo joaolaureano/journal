@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from journal.adapters.rss import SUMMARY_LIMIT, RssSource, plain_text, summary_text
+from journal.adapters.rss import (
+    SUMMARY_LIMIT,
+    RssSource,
+    body_html,
+    plain_text,
+    summary_text,
+)
 from journal.ports import SourceError, SourcePort
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -220,3 +226,145 @@ def test_persistent_failure_gives_up_after_the_retries(sleeps):
 )
 def test_comments_only_summary_is_empty(html):
     assert summary_text(html) == ""
+
+
+# full text (body)
+
+
+def full(**kwargs):
+    return {a.title: a for a in source("fulltext.xml", **kwargs).fetch()}
+
+
+def test_body_is_off_by_default():
+    assert all(a.body is None for a in full().values())
+
+
+def test_body_from_content_encoded_keeps_paragraphs_and_photos():
+    a = full(full_text=True)["In content"]
+    assert a.summary == "Teaser curto."
+    assert a.body.count("<p>") == 3
+    assert "Segundo parágrafo" in a.body
+    assert (
+        '<figure><img src="https://site.example.com/f/b.jpg" alt="Ponte"'
+        ' loading="lazy" referrerpolicy="no-referrer"><figcaption>A ponte'
+        "</figcaption></figure>"
+    ) in a.body
+
+
+def test_body_drops_cover_and_wordpress_footer():
+    a = full(full_text=True)["In content"]
+    assert a.image == "https://cdn.example.com/a.jpg"
+    assert "a.jpg" not in a.body
+    assert "apareceu primeiro" not in a.body
+
+
+def test_body_from_long_summary():
+    a = full(full_text=True)["In summary"]
+    assert a.summary.endswith("…") and len(a.summary) <= SUMMARY_LIMIT + 1
+    assert a.body.startswith("<p>palavra") and a.body.endswith("<p>Fim.</p>")
+
+
+def test_no_body_when_nothing_beyond_the_summary():
+    assert full(full_text=True)["Short"].body is None
+
+
+BASE = "https://site.com/n/1"
+
+
+@pytest.mark.parametrize(
+    ("html", "body"),
+    [
+        (
+            '<p onclick="x()">Oi <script>alert(1)</script>'
+            '<iframe src="https://e.com"></iframe></p>',
+            "<p>Oi </p>",
+        ),
+        ('<div class="x"><span style="color:red">texto</span></div>', "texto"),
+        ("<h1>A</h1><h5>B</h5>", "<h2>A</h2><h4>B</h4>"),
+        (
+            '<img src="/f/a.jpg">',
+            '<img src="https://site.com/f/a.jpg" alt="" loading="lazy"'
+            ' referrerpolicy="no-referrer">',
+        ),
+        (
+            '<a href="javascript:alert(1)">clique</a>',
+            '<a rel="noopener noreferrer">clique</a>',
+        ),
+        (
+            '<a href="/x">ir</a>',
+            '<a href="https://site.com/x" rel="noopener noreferrer">ir</a>',
+        ),
+        ('<img src="https://t.com/p.gif" width="1" height="1">', ""),
+        ('<img src="data:image/png;base64,AAAA">', ""),
+        (
+            '<img src="data:image/gif;base64,R0" data-src="https://c.com/real.jpg">',
+            '<img src="https://c.com/real.jpg" alt="" loading="lazy"'
+            ' referrerpolicy="no-referrer">',
+        ),
+        ("<blockquote><p>sem fim", "<blockquote><p>sem fim</p></blockquote>"),
+        ("<p>a</em></blockquote>b</p>", "<p>ab</p>"),
+        ("<svg><svg></svg><p>x</p></svg><p>y</p>", "<p>y</p>"),
+        (
+            "&lt;script&gt;alert(1)&lt;/script&gt;",
+            "&lt;script&gt;alert(1)&lt;/script&gt;",
+        ),
+        (
+            '<img src="https://c.com/a.jpg" /><br />  Primeira linha\nSegunda linha',
+            '<p><img src="https://c.com/a.jpg" alt="" loading="lazy"'
+            ' referrerpolicy="no-referrer"></p><p>Primeira linha</p>'
+            "<p>Segunda linha</p>",
+        ),
+    ],
+    ids=[
+        "script-handlers-frames",
+        "unknown-unwrapped",
+        "headings-shift",
+        "relative-image",
+        "javascript-link",
+        "relative-link",
+        "tracking-pixel",
+        "data-image",
+        "lazy-image",
+        "unclosed-tags-closed",
+        "stray-end-tags",
+        "nested-dropped",
+        "escaped-text-stays-text",
+        "plain-text-lines",
+    ],
+)
+def test_body_html_allowlist(html, body):
+    assert body_html(html, BASE) == body
+
+
+def test_body_html_attribute_values_cannot_break_out():
+    body = body_html(
+        '<img src="https://c.com/a.jpg" alt="x&quot; onerror=&quot;y">', BASE
+    )
+    assert body == (
+        '<img src="https://c.com/a.jpg" alt="x&quot; onerror=&quot;y"'
+        ' loading="lazy" referrerpolicy="no-referrer">'
+    )
+
+
+@pytest.mark.parametrize(
+    ("html", "summary"),
+    [
+        (
+            '<p>Article URL: <a href="https://a.com">https://a.com</a></p>'
+            '<p>Comments URL: <a href="https://news.ycombinator.com/item?id=1">'
+            "https://news.ycombinator.com/item?id=1</a></p>"
+            "<p>Points: 294</p><p># Comments: 160</p>",
+            "",
+        ),
+        (
+            "<p>Como vocês testam isso?</p><hr><p>Comments URL: "
+            '<a href="https://news.ycombinator.com/item?id=2">'
+            "https://news.ycombinator.com/item?id=2</a></p>"
+            "<p>Points: 12</p><p># Comments: 3</p>",
+            "Como vocês testam isso?",
+        ),
+    ],
+    ids=["link", "text"],
+)
+def test_hnrss_statistics_are_not_a_summary(html, summary):
+    assert summary_text(html) == summary

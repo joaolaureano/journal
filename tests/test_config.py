@@ -49,6 +49,12 @@ def test_rss_timeout_defaults_to_10(tmp_path):
     assert load_config(write(tmp_path, rss() + PUBLISHER)).sources[0].timeout == 10
 
 
+def test_rss_full_text_is_opt_in(tmp_path):
+    assert not load_config(write(tmp_path, rss() + PUBLISHER)).sources[0].full_text
+    cfg = load_config(write(tmp_path, rss(extra="full_text = true\n") + PUBLISHER))
+    assert cfg.sources[0].full_text
+
+
 def test_relative_out_resolved_against_config_dir(tmp_path, monkeypatch):
     site = tmp_path / "site"
     site.mkdir()
@@ -93,6 +99,7 @@ def test_registered_source_type_is_usable(tmp_path, monkeypatch):
         (rss(extra='timeout = "fast"\n') + PUBLISHER, "'timeout'"),
         (rss(extra="timeout = true\n") + PUBLISHER, "'timeout'"),
         (rss(extra="timeout = 0\n") + PUBLISHER, "'timeout' must be > 0"),
+        (rss(extra='full_text = "yes"\n') + PUBLISHER, "'full_text'"),
         (rss() + '[publisher]\ntype = "ftp"\n', "publisher: unknown type 'ftp'"),
     ],
     ids=[
@@ -106,6 +113,7 @@ def test_registered_source_type_is_usable(tmp_path, monkeypatch):
         "wrong-type",
         "bool-is-not-a-number",
         "timeout-not-positive",
+        "full-text-not-bool",
         "unknown-publisher-type",
     ],
 )

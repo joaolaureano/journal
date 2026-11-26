@@ -279,7 +279,10 @@ def _article_page(
     content = Template(_read("article.html")).substitute(
         title=escape(a.title),
         source=escape(a.source),
-        summary=escape(a.summary),
+        # the body is the only feed markup kept: the source rebuilt it already
+        text=f'<div class="body">{a.body}</div>'
+        if a.body
+        else f"<p>{escape(a.summary)}</p>",
         url=escape(a.url),
         image=_figure(a),
         **_when(a, tz),

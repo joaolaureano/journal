@@ -451,3 +451,28 @@ def test_article_without_summary_or_image_links_to_its_source(out):
     assert '<a href="https://news.example/x" rel="noopener noreferrer">Só link' in index
     assert f"articles/{bare.id}.html" not in index
     assert (folder / "articles" / f"{bare.id}.html").is_file()
+
+
+# full text
+
+
+def test_article_page_shows_body_in_place_of_summary(out):
+    body = '<p>Um <strong>dois</strong></p><p>três</p><img src="https://c.com/f.jpg">'
+    a = article(summary="Resumo curto", body=body)
+    folder = publish(out, a)
+    page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
+    assert f'<div class="body">{body}</div>' in page
+    assert "Resumo curto" not in page
+    assert "Resumo curto" in (folder / "index.html").read_text(encoding="utf-8")
+
+
+def test_article_page_without_body_shows_summary(out):
+    a = article(summary="Só o resumo")
+    page = (publish(out, a) / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
+    assert "<p>Só o resumo</p>" in page and 'class="body"' not in page
+
+
+def test_pages_ask_not_to_be_indexed(out):
+    publish(out, article(summary="x"))
+    for page in pages(out, archive=True):
+        assert '<meta name="robots" content="noindex, nofollow">' in page
