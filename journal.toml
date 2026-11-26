@@ -9,22 +9,24 @@ timezone = "America/Sao_Paulo"
 
 [[sources]]
 type = "rss"
-name = "Nature"
+name = "Pesquisa FAPESP"
 section = "Ciência"
-url = "https://www.nature.com/nature.rss"
+url = "https://revistapesquisa.fapesp.br/feed/"
+full_text = true
 
 [[sources]]
 type = "rss"
-name = "ScienceDaily"
+name = "NASA"
 section = "Ciência"
-url = "https://www.sciencedaily.com/rss/top.xml"
-timeout = 15
+url = "https://www.nasa.gov/feed/"
+full_text = true
 
 [[sources]]
 type = "rss"
-name = "BBC Science"
+name = "IEEE Spectrum"
 section = "Ciência"
-url = "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+url = "https://spectrum.ieee.org/feeds/feed.rss"
+full_text = true
 
 # --- Brasil e mundo ---
 
@@ -44,15 +46,17 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "Folha"
+name = "Agência Pública"
 section = "Brasil e mundo"
-url = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml"
+url = "https://apublica.org/feed/"
+full_text = true
 
 [[sources]]
 type = "rss"
-name = "BBC News Brasil"
+name = "The Conversation Brasil"
 section = "Brasil e mundo"
-url = "https://feeds.bbci.co.uk/portuguese/rss.xml"
+url = "https://theconversation.com/br/articles.atom"
+full_text = true
 
 [[sources]]
 type = "rss"
@@ -70,17 +74,19 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "BBC News World"
+name = "The Guardian"
 section = "Brasil e mundo"
-url = "https://feeds.bbci.co.uk/news/world/rss.xml"
+url = "https://www.theguardian.com/world/rss"
+full_text = true
 
 # --- Tecnologia ---
 
 [[sources]]
 type = "rss"
-name = "BBC Technology"
+name = "404 Media"
 section = "Tecnologia"
-url = "https://feeds.bbci.co.uk/news/technology/rss.xml"
+url = "https://www.404media.co/rss/"
+full_text = true
 
 [[sources]]
 type = "rss"
@@ -124,12 +130,6 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "The Register"
-section = "Tecnologia"
-url = "https://www.theregister.com/headlines.atom"
-
-[[sources]]
-type = "rss"
 name = "Krebs on Security"
 section = "Tecnologia"
 url = "https://krebsonsecurity.com/feed/"
@@ -166,9 +166,10 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "InfoQ"
+name = "The Pragmatic Engineer"
 section = "Blogs técnicos"
-url = "https://feed.infoq.com/"
+url = "https://blog.pragmaticengineer.com/rss/"
+full_text = true
 
 [[sources]]
 type = "rss"
@@ -202,9 +203,10 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "Correio do Povo"
+name = "Rádio Guaíba"
 section = "Rio Grande do Sul"
-url = "https://www.correiodopovo.com.br/cmlink/ultimas-1.1100282"
+url = "https://guaiba.com.br/feed/"
+full_text = true
 
 # Filtro (veja o README). include/exclude seguem desativados:
 [filter]
