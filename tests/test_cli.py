@@ -18,6 +18,11 @@ def config(tmp_path, *feeds, out="dist", extra=""):
     return str(path)
 
 
+def latest_articles(out: Path) -> list[dict]:
+    manifest = json.loads((out / "editions.json").read_text("utf-8"))
+    return json.loads((out / manifest[-1]["path"] / "articles.json").read_text("utf-8"))
+
+
 def test_build_from_two_sources(tmp_path, capsys):
     path = config(
         tmp_path,
@@ -25,7 +30,7 @@ def test_build_from_two_sources(tmp_path, capsys):
         ("Two", (FIXTURES / "feed2.xml").as_uri()),
     )
     code = main(["build", "--config", path])
-    index = json.loads((tmp_path / "dist" / "articles.json").read_text("utf-8"))
+    index = latest_articles(tmp_path / "dist")
     assert code == 0
     assert {a["source"] for a in index} == {"One", "Two"}
     assert [a["url"] for a in index].count("https://example.com/first") == 1
@@ -69,6 +74,15 @@ def test_build_applies_filter_cap(tmp_path, capsys):
         extra="[filter]\nmax_articles = 1\n",
     )
     assert main(["build", "--config", path]) == 0
-    index = json.loads((tmp_path / "dist" / "articles.json").read_text("utf-8"))
+    index = latest_articles(tmp_path / "dist")
     assert len(index) == 1
     assert "published 1 of " in capsys.readouterr().out
+
+
+def test_second_build_same_day_adds_a_revision(tmp_path, capsys):
+    path = config(tmp_path, ("One", (FIXTURES / "feed.xml").as_uri()))
+    assert main(["build", "--config", path]) == 0
+    assert main(["build", "--config", path]) == 0
+    manifest = json.loads((tmp_path / "dist" / "editions.json").read_text("utf-8"))
+    assert [e["revision"] for e in manifest] == [1, 2]
+    assert "in the edition of" in capsys.readouterr().out

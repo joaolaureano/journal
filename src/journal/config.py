@@ -6,12 +6,15 @@ Outside the core on purpose: this is where concrete adapters are named.
 import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import tzinfo
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from journal.adapters.rss import RssSource
 from journal.adapters.static_site import StaticSitePublisher
+from journal.adapters.storage import LocalStorage
 from journal.app import KeywordFilter
 from journal.ports import PublisherPort, SourcePort
 
@@ -37,14 +40,35 @@ SOURCE_TYPES: dict[str, AdapterType] = {
     ),
 }
 
-PUBLISHER_TYPES: dict[str, AdapterType] = {
-    "static-site": AdapterType(
-        build=lambda o, config_dir: StaticSitePublisher(
-            config_dir / o.get("out", "dist")
-        ),
+STORAGE_TYPES: dict[str, AdapterType] = {
+    "local": AdapterType(
+        build=lambda o, config_dir: LocalStorage(config_dir / o.get("out", "dist")),
         optional={"out": str},
     ),
 }
+
+
+def _static_site(options: dict[str, Any], config_dir: Path) -> StaticSitePublisher:
+    if "out" in options and "storage" in options:
+        raise ConfigError("publisher (static-site): use either 'out' or 'storage'")
+    storage = options.get(
+        "storage", {"type": "local", "out": options.get("out", "dist")}
+    )
+    return StaticSitePublisher(
+        _build(
+            storage, STORAGE_TYPES, "journal.storages", "publisher storage", config_dir
+        )
+    )
+
+
+PUBLISHER_TYPES: dict[str, AdapterType] = {
+    "static-site": AdapterType(
+        build=_static_site,
+        optional={"out": str, "storage": dict},
+    ),
+}
+
+DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
 
 @dataclass
@@ -54,6 +78,7 @@ class Config:
     article_filter: KeywordFilter | None = None
     max_articles: int | None = None
     max_age_days: int | None = None
+    timezone: tzinfo = field(default_factory=lambda: ZoneInfo(DEFAULT_TIMEZONE))
 
 
 def load_config(path: str | Path) -> Config:
@@ -74,6 +99,7 @@ def load_config(path: str | Path) -> Config:
 
     article_filter, max_articles, max_age_days = _filter(data.get("filter"), path)
     config_dir = path.resolve().parent
+    timezone = _timezone(data.get("timezone", DEFAULT_TIMEZONE), path)
     return Config(
         sources=[
             _build(entry, SOURCE_TYPES, "journal.sources", f"source #{i}", config_dir)
@@ -85,7 +111,18 @@ def load_config(path: str | Path) -> Config:
         article_filter=article_filter,
         max_articles=max_articles,
         max_age_days=max_age_days,
+        timezone=timezone,
     )
+
+
+def _timezone(name: Any, path: Path) -> tzinfo:
+    """IANA name such as 'America/Sao_Paulo'; decides the date of each edition."""
+    if not isinstance(name, str):
+        raise ConfigError(f"{path}: 'timezone' must be a string")
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise ConfigError(f"{path}: unknown timezone {name!r}") from exc
 
 
 def _filter(

@@ -1,13 +1,12 @@
-from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
-from journal.domain import Article
+from journal.domain import Edition
 
 
 @runtime_checkable
 class PublisherPort(Protocol):
-    def publish(self, articles: Sequence[Article]) -> None: ...
+    def publish(self, edition: Edition) -> None: ...
 
 
 class PublishError(Exception):
-    """A publisher could not publish the articles."""
+    """A publisher could not publish the edition."""

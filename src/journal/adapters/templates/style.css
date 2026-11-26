@@ -109,3 +109,9 @@ main > p a {
   text-transform: uppercase;
 }
 main > p { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* Arquivo de edições e link para ele. */
+ul.editions { list-style: none; padding: 0; margin: 0; }
+ul.editions li { padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-family: var(--serif); }
+ul.editions .meta { font: 0.8rem var(--mono); color: var(--muted); }
+p.archive { margin-top: 2.5rem; font: 0.8rem var(--mono); letter-spacing: 0.05em; text-transform: uppercase; }

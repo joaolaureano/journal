@@ -42,18 +42,16 @@ def test_failing_source_is_reported_and_others_published():
 
 def test_all_sources_failing_does_not_publish():
     publisher = FakePublisher()
-    publisher.published = None
     with pytest.raises(BuildError, match="feed down"):
         BuildJournal([FailingSource(), FailingSource()], publisher).run()
-    assert publisher.published is None
+    assert publisher.edition is None
 
 
 def test_no_sources_does_not_publish():
     publisher = FakePublisher()
-    publisher.published = None
     with pytest.raises(BuildError):
         BuildJournal([], publisher).run()
-    assert publisher.published is None
+    assert publisher.edition is None
 
 
 def test_successful_empty_source_publishes_empty_list():
@@ -109,10 +107,9 @@ def test_filter_keeps_matching_articles():
 
 def test_filter_removing_everything_publishes_empty_list():
     publisher = FakePublisher()
-    publisher.published = None
     source = FakeSource([article("https://a.com/1", title="Futebol")])
     BuildJournal([source], publisher, KeywordFilter(["selic"])).run()
-    assert publisher.published == []
+    assert publisher.edition is not None and publisher.published == []
 
 
 def test_max_articles_keeps_newest():
@@ -201,3 +198,17 @@ def test_unexpected_source_exception_is_isolated():
 def test_only_buggy_sources_fail_the_build():
     with pytest.raises(BuildError, match="boom"):
         run_at([BuggySource()])
+
+
+def test_edition_date_uses_configured_timezone():
+    from zoneinfo import ZoneInfo
+
+    late = datetime(2026, 11, 27, 2, tzinfo=UTC)  # still the 26th in São Paulo
+    publisher = FakePublisher()
+    BuildJournal(
+        [FakeSource([])],
+        publisher,
+        now=lambda: late,
+        timezone=ZoneInfo("America/Sao_Paulo"),
+    ).run()
+    assert publisher.edition.date.isoformat() == "2026-11-26"

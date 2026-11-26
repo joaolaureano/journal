@@ -1,6 +1,10 @@
 # Fontes deste jornal. Num fork, troque pelas suas.
 # Fontes, na ordem em que são lidas. Em URLs repetidas, vale a primeira fonte.
 
+# Fuso que define a data de cada edição (padrão: America/Sao_Paulo).
+# Chave de topo: precisa vir antes de qualquer [[sources]].
+timezone = "America/Sao_Paulo"
+
 # --- Ciência ---
 
 [[sources]]
@@ -165,4 +169,4 @@ url = "https://litoralnarede.com.br/feed/"
 
 [publisher]
 type = "static-site"
-out = "dist"  # relativo a este arquivo
+storage = { type = "local", out = "dist" }  # relativo a este arquivo

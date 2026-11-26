@@ -25,13 +25,17 @@ def main(argv: list[str] | None = None) -> int:
             config.article_filter,
             config.max_articles,
             config.max_age_days,
+            timezone=config.timezone,
         ).run()
     except (ConfigError, BuildError, PublishError) as exc:
         print(f"build failed: {exc}", file=sys.stderr)
         return 1
     for error in report.errors:
         print(f"source failed: {error}", file=sys.stderr)
-    print(f"published {len(report.articles)} of {report.fetched} articles")
+    print(
+        f"published {len(report.articles)} of {report.fetched} articles"
+        f" in the edition of {report.edition.date.isoformat()}"
+    )
     return 0
 
 

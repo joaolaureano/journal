@@ -21,21 +21,31 @@ uv run journal build                       # lê ./journal.toml
 uv run journal build --config outro.toml
 ```
 
-Busca as fontes configuradas, remove duplicatas, ordena do mais recente ao mais antigo e grava o site em `dist/`:
+Busca as fontes configuradas, remove duplicatas, ordena do mais recente ao mais antigo e grava a
+**edição do dia** em `dist/`:
 
 ```
 dist/
-  index.html            lista de notícias
-  articles/<id>.html    uma página por artigo
+  index.html                      edição mais recente
+  edicoes/index.html              arquivo: todas as edições, da mais nova à mais antiga
+  edicoes/2026-11-26/             uma pasta por edição
+    index.html                    lista de notícias da edição
+    articles/<id>.html            uma página por artigo
+    articles.json                 os mesmos dados em JSON
+  edicoes/2026-11-26-2/           2ª execução no mesmo dia (revisão 2)
+  editions.json                   manifesto: data, revisão, pasta e nº de artigos
   style.css
-  articles.json         os mesmos dados em JSON
 ```
 
 Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedagem estática.
 
-- Cada build substitui o site inteiro; se falhar no meio, o site anterior fica intacto.
+- A data da edição segue o `timezone` da config (padrão `America/Sao_Paulo`).
+- Edições nunca são sobrescritas: rodar de novo no mesmo dia cria uma revisão nova.
+- A edição é gravada primeiro; `editions.json` e `index.html` por último. Se falhar no meio, o
+  site continua apontando para a edição anterior.
 - Se nenhuma fonte responder, o comando sai com código 1 e não toca em `dist/`.
-- Por segurança, o build se recusa a escrever num diretório que já tenha outros arquivos e não seja um site do journal.
+- Por segurança, o build se recusa a escrever num diretório que já tenha outros arquivos e não seja
+  um site do journal.
 
 ## Configuração
 
@@ -52,12 +62,16 @@ timeout = 10                                # opcional, segundos
 
 [publisher]
 type = "static-site"
-out = "dist"                                # opcional, relativo ao arquivo de config
+storage = { type = "local", out = "dist" }  # opcional; `out` relativo ao arquivo de config
 ```
+
+`timezone` (chave de topo, antes de qualquer `[[sources]]`) define a data das edições.
+`out = "dist"` direto em `[publisher]` é um atalho para o armazenamento local.
 
 Para adicionar outra fonte RSS, basta outro bloco `[[sources]]`. Nenhum código muda.
 
-Tipos embutidos: fonte `rss`, publisher `static-site`. Outros tipos vêm de plugins.
+Tipos embutidos: fonte `rss`, publisher `static-site`, armazenamento `local`. Outros tipos vêm de
+plugins.
 
 ### Filtro (opcional)
 
@@ -98,15 +112,16 @@ publisher, sem alterar este repositório.
 3. Declare o entry point no `pyproject.toml` do plugin; o nome é o `type` usado na config:
 
    ```toml
-   [project.entry-points."journal.sources"]      # ou "journal.publishers"
+   [project.entry-points."journal.sources"]      # ou "journal.publishers", "journal.storages"
    reddit = "meu_pacote.reddit:REDDIT"
    ```
 
 O journal valida as opções antes de chamar `build`, só importa o plugin quando a config usa o
 tipo, e recusa um `type` oferecido por mais de um pacote.
 
-API pública para plugins: `journal.config.AdapterType`, `journal.domain.Article`,
-`journal.ports` (`SourcePort`, `PublisherPort`, `SourceError`, `PublishError`).
+API pública para plugins: `journal.config.AdapterType`, `journal.domain` (`Article`, `Edition`),
+`journal.ports` (`SourcePort`, `PublisherPort`, `SourceError`, `PublishError`) e
+`journal.adapters.storage.StoragePort` (`exists`, `read`, `write`) para novos armazenamentos.
 
 ## Desenvolvimento
 

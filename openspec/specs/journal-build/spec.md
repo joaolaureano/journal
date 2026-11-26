@@ -124,3 +124,10 @@ The build SHALL drop articles dated more than one day after the current time. Wh
 #### Scenario: Far-future article
 - **WHEN** no filter is configured and articles are dated 3 hours and 2 days in the future
 - **THEN** the publisher receives only the one dated 3 hours ahead
+
+### Requirement: Build publishes the edition of the day
+A build SHALL hand the publisher one edition holding the published articles, dated with the current date in the configured timezone (UTC when none is given).
+
+#### Scenario: Late evening in São Paulo
+- **WHEN** a build runs at 2026-11-27 02:00 UTC with timezone `America/Sao_Paulo`
+- **THEN** the publisher receives an edition dated 2026-11-26

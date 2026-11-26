@@ -1,10 +1,10 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from journal.app.filter import KeywordFilter
-from journal.domain import Article
+from journal.domain import Article, Edition
 from journal.ports import PublisherPort, SourceError, SourcePort
 
 FUTURE_TOLERANCE = timedelta(days=1)
@@ -32,9 +32,13 @@ class BuildError(Exception):
 
 @dataclass
 class BuildReport:
-    articles: list[Article]
+    edition: Edition
     errors: list[SourceError] = field(default_factory=list)
     fetched: int = 0  # unique articles read, before filtering
+
+    @property
+    def articles(self) -> list[Article]:
+        return list(self.edition.articles)
 
 
 class BuildJournal:
@@ -46,6 +50,7 @@ class BuildJournal:
         max_articles: int | None = None,
         max_age_days: int | None = None,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
+        timezone: tzinfo = UTC,
     ):
         self.sources = sources
         self.publisher = publisher
@@ -53,6 +58,7 @@ class BuildJournal:
         self.max_articles = max_articles
         self.max_age_days = max_age_days
         self.now = now
+        self.timezone = timezone  # decides which day an edition belongs to
 
     def run(self) -> BuildReport:
         by_url: dict[str, Article] = {}
@@ -86,8 +92,9 @@ class BuildJournal:
         ]
         articles = sorted(kept, key=lambda a: (-a.published_at.timestamp(), a.url))
         articles = articles[: self.max_articles]
-        self.publisher.publish(articles)
-        return BuildReport(articles, errors, fetched=len(by_url))
+        edition = Edition(self.now().astimezone(self.timezone).date(), tuple(articles))
+        self.publisher.publish(edition)
+        return BuildReport(edition, errors, fetched=len(by_url))
 
     def _in_window(self, article: Article) -> bool:
         """Drops stale articles and ones dated implausibly far in the future."""

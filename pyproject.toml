@@ -8,6 +8,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "feedparser>=6.0.14",
+    "tzdata>=2026.6",
 ]
 
 [project.scripts]

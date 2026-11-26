@@ -19,12 +19,11 @@ The core SHALL define a source contract: an operation that takes no arguments an
 - **THEN** it is not recognized as a source
 
 ### Requirement: Publisher contract
-The core SHALL define a publisher contract: an operation that receives a sequence of articles and returns nothing. Any object offering that operation SHALL be usable as a publisher.
+The core SHALL define a publisher contract: an operation that receives an edition and returns nothing. Any object offering that operation SHALL be usable as a publisher.
 
 #### Scenario: Fake publisher satisfies the contract
-- **WHEN** an in-memory object exposing the publish operation receives a list of articles
+- **WHEN** an in-memory object exposing the publish operation receives an edition
 - **THEN** it is recognized as a publisher
-- **AND** it holds exactly the articles it received, in order
 
 ### Requirement: Core does not depend on adapters or third-party libraries
 The domain, ports and app layers SHALL import only the Python standard library and other domain, ports or app modules.

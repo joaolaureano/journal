@@ -1,7 +1,6 @@
-from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
-from journal.domain import Article
+from journal.domain import Article, Edition
 
 
 def article(url: str = "https://example.com/a", **overrides) -> Article:
@@ -22,9 +21,17 @@ class FakeSource:
         return list(self.articles)
 
 
+def edition(*articles: Article, day: date = date(2026, 11, 26)) -> Edition:
+    return Edition(day, tuple(articles))
+
+
 class FakePublisher:
     def __init__(self):
-        self.published: list[Article] = []
+        self.edition: Edition | None = None
 
-    def publish(self, articles: Sequence[Article]) -> None:
-        self.published = list(articles)
+    @property
+    def published(self) -> list[Article]:
+        return list(self.edition.articles) if self.edition else []
+
+    def publish(self, edition: Edition) -> None:
+        self.edition = edition

@@ -55,12 +55,12 @@ def test_relative_out_resolved_against_config_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     path = site / "journal.toml"
     path.write_text(rss() + PUBLISHER + 'out = "public"\n')
-    assert load_config(path).publisher.out_dir == site.resolve() / "public"
+    assert load_config(path).publisher.storage.root == site.resolve() / "public"
 
 
 def test_out_defaults_to_dist(tmp_path):
     publisher = load_config(write(tmp_path, rss() + PUBLISHER)).publisher
-    assert publisher.out_dir == tmp_path.resolve() / "dist"
+    assert publisher.storage.root == tmp_path.resolve() / "dist"
 
 
 def test_registered_source_type_is_usable(tmp_path, monkeypatch):
@@ -219,3 +219,44 @@ def test_max_age_days_from_configuration(tmp_path):
 def test_filter_must_be_table(tmp_path):
     with pytest.raises(ConfigError, match=r"\[filter\]"):
         load_config(write(tmp_path, 'filter = "selic"\n' + rss() + PUBLISHER))
+
+
+# storage and timezone
+
+
+def test_storage_table_selects_local_out(tmp_path):
+    text = rss() + PUBLISHER + 'storage = { type = "local", out = "site" }\n'
+    assert load_config(write(tmp_path, text)).publisher.storage.root == (
+        tmp_path.resolve() / "site"
+    )
+
+
+@pytest.mark.parametrize(
+    ("extra", "message"),
+    [
+        ('out = "a"\nstorage = { type = "local" }\n', "either 'out' or 'storage'"),
+        ('storage = { type = "ftp" }\n', "storage: unknown type 'ftp'"),
+        ('storage = { type = "local", dir = "x" }\n', "'dir'"),
+        ('storage = "local"\n', "'storage'"),
+    ],
+)
+def test_invalid_storage_rejected(tmp_path, extra, message):
+    with pytest.raises(ConfigError, match=message):
+        load_config(write(tmp_path, rss() + PUBLISHER + extra))
+
+
+def test_timezone_defaults_to_sao_paulo(tmp_path):
+    assert str(load_config(write(tmp_path, rss() + PUBLISHER)).timezone) == (
+        "America/Sao_Paulo"
+    )
+
+
+def test_timezone_from_configuration(tmp_path):
+    text = 'timezone = "Europe/Lisbon"\n' + rss() + PUBLISHER
+    assert str(load_config(write(tmp_path, text)).timezone) == "Europe/Lisbon"
+
+
+@pytest.mark.parametrize("value", ['"Mars/Olympus"', "3"])
+def test_invalid_timezone_rejected(tmp_path, value):
+    with pytest.raises(ConfigError, match="timezone"):
+        load_config(write(tmp_path, f"timezone = {value}\n" + rss() + PUBLISHER))

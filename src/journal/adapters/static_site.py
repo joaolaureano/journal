@@ -1,13 +1,12 @@
 import json
-import shutil
 from collections.abc import Sequence
-from datetime import UTC
+from datetime import UTC, date, datetime
 from html import escape
 from importlib.resources import files
-from pathlib import Path
 from string import Template
 
-from journal.domain import Article
+from journal.adapters.storage import StoragePort
+from journal.domain import Article, Edition
 from journal.ports import PublishError
 
 TEMPLATES = files("journal.adapters") / "templates"
@@ -25,52 +24,68 @@ MONTHS = (
     "nov",
     "dez",
 )
+MANIFEST = "editions.json"
+EDITIONS = "edicoes"
 
 
 class StaticSitePublisher:
-    """Writes the whole site to `out_dir`, replacing a previous site as a unit."""
+    """Adds one edition per publish under `edicoes/<date>[-<revision>]/`.
 
-    def __init__(self, out_dir: str | Path):
-        self.out_dir = Path(out_dir)
+    Earlier editions are never rewritten. The edition's files are written first and
+    the manifest and front page last, so a failed publish leaves the published site
+    pointing at the previous edition.
+    """
 
-    def publish(self, articles: Sequence[Article]) -> None:
-        out = self.out_dir.resolve()
-        _check_replaceable(out)
-        tmp, old = out.with_name(out.name + ".tmp"), out.with_name(out.name + ".old")
-        _check_replaceable(tmp)
-        _check_replaceable(old)
+    def __init__(self, storage: StoragePort):
+        self.storage = storage
+
+    def publish(self, edition: Edition) -> None:
         try:
-            shutil.rmtree(tmp, ignore_errors=True)
-            _write_site(tmp, articles)
-            if out.exists():
-                shutil.rmtree(old, ignore_errors=True)
-                out.rename(old)
-            tmp.rename(out)
-            shutil.rmtree(old, ignore_errors=True)
-        except OSError as exc:
-            shutil.rmtree(tmp, ignore_errors=True)
-            raise PublishError(f"cannot publish to {out}: {exc}") from exc
+            manifest = self._manifest()
+            revision, slug = self._next_slug(manifest, edition.date)
+            entry = {
+                "date": edition.date.isoformat(),
+                "revision": revision,
+                "path": f"{EDITIONS}/{slug}/",
+                "articles": len(edition.articles),
+                "published_at": datetime.now(UTC).isoformat(timespec="seconds"),
+            }
+            manifest.append(entry)
+            base = entry["path"]
+            for a in edition.articles:
+                self._put(f"{base}articles/{a.id}.html", _article_page(a, "../../../"))
+            self._put(f"{base}articles.json", _index_json(edition.articles))
+            self._put(f"{base}index.html", _edition_page(edition, entry, "../../", ""))
+            self._put("style.css", _read("style.css"))
+            self._put(f"{EDITIONS}/index.html", _archive_page(manifest))
+            self._put(MANIFEST, json.dumps(manifest, ensure_ascii=False, indent=2))
+            self._put("index.html", _edition_page(edition, entry, "", base))
+        except (OSError, KeyError, TypeError, ValueError) as exc:
+            raise PublishError(f"cannot publish edition {edition.date}: {exc}") from exc
 
+    def _manifest(self) -> list[dict]:
+        raw = self.storage.read(MANIFEST)
+        if raw is None:
+            return []
+        try:
+            manifest = json.loads(raw)
+        except ValueError as exc:
+            raise PublishError(f"{MANIFEST} is not valid JSON: {exc}") from exc
+        if not isinstance(manifest, list):
+            raise PublishError(f"{MANIFEST} must be a JSON array")
+        return manifest
 
-def _check_replaceable(path: Path) -> None:
-    """Only empty dirs or earlier journal sites may be replaced."""
-    if not path.exists():
-        return
-    if path.is_dir() and (
-        not any(path.iterdir()) or (path / "articles.json").is_file()
-    ):
-        return
-    raise PublishError(f"refusing to replace {path}: not a journal site")
+    def _next_slug(self, manifest: list[dict], day: date) -> tuple[int, str]:
+        """First revision of `day` not yet in the manifest nor in storage."""
+        revision = 1 + sum(e.get("date") == day.isoformat() for e in manifest)
+        while True:
+            slug = day.isoformat() + ("" if revision == 1 else f"-{revision}")
+            if not self.storage.exists(f"{EDITIONS}/{slug}/index.html"):
+                return revision, slug
+            revision += 1
 
-
-def _write_site(root: Path, articles: Sequence[Article]) -> None:
-    (root / "articles").mkdir(parents=True)
-    (root / "style.css").write_text(_read("style.css"), encoding="utf-8")
-    (root / "articles.json").write_text(_index_json(articles), encoding="utf-8")
-    (root / "index.html").write_text(_index_page(articles), encoding="utf-8")
-    for article in articles:
-        page = root / "articles" / f"{article.id}.html"
-        page.write_text(_article_page(article), encoding="utf-8")
+    def _put(self, key: str, text: str) -> None:
+        self.storage.write(key, text.encode("utf-8"))
 
 
 def _read(name: str) -> str:
@@ -83,10 +98,18 @@ def _page(title: str, content: str, root: str) -> str:
     )
 
 
+def _day(d: date) -> str:
+    return f"{d.day} {MONTHS[d.month - 1]} {d.year}"
+
+
 def _when(article: Article) -> dict[str, str]:
     d = article.published_at.astimezone(UTC)
-    shown = f"{d.day} {MONTHS[d.month - 1]} {d.year}, {d:%H:%M} UTC"
-    return {"iso": d.isoformat(), "date": shown}
+    return {"iso": d.isoformat(), "date": f"{_day(d)}, {d:%H:%M} UTC"}
+
+
+def _edition_label(entry: dict) -> str:
+    label = f"Edição de {_day(date.fromisoformat(entry['date']))}"
+    return label + (f" (revisão {entry['revision']})" if entry["revision"] > 1 else "")
 
 
 def _img(article: Article, css_class: str) -> str:
@@ -115,14 +138,15 @@ def _figure(article: Article) -> str:
     )
 
 
-def _index_page(articles: Sequence[Article]) -> str:
+def _edition_page(edition: Edition, entry: dict, root: str, base: str) -> str:
+    """Article list of an edition; `base` is the edition folder seen from the page."""
     items = []
-    for a in articles:
+    for a in edition.articles:
         w = _when(a)
         summary = f'<p class="summary">{escape(a.summary)}</p>' if a.summary else ""
         items.append(
             f"<li>{_img(a, 'thumb')}"
-            f'<h2><a href="articles/{a.id}.html">{escape(a.title)}</a></h2>'
+            f'<h2><a href="{base}articles/{a.id}.html">{escape(a.title)}</a></h2>'
             f'<p class="meta">{escape(a.source)} · '
             f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}</li>'
         )
@@ -131,11 +155,31 @@ def _index_page(articles: Sequence[Article]) -> str:
         if items
         else "<p>Nenhum artigo publicado.</p>"
     )
-    content = Template(_read("index.html")).substitute(items=listing)
-    return _page("Journal", content, root="")
+    label = _edition_label(entry)
+    content = Template(_read("index.html")).substitute(
+        heading=escape(label), items=listing, archive=f"{root}{EDITIONS}/index.html"
+    )
+    return _page(f"{label} · Journal", content, root=root)
 
 
-def _article_page(a: Article) -> str:
+def _count(n: int) -> str:
+    return f"{n} artigo" if n == 1 else f"{n} artigos"
+
+
+def _archive_page(manifest: list[dict]) -> str:
+    items = [
+        f'<li><a href="{escape(e["path"].removeprefix(EDITIONS + "/"))}index.html">'
+        f"{escape(_edition_label(e))}</a>"
+        f' <span class="meta">· {_count(int(e["articles"]))}</span></li>'
+        for e in reversed(manifest)
+    ]
+    content = (
+        "<h1>Edições</h1>\n" + '<ul class="editions">\n' + "\n".join(items) + "\n</ul>"
+    )
+    return _page("Edições · Journal", content, root="../")
+
+
+def _article_page(a: Article, root: str) -> str:
     content = Template(_read("article.html")).substitute(
         title=escape(a.title),
         source=escape(a.source),
@@ -144,7 +188,7 @@ def _article_page(a: Article) -> str:
         image=_figure(a),
         **_when(a),
     )
-    return _page(f"{a.title} · Journal", content, root="../")
+    return _page(f"{a.title} · Journal", content, root=root)
 
 
 def _index_json(articles: Sequence[Article]) -> str:
