@@ -1,5 +1,8 @@
 # Fontes deste jornal. Num fork, troque pelas suas.
 # Fontes, na ordem em que são lidas. Em URLs repetidas, vale a primeira fonte.
+
+# --- Ciência ---
+
 [[sources]]
 type = "rss"
 name = "Nature"
@@ -10,6 +13,105 @@ type = "rss"
 name = "ScienceDaily"
 url = "https://www.sciencedaily.com/rss/top.xml"
 timeout = 15
+
+# --- Brasil ---
+
+[[sources]]
+type = "rss"
+name = "Agência Brasil"
+url = "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml"
+
+[[sources]]
+type = "rss"
+name = "g1"
+url = "https://g1.globo.com/rss/g1/"
+
+[[sources]]
+type = "rss"
+name = "Folha"
+url = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml"
+
+[[sources]]
+type = "rss"
+name = "BBC News Brasil"
+url = "https://feeds.bbci.co.uk/portuguese/rss.xml"
+
+[[sources]]
+type = "rss"
+name = "Poder360"
+url = "https://www.poder360.com.br/feed/"
+
+# --- Tecnologia ---
+
+[[sources]]
+type = "rss"
+name = "Hacker News"
+url = "https://news.ycombinator.com/rss"
+
+[[sources]]
+type = "rss"
+name = "Lobsters"
+url = "https://lobste.rs/rss"
+
+[[sources]]
+type = "rss"
+name = "LWN"
+url = "https://lwn.net/headlines/rss"
+
+[[sources]]
+type = "rss"
+name = "Ars Technica"
+url = "https://feeds.arstechnica.com/arstechnica/index"
+
+[[sources]]
+type = "rss"
+name = "Hackaday"
+url = "https://hackaday.com/blog/feed/"
+
+[[sources]]
+type = "rss"
+name = "Slashdot"
+url = "https://rss.slashdot.org/Slashdot/slashdotMain"
+
+[[sources]]
+type = "rss"
+name = "The Register"
+url = "https://www.theregister.com/headlines.atom"
+
+[[sources]]
+type = "rss"
+name = "Krebs on Security"
+url = "https://krebsonsecurity.com/feed/"
+
+[[sources]]
+type = "rss"
+name = "Tecnoblog"
+url = "https://tecnoblog.net/feed/"
+
+# --- Rio Grande do Sul ---
+
+[[sources]]
+type = "rss"
+name = "Sul21"
+url = "https://sul21.com.br/feed/"
+
+# Sem RSS próprio: busca do Google News restrita ao site. Ficam por último
+# para espaçar as requisições ao Google News, que responde 429 se forem muitas.
+
+[[sources]]
+type = "rss"
+name = "GZH"
+url = "https://news.google.com/rss/search?q=site:gauchazh.clicrbs.com.br&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+
+[[sources]]
+type = "rss"
+name = "Jornal do Comércio"
+url = "https://news.google.com/rss/search?q=site:jornaldocomercio.com&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+
+[[sources]]
+type = "rss"
+name = "Correio do Povo"
+url = "https://news.google.com/rss/search?q=site:correiodopovo.com.br&hl=pt-BR&gl=BR&ceid=BR:pt-419"
 
 [publisher]
 type = "static-site"
