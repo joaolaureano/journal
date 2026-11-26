@@ -5,6 +5,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from html import escape
 from html.parser import HTMLParser
 from urllib.parse import urljoin
@@ -38,6 +39,9 @@ BODY_DROPPED = {
     "noscript", "template", "button", "select", "textarea",
 }  # fmt: skip
 VOID_TAGS = {"br", "img"}
+# Months whose Portuguese abbreviation differs from the English one (UOL's dates).
+PT_MONTHS = {"fev": "Feb", "abr": "Apr", "mai": "May", "ago": "Aug", "set": "Sep",
+             "out": "Oct", "dez": "Dec"}  # fmt: skip
 PIXEL_MAX = 2  # px; images this small are trackers
 
 
@@ -108,8 +112,14 @@ class RssSource:
         return parsed
 
     def _to_article(self, entry) -> Article:
-        when = entry.get("published_parsed") or entry.get("updated_parsed")
-        if when is None:
+        # dict.get skips feedparser's deprecated updated -> published fallback
+        when = dict.get(entry, "published_parsed") or dict.get(entry, "updated_parsed")
+        if when is not None:
+            published_at = datetime(*when[:6], tzinfo=UTC)
+        else:
+            text = dict.get(entry, "published") or dict.get(entry, "updated")
+            published_at = _rfc822_pt(text)
+        if published_at is None:
             raise ValueError(f"entry has no date: {entry.get('title')!r}")
         image = _image(entry)
         caption = credit = None
@@ -123,7 +133,7 @@ class RssSource:
             url=entry["link"],
             summary=summary,
             source=self.name,
-            published_at=datetime(*when[:6], tzinfo=UTC),
+            published_at=published_at,
             image=image,
             image_caption=caption,
             image_credit=credit,
@@ -169,6 +179,20 @@ class _ImgFinder(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag == "img" and self.src is None:
             self.src = dict(attrs).get("src")
+
+
+def _rfc822_pt(text: str | None) -> datetime | None:
+    """'Qui, 26 Nov 2026 10:08:44 -0300', the RFC 822 date in Portuguese feedparser
+    leaves unparsed; None when it is not a date."""
+    if not text:
+        return None
+    text = re.sub(r"^\s*[^\W\d_]+\.?,\s*", "", text)  # the weekday is redundant
+    text = re.sub(r"[^\W\d_]{3}", lambda m: PT_MONTHS.get(m[0].lower(), m[0]), text)
+    try:
+        parsed = parsedate_to_datetime(text)
+    except (TypeError, ValueError):
+        return None
+    return parsed.replace(tzinfo=parsed.tzinfo or UTC).astimezone(UTC)
 
 
 def _first_img(html: str) -> str | None:

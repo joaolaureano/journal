@@ -83,6 +83,13 @@ section = "Brasil e mundo"
 url = "https://www.theguardian.com/world/rss"
 full_text = true
 
+# Só resumo cortado (~200 caracteres): sem full_text. Datas em português (Qui, 26 Nov…).
+[[sources]]
+type = "rss"
+name = "UOL"
+section = "Brasil e mundo"
+url = "https://rss.uol.com.br/feed/noticias.xml"
+
 # --- Tecnologia ---
 
 [[sources]]

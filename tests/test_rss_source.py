@@ -9,6 +9,7 @@ import pytest
 from journal.adapters.rss import (
     SUMMARY_LIMIT,
     RssSource,
+    _rfc822_pt,
     body_html,
     plain_text,
     summary_text,
@@ -368,3 +369,35 @@ def test_body_html_attribute_values_cannot_break_out():
 )
 def test_hnrss_statistics_are_not_a_summary(html, summary):
     assert summary_text(html) == summary
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Qui, 26 Nov 2026 10:08:44 -0300",
+            datetime(2026, 11, 26, 13, 8, 44, tzinfo=UTC),
+        ),
+        ("Sáb, 05 Dez 2026 08:00:00 -0300", datetime(2026, 12, 5, 11, tzinfo=UTC)),
+        ("Ter, 03 Fev 2026 23:30:00 GMT", datetime(2026, 2, 3, 23, 30, tzinfo=UTC)),
+        ("ontem à tarde", None),
+        (None, None),
+    ],
+    ids=["uol", "portuguese-month", "gmt", "not-a-date", "missing"],
+)
+def test_portuguese_rfc822_dates(text, expected):
+    assert _rfc822_pt(text) == expected
+
+
+def test_feed_with_portuguese_dates_is_read(tmp_path):
+    feed = tmp_path / "uol.xml"
+    feed.write_text(
+        "<rss><channel><title>UOL</title><item><title>Notícia</title>"
+        "<link>https://a.com/1</link><description>Resumo</description>"
+        "<pubDate>Qui, 26 Nov 2026 10:08:44 -0300</pubDate></item>"
+        "<item><title>Sem data</title><link>https://a.com/2</link>"
+        "<pubDate>ontem à tarde</pubDate></item></channel></rss>",
+        encoding="utf-8",
+    )
+    [a] = RssSource(feed.as_uri(), "UOL").fetch()
+    assert a.published_at == datetime(2026, 11, 26, 13, 8, 44, tzinfo=UTC)
