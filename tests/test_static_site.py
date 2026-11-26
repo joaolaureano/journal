@@ -200,9 +200,10 @@ def test_image_url_is_escaped(out):
 def test_site_is_self_contained(out):
     publish(out, article())
     assert (out / "style.css").is_file()
+    [fingerprinted] = out.glob("style.*.css")
     for page in pages(out, archive=True):
         assert 'lang="pt-BR"' in page
-        assert re.search(r'href="(\.\./)*style\.css\?v=[0-9a-f]{10}"', page)
+        assert re.search(rf'href="(\.\./)*{fingerprinted.name}"', page)
         assert "<script" not in page
         internal = [h for h in re.findall(r'href="([^"]+)"', page) if "://" not in h]
         assert internal and not any(h.startswith("/") for h in internal)
@@ -266,14 +267,37 @@ def test_article_page_links_back_to_its_edition(out):
     folder = publish(out, a)
     page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
     assert 'href="../index.html"' in page
-    assert 'href="../../../style.css?v=' in page
+    assert re.search(r'href="\.\./\.\./\.\./style\.[0-9a-f]{10}\.css"', page)
 
 
-def test_stylesheet_link_changes_with_the_stylesheet(out):
-    a = article()
-    page = (publish(out, a) / "index.html").read_text(encoding="utf-8")
+def test_stylesheet_file_is_named_after_its_content(out):
+    page = (publish(out, article()) / "index.html").read_text(encoding="utf-8")
     css = (out / "style.css").read_bytes()
-    assert f'style.css?v={hashlib.sha256(css).hexdigest()[:10]}"' in page
+    name = f"style.{hashlib.sha256(css).hexdigest()[:10]}.css"
+    assert (out / name).read_bytes() == css
+    assert f'href="../../{name}"' in page
+
+
+def test_changed_stylesheet_gets_a_new_file(out, monkeypatch):
+    publish(out, article("https://a.com/1"))
+    first = {p.name for p in out.glob("style.*.css")}
+    read = static_site._read
+    monkeypatch.setattr(
+        static_site,
+        "_read",
+        lambda name: read(name) + "/* mudou */" if name == "style.css" else read(name),
+    )
+    publish(out, article("https://a.com/2"))
+    second = {p.name for p in out.glob("style.*.css")} - first
+    assert len(second) == 1
+    assert f'href="{second.pop()}"' in (out / "index.html").read_text(encoding="utf-8")
+
+
+def test_tabs_sit_between_edition_date_and_section_index(out):
+    publish(out, article(summary="x", section="Ciência"))
+    page = (out / "index.html").read_text(encoding="utf-8")
+    assert page.index("Edição de") < page.index('nav class="tabs"')
+    assert page.index('nav class="tabs"') < page.index('nav class="sections"')
 
 
 # failure and safety

@@ -127,8 +127,8 @@ ul.editions { list-style: none; padding: 0; margin: 0; }
 ul.editions li { padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-family: var(--serif); }
 ul.editions .meta { font: 0.8rem var(--mono); color: var(--muted); }
 
-/* Abas Notícias e Artigos, logo abaixo do nome do jornal. */
-nav.tabs { display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0 0; }
+/* Abas Notícias e Artigos, entre a data da edição e o índice de seções. */
+nav.tabs { display: flex; justify-content: center; gap: 1.5rem; margin: 0.9rem 0 0.2rem; }
 nav.tabs a {
   padding-bottom: 0.2rem;
   border-bottom: 2px solid transparent;

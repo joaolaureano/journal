@@ -80,7 +80,8 @@ class StaticSitePublisher:
             for kind, name in LIST_PAGES.items():
                 page = _edition_page(edition, entry, manifest, "../../", "", kind)
                 self._put(f"{base}{name}", page)
-            self._put("style.css", _read("style.css"))
+            self._put(_stylesheet(), _read("style.css"))
+            self._put("style.css", _read("style.css"))  # for pages from before
             self._put(f"{EDITIONS}/index.html", _archive_page(manifest))
             self._put(SEEN, _seen_json(seen, edition))
             self._put(MANIFEST, json.dumps(manifest, ensure_ascii=False, indent=2))
@@ -146,13 +147,15 @@ def _page(title: str, content: str, root: str, menu: str) -> str:
         content=content,
         root=root,
         menu=menu,
-        version=_style_version(),
+        stylesheet=_stylesheet(),
     )
 
 
-def _style_version() -> str:
-    """Changes with the stylesheet, so a year-long cached copy is fetched again."""
-    return hashlib.sha256(_read("style.css").encode("utf-8")).hexdigest()[:10]
+def _stylesheet() -> str:
+    """'style.<hash>.css': a changed stylesheet is a new file, so no cache keeps an old
+    one (CloudFront's cache key ignores query strings)."""
+    digest = hashlib.sha256(_read("style.css").encode("utf-8")).hexdigest()[:10]
+    return f"style.{digest}.css"
 
 
 def _menu(manifest: list[dict], root: str, current: dict | None) -> str:
