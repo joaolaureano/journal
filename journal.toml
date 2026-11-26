@@ -43,6 +43,11 @@ url = "https://feeds.bbci.co.uk/portuguese/rss.xml"
 
 [[sources]]
 type = "rss"
+name = "Nexo"
+url = "https://www.nexojornal.com.br/rss.xml"
+
+[[sources]]
+type = "rss"
 name = "Poder360"
 url = "https://www.poder360.com.br/feed/"
 
