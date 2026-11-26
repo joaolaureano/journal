@@ -115,6 +115,11 @@ type = "rss"
 name = "Sul21"
 url = "https://sul21.com.br/feed/"
 
+[[sources]]
+type = "rss"
+name = "Jornal do Comércio"
+url = "https://www.jornaldocomercio.com/rss"
+
 # Filtro opcional (veja o README). Exemplo, desativado:
 # [filter]
 # include = ["selic", "juros", "ibovespa"]
