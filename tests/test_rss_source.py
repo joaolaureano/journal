@@ -95,7 +95,18 @@ def test_image_comes_from_feed_media():
         "Summary image": None,
         "Bad media": None,
         "Content first": "https://cdn.example.com/c.jpg",
+        "Captioned": "https://cdn.example.com/d.jpg",
+        "Credit without image": None,
     }
+
+
+def test_image_caption_and_credit_come_from_feed_media():
+    found = {
+        a.title: (a.image_caption, a.image_credit) for a in source("images.xml").fetch()
+    }
+    assert found["Captioned"] == ("Asteroid Dimorphos", "ESA")
+    assert found["Thumbnail"] == (None, None)
+    assert found["Credit without image"] == (None, None)
 
 
 def test_truncated_response_raises_source_error():

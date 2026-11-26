@@ -98,6 +98,23 @@ def _img(article: Article, css_class: str) -> str:
     )
 
 
+def _figure(article: Article) -> str:
+    if not article.image:
+        return ""
+    source = escape(article.source)
+    credit = (
+        f"Imagem: {escape(article.image_credit)}, via {source}"
+        if article.image_credit
+        else f"Imagem: {source}"
+    )
+    caption = (
+        f"{escape(article.image_caption)} " if article.image_caption else ""
+    ) + f'<span class="credit">{credit}</span>'
+    return (
+        f"<figure>{_img(article, 'photo')}<figcaption>{caption}</figcaption></figure>"
+    )
+
+
 def _index_page(articles: Sequence[Article]) -> str:
     items = []
     for a in articles:
@@ -124,7 +141,7 @@ def _article_page(a: Article) -> str:
         source=escape(a.source),
         summary=escape(a.summary),
         url=escape(a.url),
-        image=_img(a, "photo"),
+        image=_figure(a),
         **_when(a),
     )
     return _page(f"{a.title} · Journal", content, root="../")
@@ -140,6 +157,8 @@ def _index_json(articles: Sequence[Article]) -> str:
             "source": a.source,
             "published_at": a.published_at.isoformat(),
             "image": a.image,
+            "image_caption": a.image_caption,
+            "image_credit": a.image_credit,
         }
         for a in articles
     ]

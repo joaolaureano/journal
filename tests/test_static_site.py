@@ -47,6 +47,8 @@ def test_writes_articles_json_in_order(out):
         "source": "fake",
         "published_at": "2026-01-01T00:00:00+00:00",
         "image": None,
+        "image_caption": None,
+        "image_credit": None,
     }
 
 
@@ -121,7 +123,46 @@ def test_image_shown_in_list_and_article_page(out):
 
 def test_no_image_element_without_image(out):
     StaticSitePublisher(out).publish([article()])
-    assert not any("<img" in page for page in pages(out))
+    assert not any("<img" in p or "<figcaption" in p for p in pages(out))
+
+
+def article_page(out, a):
+    return (out / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
+
+
+def test_caption_with_credit_on_article_page(out):
+    a = article(
+        source="Ars Technica",
+        image="https://cdn.example.com/a.jpg",
+        image_caption="Asteroid Dimorphos",
+        image_credit="ESA",
+    )
+    StaticSitePublisher(out).publish([a])
+    caption = re.search(r"<figcaption>(.*?)</figcaption>", article_page(out, a))
+    assert "Asteroid Dimorphos" in caption.group(1)
+    assert "Imagem: ESA, via Ars Technica" in caption.group(1)
+    assert read_index(out)[0]["image_credit"] == "ESA"
+    assert "<figcaption" not in (out / "index.html").read_text(encoding="utf-8")
+
+
+def test_caption_without_credit_names_source(out):
+    a = article(source="BBC News World", image="https://cdn.example.com/a.jpg")
+    StaticSitePublisher(out).publish([a])
+    caption = re.search(r"<figcaption>(.*?)</figcaption>", article_page(out, a))
+    assert "Imagem: BBC News World" in caption.group(1)
+    assert ", via" not in caption.group(1)
+
+
+def test_caption_and_credit_are_escaped(out):
+    a = article(
+        image="https://cdn.example.com/a.jpg",
+        image_caption="<script>x()</script>",
+        image_credit="<b>ESA</b>",
+    )
+    StaticSitePublisher(out).publish([a])
+    page = article_page(out, a)
+    assert "<script" not in page and "<b>" not in page
+    assert "&lt;b&gt;ESA&lt;/b&gt;" in page
 
 
 def test_image_url_is_escaped(out):

@@ -12,6 +12,8 @@ class Article:
     source: str
     published_at: datetime
     image: str | None = None
+    image_caption: str | None = None
+    image_credit: str | None = None
     id: str = field(init=False)
 
     def __post_init__(self) -> None:

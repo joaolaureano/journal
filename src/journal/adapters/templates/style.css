@@ -86,7 +86,22 @@ ol.articles .thumb {
 article { padding-top: 2rem; }
 article h1 { margin: 0.5rem 0 0.75rem; font: 600 2rem/1.2 var(--serif); }
 article p { color: var(--muted); font-size: 1.05rem; }
-article .photo { display: block; margin: 1.25rem 0; border: 1px solid var(--border); } /* nunca maior que o original */
+article figure { margin: 1.25rem 0; }
+article .photo { display: block; border: 1px solid var(--border); } /* nunca maior que o original */
+article figcaption {
+  margin-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+article figcaption .credit {
+  font: 0.68rem/1.5 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 article p:last-child a,
 main > p a {
   font: 0.8rem var(--mono);

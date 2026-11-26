@@ -85,3 +85,13 @@ def test_image_is_optional():
 def test_non_http_image_rejected(image):
     with pytest.raises(ValueError):
         make(image=image)
+
+
+def test_image_caption_and_credit():
+    a = make(
+        image="https://cdn.example.com/a.jpg",
+        image_caption="Dimorphos",
+        image_credit="ESA",
+    )
+    assert (a.image_caption, a.image_credit) == ("Dimorphos", "ESA")
+    assert (make().image_caption, make().image_credit) == (None, None)

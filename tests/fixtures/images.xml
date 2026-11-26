@@ -42,5 +42,19 @@
   <media:content url="https://cdn.example.com/c.jpg" medium="image"/>
   <media:thumbnail url="https://cdn.example.com/c-thumb.jpg"/>
 </item>
+<item>
+  <title>Captioned</title>
+  <link>https://example.com/captioned</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <media:content url="https://cdn.example.com/d.jpg" medium="image"/>
+  <media:text>Asteroid &lt;b&gt;Dimorphos&lt;/b&gt;</media:text>
+  <media:credit>ESA</media:credit>
+</item>
+<item>
+  <title>Credit without image</title>
+  <link>https://example.com/no-image-credit</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <media:credit>Nobody</media:credit>
+</item>
 </channel>
 </rss>

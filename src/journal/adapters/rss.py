@@ -47,13 +47,21 @@ class RssSource:
         when = entry.get("published_parsed") or entry.get("updated_parsed")
         if when is None:
             raise ValueError(f"entry has no date: {entry.get('title')!r}")
+        image = _image(entry)
+        caption = credit = None
+        if image:
+            caption = plain_text(entry.get("media_text", "")) or None
+            credits = entry.get("media_credit") or [{}]
+            credit = credits[0].get("content", "").strip() or None
         return Article(
             title=entry["title"],
             url=entry["link"],
             summary=plain_text(entry.get("summary", "")),
             source=self.name,
             published_at=datetime(*when[:6], tzinfo=UTC),
-            image=_image(entry),
+            image=image,
+            image_caption=caption,
+            image_credit=credit,
         )
 
 
