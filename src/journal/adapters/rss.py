@@ -23,6 +23,9 @@ RETRY_STATUSES = {408, 429}  # plus every 5xx; other 4xx answers are final
 WORDPRESS_FOOTER = re.compile(
     r"\s*(?:O post .+ apareceu primeiro em|The post .+ appeared first on) .+?\.?\s*$"
 )
+# arXiv's first line: "arXiv:2611.33159v1 Announce Type: new \nAbstract: ...".
+ARXIV_PREFIX = re.compile(r"^\s*arXiv:\S+\s+Announce Type:\s*\S+\s*(?:Abstract:\s*)?")
+ARXIV_REPLACEMENTS = {"replace", "replace-cross"}  # new versions of old papers
 # What hnrss.org writes instead of a summary: links and counters, not text.
 HNRSS_STATS = re.compile(
     r"(?:Article URL|Comments URL): \S+|Points: \d+|# Comments: \d+"
@@ -81,6 +84,8 @@ class RssSource:
                 time.sleep(delay)
         articles = []
         for entry in parsed.entries:
+            if entry.get("arxiv_announce_type") in ARXIV_REPLACEMENTS:
+                continue
             try:
                 articles.append(self._to_article(entry))
             except KeyError as exc:
@@ -127,7 +132,7 @@ class RssSource:
             caption = plain_text(entry.get("media_text", "")) or None
             credits = entry.get("media_credit") or [{}]
             credit = credits[0].get("content", "").strip() or None
-        summary = summary_text(entry.get("summary", ""))
+        summary = summary_text(_summary_html(entry))
         return Article(
             title=entry["title"],
             url=entry["link"],
@@ -143,7 +148,7 @@ class RssSource:
     def _body(self, entry, image: str | None, summary: str) -> str | None:
         """The entry's longest text as safe HTML, when it adds to the summary."""
         texts = [c.get("value", "") for c in entry.get("content", [])]
-        texts.append(entry.get("summary", ""))
+        texts.append(_summary_html(entry))
         bodies = [body_html(t, entry["link"], image) for t in texts]
         body = max(bodies, key=lambda b: len(plain_text(b)))
         if len(plain_text(body)) > len(summary) or "<img " in body:
@@ -179,6 +184,10 @@ class _ImgFinder(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag == "img" and self.src is None:
             self.src = dict(attrs).get("src")
+
+
+def _summary_html(entry) -> str:
+    return ARXIV_PREFIX.sub("", entry.get("summary", ""))
 
 
 def _rfc822_pt(text: str | None) -> datetime | None:

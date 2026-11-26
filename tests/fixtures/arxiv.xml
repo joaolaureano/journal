@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:arxiv="http://arxiv.org/schemas/atom">
+<channel>
+<title>cs.SE updates on arXiv.org</title>
+<item>
+<title>Conditional Work Bounds for a Scan Matcher</title>
+<link>https://arxiv.org/abs/2611.33159</link>
+<description>arXiv:2611.33159v1 Announce Type: new
+Abstract: Normal Distributions Transform scan matching has strongly input-dependent execution time.</description>
+<pubDate>Thu, 26 Nov 2026 00:00:00 -0500</pubDate>
+<arxiv:announce_type>new</arxiv:announce_type>
+</item>
+<item>
+<title>An Old Paper, Version 3</title>
+<link>https://arxiv.org/abs/2401.00001</link>
+<description>arXiv:2401.00001v3 Announce Type: replace
+Abstract: Already published.</description>
+<pubDate>Thu, 26 Nov 2026 00:00:00 -0500</pubDate>
+<arxiv:announce_type>replace</arxiv:announce_type>
+</item>
+</channel>
+</rss>

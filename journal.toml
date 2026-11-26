@@ -101,18 +101,6 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "Hacker News"
-section = "Tecnologia"
-url = "https://news.ycombinator.com/rss"
-
-[[sources]]
-type = "rss"
-name = "Lobsters"
-section = "Tecnologia"
-url = "https://lobste.rs/rss"
-
-[[sources]]
-type = "rss"
 name = "LWN"
 section = "Tecnologia"
 url = "https://lwn.net/headlines/rss"
@@ -148,13 +136,6 @@ url = "https://krebsonsecurity.com/feed/"
 full_text = true
 
 # --- Blogs técnicos ---
-
-[[sources]]
-type = "rss"
-name = "Hacker News Best"
-section = "Blogs técnicos"
-kind = "artigo"
-url = "https://hnrss.org/best"
 
 [[sources]]
 type = "rss"
@@ -202,6 +183,17 @@ name = "Netflix TechBlog"
 section = "Blogs técnicos"
 kind = "artigo"
 url = "https://netflixtechblog.com/feed"
+full_text = true
+
+# --- Papers ---
+# Resumo completo de cada paper; o feed repete versões novas de papers antigos (puladas).
+
+[[sources]]
+type = "rss"
+name = "arXiv"
+section = "Papers"
+kind = "artigo"
+url = "https://rss.arxiv.org/rss/cs.SE+cs.DC+cs.DB+cs.PL"
 full_text = true
 
 # --- Rio Grande do Sul ---

@@ -401,3 +401,10 @@ def test_feed_with_portuguese_dates_is_read(tmp_path):
     )
     [a] = RssSource(feed.as_uri(), "UOL").fetch()
     assert a.published_at == datetime(2026, 11, 26, 13, 8, 44, tzinfo=UTC)
+
+
+def test_arxiv_prefix_removed_and_replacements_skipped():
+    [paper] = source("arxiv.xml", full_text=True).fetch()
+    assert paper.title == "Conditional Work Bounds for a Scan Matcher"
+    assert paper.summary.startswith("Normal Distributions Transform")
+    assert paper.body is None  # the abstract fits in the summary
