@@ -20,7 +20,7 @@ para a etapa que motivou o projeto: usar LLM para curar e escrever as notícias.
 ## 2. O que já existe (o fluxo sem LLM)
 
 ```
-28 feeds RSS ──► RssSource (texto completo, fotos, datas pt-BR, arXiv limpo)
+27 feeds RSS ──► RssSource (texto completo, fotos, datas pt-BR, arXiv limpo)
              ──► BuildJournal: dedup por URL, histórico (seen.json, 90 dias),
                  janela de 2 dias, filtro de palavras, limite por seção e tipo
              ──► Edition ──► StaticSitePublisher ──► S3 ──► CloudFront
