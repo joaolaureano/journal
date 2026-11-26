@@ -5,7 +5,7 @@ import sys
 
 from journal.app import BuildError, BuildJournal
 from journal.config import ConfigError, load_config
-from journal.ports import PublishError
+from journal.ports import HistoryPort, PublishError
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,6 +26,9 @@ def main(argv: list[str] | None = None) -> int:
             config.max_articles,
             config.max_age_days,
             timezone=config.timezone,
+            history=config.publisher
+            if isinstance(config.publisher, HistoryPort)
+            else None,
         ).run()
     except (ConfigError, BuildError, PublishError) as exc:
         print(f"build failed: {exc}", file=sys.stderr)
@@ -35,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"published {len(report.articles)} of {report.fetched} articles"
         f" in the edition of {report.edition.date.isoformat()}"
+        f" ({report.already_published} already in earlier editions)"
     )
     return 0
 

@@ -49,3 +49,10 @@ The core SHALL define a publish error type. A publisher that cannot publish SHAL
 #### Scenario: Caller handles failure without knowing the adapter
 - **WHEN** a publisher fails and raises the publish error
 - **THEN** a caller that only knows the core contracts can catch it as the publish error
+
+### Requirement: History contract
+The core SHALL define a history contract: an operation that, given a date, returns the keys of the articles first published in an edition dated before it. An article's key SHALL be its URL normalized as for deduplication.
+
+#### Scenario: Fake history satisfies the contract
+- **WHEN** an in-memory object exposes that operation
+- **THEN** it is recognized as a history

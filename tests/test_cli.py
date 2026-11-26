@@ -85,4 +85,5 @@ def test_second_build_same_day_adds_a_revision(tmp_path, capsys):
     assert main(["build", "--config", path]) == 0
     manifest = json.loads((tmp_path / "dist" / "editions.json").read_text("utf-8"))
     assert [e["revision"] for e in manifest] == [1, 2]
-    assert "in the edition of" in capsys.readouterr().out
+    assert [e["articles"] for e in manifest][0] == manifest[1]["articles"] > 0
+    assert "(0 already in earlier editions)" in capsys.readouterr().out

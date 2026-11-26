@@ -1,6 +1,6 @@
 import json
 from collections.abc import Sequence
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from html import escape
 from importlib.resources import files
 from string import Template
@@ -25,11 +25,16 @@ MONTHS = (
     "dez",
 )
 MANIFEST = "editions.json"
+SEEN = "seen.json"  # article key -> date of the first edition that published it
+SEEN_RETENTION = timedelta(days=90)
 EDITIONS = "edicoes"
 
 
 class StaticSitePublisher:
     """Adds one edition per publish under `edicoes/<date>[-<revision>]/`.
+
+    Also the journal's history: `seen.json` remembers which stories each day
+    published, so later days do not repeat them (kept for SEEN_RETENTION).
 
     Earlier editions are never rewritten. The edition's files are written first and
     the manifest and front page last, so a failed publish leaves the published site
@@ -39,9 +44,13 @@ class StaticSitePublisher:
     def __init__(self, storage: StoragePort):
         self.storage = storage
 
+    def published_before(self, day: date) -> set[str]:
+        return {k for k, first in self._seen().items() if first < day.isoformat()}
+
     def publish(self, edition: Edition) -> None:
         try:
             manifest = self._manifest()
+            seen = self._seen()
             revision, slug = self._next_slug(manifest, edition.date)
             entry = {
                 "date": edition.date.isoformat(),
@@ -58,6 +67,7 @@ class StaticSitePublisher:
             self._put(f"{base}index.html", _edition_page(edition, entry, "../../", ""))
             self._put("style.css", _read("style.css"))
             self._put(f"{EDITIONS}/index.html", _archive_page(manifest))
+            self._put(SEEN, _seen_json(seen, edition))
             self._put(MANIFEST, json.dumps(manifest, ensure_ascii=False, indent=2))
             self._put("index.html", _edition_page(edition, entry, "", base))
         except (OSError, KeyError, TypeError, ValueError) as exc:
@@ -75,6 +85,18 @@ class StaticSitePublisher:
             raise PublishError(f"{MANIFEST} must be a JSON array")
         return manifest
 
+    def _seen(self) -> dict[str, str]:
+        raw = self.storage.read(SEEN)
+        if raw is None:
+            return {}
+        try:
+            seen = json.loads(raw)
+        except ValueError as exc:
+            raise PublishError(f"{SEEN} is not valid JSON: {exc}") from exc
+        if not isinstance(seen, dict):
+            raise PublishError(f"{SEEN} must be a JSON object")
+        return seen
+
     def _next_slug(self, manifest: list[dict], day: date) -> tuple[int, str]:
         """First revision of `day` not yet in the manifest nor in storage."""
         revision = 1 + sum(e.get("date") == day.isoformat() for e in manifest)
@@ -86,6 +108,15 @@ class StaticSitePublisher:
 
     def _put(self, key: str, text: str) -> None:
         self.storage.write(key, text.encode("utf-8"))
+
+
+def _seen_json(seen: dict[str, str], edition: Edition) -> str:
+    """Adds the edition's stories (keeping the first date) and drops expired ones."""
+    for a in edition.articles:
+        seen.setdefault(a.key, edition.date.isoformat())
+    oldest = (edition.date - SEEN_RETENTION).isoformat()
+    kept = {k: d for k, d in sorted(seen.items()) if d >= oldest}
+    return json.dumps(kept, ensure_ascii=False, indent=0)
 
 
 def _read(name: str) -> str:

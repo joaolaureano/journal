@@ -1,7 +1,9 @@
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+TRACKING_PARAMS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
 
 
 @dataclass(frozen=True)
@@ -29,7 +31,27 @@ class Article:
             self, "id", hashlib.sha256(self.url.encode()).hexdigest()[:16]
         )
 
+    @property
+    def key(self) -> str:
+        """Identity of the story across sources and editions; see `dedup_key`."""
+        return dedup_key(self.url)
+
 
 def is_http_url(value: str) -> bool:
     parts = urlsplit(value)
     return parts.scheme in ("http", "https") and bool(parts.netloc)
+
+
+def dedup_key(url: str) -> str:
+    """Same story, same key: ignores scheme, `www.`, fragment, tracking params
+    and a trailing slash. 'http://www.a.com/x/?utm_source=y#z' -> 'a.com/x'."""
+    parts = urlsplit(url)
+    host = parts.netloc.lower().removeprefix("www.")
+    query = urlencode(
+        [
+            (k, v)
+            for k, v in parse_qsl(parts.query, keep_blank_values=True)
+            if not k.lower().startswith("utm_") and k.lower() not in TRACKING_PARAMS
+        ]
+    )
+    return urlunsplit(("", host, parts.path.rstrip("/"), query, "")).lstrip("/")

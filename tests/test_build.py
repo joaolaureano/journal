@@ -212,3 +212,30 @@ def test_edition_date_uses_configured_timezone():
         timezone=ZoneInfo("America/Sao_Paulo"),
     ).run()
     assert publisher.edition.date.isoformat() == "2026-11-26"
+
+
+class FakeHistory:
+    def __init__(self, keys):
+        self.keys = set(keys)
+        self.asked = None
+
+    def published_before(self, day):
+        self.asked = day
+        return self.keys
+
+
+def test_articles_from_earlier_editions_are_dropped():
+    old = article("https://a.com/old", published_at=NOW)
+    new = article("https://a.com/new", published_at=NOW)
+    history = FakeHistory({old.key})
+    publisher, report = run_at([FakeSource([old, new])], history=history)
+    assert [a.url for a in publisher.published] == ["https://a.com/new"]
+    assert report.already_published == 1 and report.fetched == 2
+    assert history.asked == NOW.date()
+
+
+def test_history_matches_url_variants():
+    history = FakeHistory({article("https://a.com/x").key})
+    variant = article("http://www.a.com/x/?utm_source=rss", published_at=NOW)
+    publisher, _ = run_at([FakeSource([variant])], history=history)
+    assert publisher.published == []

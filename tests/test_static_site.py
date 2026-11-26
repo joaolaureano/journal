@@ -8,7 +8,7 @@ from fakes import article, edition
 from journal.adapters import static_site
 from journal.adapters.static_site import StaticSitePublisher
 from journal.adapters.storage import LocalStorage, StoragePort
-from journal.ports import PublisherPort, PublishError
+from journal.ports import HistoryPort, PublisherPort, PublishError
 
 DAY = date(2026, 11, 26)
 
@@ -50,6 +50,7 @@ def out(tmp_path):
 
 def test_is_a_publisher(out):
     assert isinstance(publisher(out), PublisherPort)
+    assert isinstance(publisher(out), HistoryPort)
     assert isinstance(LocalStorage(out), StoragePort)
 
 
@@ -307,3 +308,41 @@ def test_publishes_into_empty_directory(out):
 def test_storage_rejects_keys_outside_root(out):
     with pytest.raises(PublishError, match="outside"):
         LocalStorage(out).write("../escape.txt", b"x")
+
+
+# history (seen.json)
+
+
+def test_history_lists_stories_from_earlier_days_only(out):
+    a, b = article("https://a.com/a"), article("https://a.com/b")
+    publish(out, a, day=date(2026, 11, 25))
+    publish(out, b)
+    history = publisher(out)
+    assert history.published_before(date(2026, 11, 26)) == {a.key}
+    assert history.published_before(date(2026, 11, 27)) == {a.key, b.key}
+    assert history.published_before(date(2026, 11, 25)) == set()
+
+
+def test_history_keeps_first_date_on_revision(out):
+    a = article()
+    publish(out, a, day=date(2026, 11, 25))
+    publish(out, a)
+    assert publisher(out).published_before(date(2026, 11, 26)) == {a.key}
+
+
+def test_history_forgets_after_retention(out):
+    a = article("https://a.com/a")
+    publish(out, a, day=date(2026, 8, 1))
+    publish(out, article("https://a.com/b"), day=date(2026, 11, 26))
+    assert a.key not in publisher(out).published_before(date(2026, 11, 27))
+
+
+def test_empty_site_has_no_history(out):
+    assert publisher(out).published_before(DAY) == set()
+
+
+def test_corrupt_history_raises_publish_error(out):
+    publish(out, article())
+    (out / "seen.json").write_text("[]")
+    with pytest.raises(PublishError, match="seen.json"):
+        publisher(out).published_before(DAY)

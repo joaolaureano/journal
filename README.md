@@ -34,6 +34,7 @@ dist/
     articles.json                 os mesmos dados em JSON
   edicoes/2026-11-26-2/           2ª execução no mesmo dia (revisão 2)
   editions.json                   manifesto: data, revisão, pasta e nº de artigos
+  seen.json                       histórico: notícia -> dia em que saiu pela 1ª vez
   style.css
 ```
 
@@ -41,6 +42,9 @@ Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedag
 
 - A data da edição segue o `timezone` da config (padrão `America/Sao_Paulo`).
 - Edições nunca são sobrescritas: rodar de novo no mesmo dia cria uma revisão nova.
+- Uma notícia que saiu numa edição de um dia anterior não volta nas seguintes (`seen.json`, mesma
+  normalização de URL da deduplicação, guardado por 90 dias). Uma revisão do mesmo dia refaz o dia
+  inteiro, então pode repetir o que a revisão anterior trouxe.
 - A edição é gravada primeiro; `editions.json` e `index.html` por último. Se falhar no meio, o
   site continua apontando para a edição anterior.
 - Se nenhuma fonte responder, o comando sai com código 1 e não toca em `dist/`.
