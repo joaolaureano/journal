@@ -7,7 +7,7 @@ variable "name" {
 variable "region" {
   description = "Região da AWS."
   type        = string
-  default     = "sa-east-1"
+  default     = "us-east-1"
 }
 
 variable "schedule_expression" {
@@ -26,4 +26,10 @@ variable "log_retention_days" {
   description = "Por quantos dias guardar os logs da Lambda."
   type        = number
   default     = 14
+}
+
+variable "permissions_boundary" {
+  description = "ARN de um permissions boundary para os papéis criados (opcional)."
+  type        = string
+  default     = null
 }

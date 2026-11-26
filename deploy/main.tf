@@ -135,8 +135,9 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "build" {
-  name_prefix        = "${var.name}-build-"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+  name_prefix          = "${var.name}-build-"
+  assume_role_policy   = data.aws_iam_policy_document.lambda_assume.json
+  permissions_boundary = var.permissions_boundary
 }
 
 data "aws_iam_policy_document" "build" {
@@ -207,8 +208,9 @@ data "aws_iam_policy_document" "scheduler_assume" {
 }
 
 resource "aws_iam_role" "scheduler" {
-  name_prefix        = "${var.name}-scheduler-"
-  assume_role_policy = data.aws_iam_policy_document.scheduler_assume.json
+  name_prefix          = "${var.name}-scheduler-"
+  assume_role_policy   = data.aws_iam_policy_document.scheduler_assume.json
+  permissions_boundary = var.permissions_boundary
 }
 
 data "aws_iam_policy_document" "scheduler" {

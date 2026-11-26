@@ -28,7 +28,13 @@ tofu apply                   # mostra o plano e pede confirmação
 
 No fim, `site_url` é o endereço do jornal. O CloudFront leva alguns minutos para ficar
 disponível. Variáveis (`name`, `region`, `schedule_expression`, `schedule_timezone`,
-`log_retention_days`) têm padrão em `variables.tf`; mude com `-var` ou um `terraform.tfvars`.
+`log_retention_days`, `permissions_boundary`) têm padrão em `variables.tf`; mude com `-var` ou um
+`terraform.tfvars`.
+
+Se a sua conta exige um permissions boundary nos papéis criados, passe o ARN:
+`tofu apply -var permissions_boundary=arn:aws:iam::<conta>:policy/<boundary>`. Os nomes começam
+com `name` (bucket `journal-site-*`, função `journal-build`) e os papéis levam a tag
+`Project = name`, o que permite um boundary por tag.
 
 O estado fica em `deploy/terraform.tfstate` (fora do git). Para guardar no S3, copie
 `backend.tf.example` para `backend.tf`, ajuste o bucket e rode `tofu init -migrate-state`.
