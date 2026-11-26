@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> int:
             config.publisher,
             config.article_filter,
             config.max_articles,
+            config.max_age_days,
         ).run()
     except (ConfigError, BuildError, PublishError) as exc:
         print(f"build failed: {exc}", file=sys.stderr)

@@ -53,6 +53,7 @@ class Config:
     publisher: PublisherPort
     article_filter: KeywordFilter | None = None
     max_articles: int | None = None
+    max_age_days: int | None = None
 
 
 def load_config(path: str | Path) -> Config:
@@ -71,7 +72,7 @@ def load_config(path: str | Path) -> Config:
     if not isinstance(publisher, dict):
         raise ConfigError(f"{path}: a [publisher] table is required")
 
-    article_filter, max_articles = _filter(data.get("filter"), path)
+    article_filter, max_articles, max_age_days = _filter(data.get("filter"), path)
     config_dir = path.resolve().parent
     return Config(
         sources=[
@@ -83,15 +84,20 @@ def load_config(path: str | Path) -> Config:
         ),
         article_filter=article_filter,
         max_articles=max_articles,
+        max_age_days=max_age_days,
     )
 
 
-def _filter(table: Any, path: Path) -> tuple[KeywordFilter | None, int | None]:
+def _filter(
+    table: Any, path: Path
+) -> tuple[KeywordFilter | None, int | None, int | None]:
     if table is None:
-        return None, None
+        return None, None, None
     if not isinstance(table, dict):
         raise ConfigError(f"{path}: [filter] must be a table")
-    if unknown := sorted(table.keys() - {"include", "exclude", "max_articles"}):
+    if unknown := sorted(
+        table.keys() - {"include", "exclude", "max_articles", "max_age_days"}
+    ):
         raise ConfigError(f"{path}: [filter] unknown option {unknown[0]!r}")
     terms = {}
     for key in ("include", "exclude"):
@@ -103,12 +109,14 @@ def _filter(table: Any, path: Path) -> tuple[KeywordFilter | None, int | None]:
                 f"{path}: [filter] {key!r} must be a list of non-empty strings"
             )
         terms[key] = value
-    limit = table.get("max_articles")
-    if limit is not None and (
-        not isinstance(limit, int) or isinstance(limit, bool) or limit < 1
-    ):
-        raise ConfigError(f"{path}: [filter] 'max_articles' must be a positive integer")
-    return KeywordFilter(**terms), limit
+    limits = {}
+    for key in ("max_articles", "max_age_days"):
+        value = limits[key] = table.get(key)
+        if value is not None and (
+            not isinstance(value, int) or isinstance(value, bool) or value < 1
+        ):
+            raise ConfigError(f"{path}: [filter] {key!r} must be a positive integer")
+    return KeywordFilter(**terms), limits["max_articles"], limits["max_age_days"]
 
 
 def _build(

@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fakes import FakePublisher, FakeSource, article
@@ -129,3 +129,75 @@ def test_max_articles_keeps_newest():
         "https://a.com/11",
         "https://a.com/10",
     ]
+
+
+NOW = datetime(2026, 11, 10, 12, tzinfo=UTC)
+
+
+def run_at(sources, **options):
+    publisher = FakePublisher()
+    report = BuildJournal(sources, publisher, now=lambda: NOW, **options).run()
+    return publisher, report
+
+
+@pytest.mark.parametrize(
+    "variant",
+    [
+        "http://example.com/news/1",
+        "https://www.example.com/news/1",
+        "https://example.com/news/1/",
+        "https://example.com/news/1#comments",
+        "https://example.com/news/1?utm_source=rss&utm_medium=feed",
+        "https://EXAMPLE.com/news/1?fbclid=abc",
+    ],
+)
+def test_dedup_ignores_url_noise(variant):
+    first = FakeSource([article("https://example.com/news/1", title="first")])
+    second = FakeSource([article(variant, title="second", published_at=NOW)])
+    publisher, report = run_at([first, second])
+    assert [a.title for a in publisher.published] == ["first"]
+    assert report.fetched == 1
+
+
+def test_dedup_keeps_meaningful_query():
+    a = FakeSource(
+        [article("https://example.com/?p=1"), article("https://example.com/?p=2")]
+    )
+    publisher, _ = run_at([a])
+    assert len(publisher.published) == 2
+
+
+def test_max_age_drops_stale_articles():
+    fresh = article("https://a.com/fresh", published_at=NOW - timedelta(days=1))
+    stale = article("https://a.com/stale", published_at=NOW - timedelta(days=3))
+    publisher, report = run_at([FakeSource([fresh, stale])], max_age_days=2)
+    assert [a.url for a in publisher.published] == ["https://a.com/fresh"]
+    assert report.fetched == 2
+
+
+def test_far_future_articles_dropped_without_filter():
+    soon = article("https://a.com/soon", published_at=NOW + timedelta(hours=3))
+    far = article("https://a.com/far", published_at=NOW + timedelta(days=2))
+    publisher, _ = run_at([FakeSource([soon, far])])
+    assert [a.url for a in publisher.published] == ["https://a.com/soon"]
+
+
+class BuggySource:
+    name = "Buggy"
+
+    def fetch(self):
+        raise TypeError("boom")
+
+
+def test_unexpected_source_exception_is_isolated():
+    publisher, report = run_at(
+        [BuggySource(), FakeSource([article("https://a.com/1")])]
+    )
+    assert [a.url for a in publisher.published] == ["https://a.com/1"]
+    assert len(report.errors) == 1
+    assert "Buggy" in str(report.errors[0]) and "boom" in str(report.errors[0])
+
+
+def test_only_buggy_sources_fail_the_build():
+    with pytest.raises(BuildError, match="boom"):
+        run_at([BuggySource()])

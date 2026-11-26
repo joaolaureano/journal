@@ -185,6 +185,7 @@ def test_filter_from_configuration(tmp_path):
     text = rss() + PUBLISHER + '[filter]\ninclude = ["selic"]\nmax_articles = 5\n'
     cfg = load_config(write(tmp_path, text))
     assert cfg.max_articles == 5
+    assert cfg.max_age_days is None
     assert cfg.article_filter.matches(article(title="Copom mantém a Selic"))
     assert not cfg.article_filter.matches(article(title="Futebol"))
 
@@ -193,6 +194,8 @@ def test_filter_from_configuration(tmp_path):
     "table, key",
     [
         ("max_articles = 0", "max_articles"),
+        ("max_age_days = 0", "max_age_days"),
+        ("max_age_days = 1.5", "max_age_days"),
         ("max_articles = true", "max_articles"),
         ('max_articles = "5"', "max_articles"),
         ('include = "selic"', "include"),
@@ -204,6 +207,13 @@ def test_filter_from_configuration(tmp_path):
 def test_invalid_filter_rejected(tmp_path, table, key):
     with pytest.raises(ConfigError, match=key):
         load_config(write(tmp_path, rss() + PUBLISHER + f"[filter]\n{table}\n"))
+
+
+def test_max_age_days_from_configuration(tmp_path):
+    cfg = load_config(
+        write(tmp_path, rss() + PUBLISHER + "[filter]\nmax_age_days = 2\n")
+    )
+    assert cfg.max_age_days == 2
 
 
 def test_filter_must_be_table(tmp_path):
