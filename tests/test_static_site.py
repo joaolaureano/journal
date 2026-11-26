@@ -361,9 +361,11 @@ def test_edition_grouped_by_section_with_headings(out):
     c = article("https://a.com/3", title="Solta")
     folder = publish(out, a, b, c)
     index = (folder / "index.html").read_text(encoding="utf-8")
-    assert index.index("<h1>Ciência</h1>") < index.index("Ciencia 1")
-    assert index.index("Ciencia 1") < index.index("<h1>Tecnologia</h1>")
-    assert index.index("<h1>Tecnologia</h1>") < index.index("<h1>Outras</h1>")
+    assert index.index('<h1 id="ciencia">Ciência</h1>') < index.index("Ciencia 1")
+    assert index.index("Ciencia 1") < index.index('<h1 id="tecnologia">Tecnologia</h1>')
+    assert index.index('<h1 id="tecnologia">Tecnologia</h1>') < index.index(
+        '<h1 id="outras">Outras</h1>'
+    )
     assert read_index(folder)[0]["section"] == "Ciência"
 
 
@@ -414,3 +416,21 @@ def test_every_page_has_the_menu(out):
     assert all('class="editions-menu"' in page for page in pages(out, archive=True))
     page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
     assert 'href="../../../edicoes/2026-11-26/index.html" aria-current' in menu(page)
+
+
+# section index
+
+
+def test_section_index_links_to_each_section_in_order(out):
+    a = article("https://a.com/1", section="Ciência")
+    b = article("https://a.com/2", section="Brasil e mundo")
+    page = (publish(out, a, b) / "index.html").read_text(encoding="utf-8")
+    nav = re.search(r'<nav class="sections".*?</nav>', page).group(0)
+    assert nav.index('href="#ciencia"') < nav.index('href="#brasil-e-mundo"')
+    assert '<h1 id="brasil-e-mundo">Brasil e mundo</h1>' in page
+    assert page.index('class="edition"') < page.index('class="sections"')
+
+
+def test_no_section_index_without_sections(out):
+    page = (publish(out, article()) / "index.html").read_text(encoding="utf-8")
+    assert 'class="sections"' not in page

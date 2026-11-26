@@ -44,6 +44,7 @@ Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedag
   `America/Sao_Paulo`).
 - Com `section` nas fontes, a edição sai em blocos por seção, na ordem da config; fontes sem seção
   vão para "Outras".
+  Abaixo da data da edição, um índice leva direto a cada seção.
 - Resumos: sem o rodapé "O post … apareceu primeiro em …" do WordPress e com no máximo ~400
   caracteres. Sem imagem nos campos de mídia, vale a primeira do texto completo do feed.
 - Toda página tem um menu fixo à esquerda com as 30 edições mais recentes (DD/MM/AAAA), a última

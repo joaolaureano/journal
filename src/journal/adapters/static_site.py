@@ -1,4 +1,6 @@
 import json
+import re
+import unicodedata
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta, tzinfo
 from html import escape
@@ -196,20 +198,36 @@ def _edition_page(
 ) -> str:
     """Article list of an edition; `base` is the edition folder seen from the page."""
     sectioned = any(a.section for a in edition.articles)
-    blocks = []
+    blocks, links = [], []
     for section, group in groupby(edition.articles, key=lambda a: a.section):
         items = [_list_item(a, base, edition.timezone) for a in group]
-        heading = f"<h1>{escape(section or 'Outras')}</h1>\n" if sectioned else ""
+        heading = ""
+        if sectioned:
+            name = escape(section or "Outras")
+            anchor = _anchor(section or "Outras")
+            heading = f'<h1 id="{anchor}">{name}</h1>\n'
+            links.append(f'<a href="#{anchor}">{name}</a>')
         blocks.append(
             heading + '<ol class="articles">\n' + "\n".join(items) + "\n</ol>"
         )
     listing = "\n".join(blocks) or "<p>Nenhum artigo publicado.</p>"
+    index = (
+        f'<nav class="sections" aria-label="Seções">{" · ".join(links)}</nav>\n'
+        if links
+        else ""
+    )
     label = _edition_label(entry)
     content = Template(_read("index.html")).substitute(
-        heading=escape(label), items=listing
+        heading=escape(label), sections=index, items=listing
     )
     menu = _menu(manifest, root, entry)
     return _page(f"{label} · Journal", content, root, menu)
+
+
+def _anchor(name: str) -> str:
+    """'Brasil e mundo' -> 'brasil-e-mundo': lowercase, no accents, hyphens."""
+    plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "-", plain.lower()).strip("-") or "secao"
 
 
 def _count(n: int) -> str:
