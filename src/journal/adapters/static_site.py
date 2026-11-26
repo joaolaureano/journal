@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import unicodedata
@@ -131,8 +132,17 @@ def _read(name: str) -> str:
 
 def _page(title: str, content: str, root: str, menu: str) -> str:
     return Template(_read("base.html")).substitute(
-        title=escape(title), content=content, root=root, menu=menu
+        title=escape(title),
+        content=content,
+        root=root,
+        menu=menu,
+        version=_style_version(),
     )
+
+
+def _style_version() -> str:
+    """Changes with the stylesheet, so a year-long cached copy is fetched again."""
+    return hashlib.sha256(_read("style.css").encode("utf-8")).hexdigest()[:10]
 
 
 def _menu(manifest: list[dict], root: str, current: dict | None) -> str:

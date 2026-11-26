@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 from datetime import UTC, date, datetime, timedelta
@@ -199,7 +200,7 @@ def test_site_is_self_contained(out):
     assert (out / "style.css").is_file()
     for page in pages(out, archive=True):
         assert 'lang="pt-BR"' in page
-        assert re.search(r'href="(\.\./)*style\.css"', page)
+        assert re.search(r'href="(\.\./)*style\.css\?v=[0-9a-f]{10}"', page)
         assert "<script" not in page
         internal = [h for h in re.findall(r'href="([^"]+)"', page) if "://" not in h]
         assert internal and not any(h.startswith("/") for h in internal)
@@ -263,7 +264,14 @@ def test_article_page_links_back_to_its_edition(out):
     folder = publish(out, a)
     page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
     assert 'href="../index.html"' in page
-    assert 'href="../../../style.css"' in page
+    assert 'href="../../../style.css?v=' in page
+
+
+def test_stylesheet_link_changes_with_the_stylesheet(out):
+    a = article()
+    page = (publish(out, a) / "index.html").read_text(encoding="utf-8")
+    css = (out / "style.css").read_bytes()
+    assert f'style.css?v={hashlib.sha256(css).hexdigest()[:10]}"' in page
 
 
 # failure and safety

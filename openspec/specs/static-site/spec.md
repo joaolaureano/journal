@@ -49,11 +49,12 @@ All article text and URLs placed in pages SHALL be HTML-escaped, so markup comin
 - **THEN** the pages contain `&lt;script&gt;alert(1)&lt;/script&gt;` and no `<script>` element
 
 ### Requirement: Site is self-contained and portable
-Publishing SHALL write `style.css`, and every page SHALL use only relative links to other pages and to the stylesheet, declare its language as `pt-BR`, and include no scripts, so the site works when opened from disk and from any static host.
+Publishing SHALL write `style.css`, and every page SHALL use only relative links to other pages and to the stylesheet, declare its language as `pt-BR`, and include no scripts, so the site works when opened from disk and from any static host. The stylesheet link SHALL carry a version taken from the stylesheet's content (`style.css?v=<hash>`), so a changed stylesheet is fetched again despite its year-long cache.
 
 #### Scenario: Pages use relative links
 - **WHEN** a site is published
 - **THEN** `style.css` exists and every page references it with a relative path
+- **AND** the reference ends in `?v=` followed by the start of the stylesheet's SHA-256
 - **AND** no page contains a `<script>` element or an absolute link to another page of the site
 
 ### Requirement: Unrelated directories are never replaced
