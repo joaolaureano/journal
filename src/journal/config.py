@@ -17,6 +17,7 @@ from journal.adapters.s3 import S3Storage
 from journal.adapters.static_site import StaticSitePublisher
 from journal.adapters.storage import LocalStorage
 from journal.app import KeywordFilter, Sectioned
+from journal.domain import KINDS
 from journal.ports import PublisherPort, SourcePort
 
 OptionTypes = dict[str, type | tuple[type, ...]]
@@ -142,15 +143,18 @@ def _timezone(name: Any, path: Path) -> tzinfo:
 
 
 def _source(entry: Any, where: str, config_dir: Path) -> SourcePort:
-    """`section` is accepted on every source type and handled here, not by adapters."""
-    if not isinstance(entry, dict) or "section" not in entry:
+    """`section` and `kind` are accepted on every source type and handled here."""
+    if not isinstance(entry, dict) or not {"section", "kind"} & entry.keys():
         return _build(entry, SOURCE_TYPES, "journal.sources", where, config_dir)
     options = dict(entry)
-    section = options.pop("section")
-    if not isinstance(section, str) or not section.strip():
+    section = options.pop("section", None)
+    if section is not None and (not isinstance(section, str) or not section.strip()):
         raise ConfigError(f"{where}: 'section' must be a non-empty string")
+    kind = options.pop("kind", None)
+    if kind is not None and kind not in KINDS:
+        raise ConfigError(f"{where}: 'kind' must be one of {', '.join(KINDS)}")
     source = _build(options, SOURCE_TYPES, "journal.sources", where, config_dir)
-    return Sectioned(source, section.strip())
+    return Sectioned(source, section.strip() if section else None, kind)
 
 
 LIMITS = ("max_articles", "max_age_days", "max_per_section")

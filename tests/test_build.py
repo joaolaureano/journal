@@ -284,3 +284,18 @@ def test_edition_carries_timezone():
     publisher = FakePublisher()
     BuildJournal([FakeSource([])], publisher, timezone=tz).run()
     assert publisher.edition.timezone is tz
+
+
+def test_news_do_not_push_articles_out_of_a_section():
+    from journal.app import Sectioned
+
+    news = [article(f"https://n.com/{h}", published_at=at(h)) for h in (9, 10, 11)]
+    essay = article("https://e.com/1", published_at=at(8), kind="artigo")
+    sci = Sectioned(FakeSource([*news, essay]), "Ciência")
+    publisher = FakePublisher()
+    BuildJournal([sci], publisher, max_per_section=2).run()
+    assert [a.url for a in publisher.published] == [
+        "https://n.com/11",
+        "https://n.com/10",
+        "https://e.com/1",
+    ]

@@ -284,6 +284,18 @@ def test_section_wraps_any_source(tmp_path):
     assert isinstance(source.source, RssSource)
 
 
+def test_kind_wraps_any_source(tmp_path):
+    cfg = load_config(write(tmp_path, rss(extra='kind = "artigo"\n') + PUBLISHER))
+    [source] = cfg.sources
+    assert source.kind == "artigo" and source.section is None
+
+
+@pytest.mark.parametrize("value", ['"blog"', "1"])
+def test_invalid_kind_rejected(tmp_path, value):
+    with pytest.raises(ConfigError, match="kind"):
+        load_config(write(tmp_path, rss(extra=f"kind = {value}\n") + PUBLISHER))
+
+
 @pytest.mark.parametrize("value", ['""', "3"])
 def test_invalid_section_rejected(tmp_path, value):
     with pytest.raises(ConfigError, match="section"):

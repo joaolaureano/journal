@@ -111,11 +111,12 @@ class BuildJournal:
 
 
 def _cap_per_section(articles: list[Article], limit: int) -> list[Article]:
-    """Keeps the first `limit` articles of each section, preserving order."""
-    counts: dict[str | None, int] = {}
+    """Keeps the first `limit` articles of each section and kind, preserving order."""
+    counts: dict[tuple[str | None, str], int] = {}
     kept = []
     for a in articles:
-        counts[a.section] = counts.get(a.section, 0) + 1
-        if counts[a.section] <= limit:
+        key = (a.section, a.kind)  # news and articles of a section count apart
+        counts[key] = counts.get(key, 0) + 1
+        if counts[key] <= limit:
             kept.append(a)
     return kept

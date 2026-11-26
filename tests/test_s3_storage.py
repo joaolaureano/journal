@@ -58,6 +58,8 @@ def test_content_type_and_cache(s3):
     storage.write("edicoes/2026-11-26/index.html", b"")
     storage.write("style.css", b"")
     storage.write("editions.json", b"")
+    storage.write("artigos.html", b"")
+    storage.write("edicoes/2026-11-26/artigos.html", b"")
     obj = {k: v for (_, k), v in s3.objects.items()}
     assert obj["index.html"]["ContentType"] == "text/html; charset=utf-8"
     assert obj["index.html"]["CacheControl"] == SHORT_CACHE
@@ -65,6 +67,8 @@ def test_content_type_and_cache(s3):
     assert obj["style.css"]["ContentType"] == "text/css; charset=utf-8"
     assert obj["editions.json"]["ContentType"] == "application/json; charset=utf-8"
     assert obj["editions.json"]["CacheControl"] == SHORT_CACHE
+    assert obj["artigos.html"]["CacheControl"] == SHORT_CACHE
+    assert obj["edicoes/2026-11-26/artigos.html"]["CacheControl"] == LONG_CACHE
 
 
 def test_other_errors_become_publish_errors(s3):

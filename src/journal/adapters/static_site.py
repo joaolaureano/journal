@@ -33,6 +33,13 @@ SEEN = "seen.json"  # article key -> date of the first edition that published it
 SEEN_RETENTION = timedelta(days=90)
 EDITIONS = "edicoes"
 MENU_EDITIONS = 30  # the archive lists the rest
+LIST_PAGES = {"noticia": "index.html", "artigo": "artigos.html"}  # one page per kind
+TABS = {"noticia": "Notícias", "artigo": "Artigos"}
+EMPTY = {
+    "noticia": "Nenhuma notícia publicada.",
+    "artigo": "Nenhum artigo nesta edição.",
+}
+WORDS_PER_MINUTE = 200
 
 
 class StaticSitePublisher:
@@ -70,13 +77,16 @@ class StaticSitePublisher:
                 page = _article_page(a, edition.timezone, "../../../", manifest, entry)
                 self._put(f"{base}articles/{a.id}.html", page)
             self._put(f"{base}articles.json", _index_json(edition.articles))
-            page = _edition_page(edition, entry, manifest, "../../", "")
-            self._put(f"{base}index.html", page)
+            for kind, name in LIST_PAGES.items():
+                page = _edition_page(edition, entry, manifest, "../../", "", kind)
+                self._put(f"{base}{name}", page)
             self._put("style.css", _read("style.css"))
             self._put(f"{EDITIONS}/index.html", _archive_page(manifest))
             self._put(SEEN, _seen_json(seen, edition))
             self._put(MANIFEST, json.dumps(manifest, ensure_ascii=False, indent=2))
-            self._put("index.html", _edition_page(edition, entry, manifest, "", base))
+            # the root index.html goes last: until then the site shows the previous one
+            for kind, name in reversed(LIST_PAGES.items()):
+                self._put(name, _edition_page(edition, entry, manifest, "", base, kind))
         except (OSError, KeyError, TypeError, ValueError) as exc:
             raise PublishError(f"cannot publish edition {edition.date}: {exc}") from exc
 
@@ -204,12 +214,18 @@ def _figure(article: Article) -> str:
 
 
 def _edition_page(
-    edition: Edition, entry: dict, manifest: list[dict], root: str, base: str
+    edition: Edition,
+    entry: dict,
+    manifest: list[dict],
+    root: str,
+    base: str,
+    kind: str = "noticia",
 ) -> str:
-    """Article list of an edition; `base` is the edition folder seen from the page."""
-    sectioned = any(a.section for a in edition.articles)
+    """List page of one kind; `base` is the edition folder seen from the page."""
+    articles = [a for a in edition.articles if a.kind == kind]
+    sectioned = any(a.section for a in articles)
     blocks, links = [], []
-    for section, group in groupby(edition.articles, key=lambda a: a.section):
+    for section, group in groupby(articles, key=lambda a: a.section):
         items = [_list_item(a, base, edition.timezone) for a in group]
         heading = ""
         if sectioned:
@@ -220,7 +236,7 @@ def _edition_page(
         blocks.append(
             heading + '<ol class="articles">\n' + "\n".join(items) + "\n</ol>"
         )
-    listing = "\n".join(blocks) or "<p>Nenhum artigo publicado.</p>"
+    listing = "\n".join(blocks) or f"<p>{EMPTY[kind]}</p>"
     index = (
         f'<nav class="sections" aria-label="Seções">{" · ".join(links)}</nav>\n'
         if links
@@ -228,10 +244,29 @@ def _edition_page(
     )
     label = _edition_label(entry)
     content = Template(_read("index.html")).substitute(
-        heading=escape(label), sections=index, items=listing
+        tabs=_tabs(kind), heading=escape(label), sections=index, items=listing
     )
     menu = _menu(manifest, root, entry)
     return _page(f"{label} · Journal", content, root, menu)
+
+
+def _tabs(current: str) -> str:
+    links = [
+        f'<a href="{LIST_PAGES[k]}"{' aria-current="page"' if k == current else ""}>'
+        f"{label}</a>"
+        for k, label in TABS.items()
+    ]
+    return (
+        '<nav class="tabs" aria-label="Notícias ou artigos">'
+        + "".join(links)
+        + "</nav>"
+    )
+
+
+def _reading_time(body: str) -> str:
+    """'12 min de leitura'; the body is markup the source rebuilt, so tags are clean."""
+    words = len(re.sub(r"<[^>]+>", " ", body).split())
+    return f"{max(1, round(words / WORDS_PER_MINUTE))} min de leitura"
 
 
 def _anchor(name: str) -> str:
@@ -252,11 +287,12 @@ def _list_item(a: Article, base: str, tz: tzinfo) -> str:
         link = f'href="{base}articles/{a.id}.html"'
     else:
         link = f'href="{escape(a.url)}" rel="noopener noreferrer"'
+    reading = f" · {_reading_time(a.body)}" if a.kind == "artigo" and a.body else ""
     return (
         f"<li>{_img(a, 'thumb')}"
         f"<h2><a {link}>{escape(a.title)}</a></h2>"
         f'<p class="meta">{escape(a.source)} · '
-        f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}</li>'
+        f'<time datetime="{w["iso"]}">{w["date"]}</time>{reading}</p>{summary}</li>'
     )
 
 
@@ -284,6 +320,7 @@ def _article_page(
         if a.body
         else f"<p>{escape(a.summary)}</p>",
         url=escape(a.url),
+        back=f"../{LIST_PAGES[a.kind]}",
         image=_figure(a),
         **_when(a, tz),
     )
@@ -304,6 +341,7 @@ def _index_json(articles: Sequence[Article]) -> str:
             "image_caption": a.image_caption,
             "image_credit": a.image_credit,
             "section": a.section,
+            "kind": a.kind,
         }
         for a in articles
     ]

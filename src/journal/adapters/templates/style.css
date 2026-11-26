@@ -127,6 +127,19 @@ ul.editions { list-style: none; padding: 0; margin: 0; }
 ul.editions li { padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-family: var(--serif); }
 ul.editions .meta { font: 0.8rem var(--mono); color: var(--muted); }
 
+/* Abas Notícias e Artigos, logo abaixo do nome do jornal. */
+nav.tabs { display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0 0; }
+nav.tabs a {
+  padding-bottom: 0.2rem;
+  border-bottom: 2px solid transparent;
+  font: 600 0.8rem/1.4 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--muted);
+}
+nav.tabs a[aria-current="page"] { border-bottom-color: var(--accent); color: var(--text); }
+
 /* Data da edição, logo abaixo do nome do jornal. */
 p.edition { margin: 0.75rem 0 0; text-align: center; font: 0.8rem var(--mono); color: var(--muted); }
 

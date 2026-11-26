@@ -7,7 +7,13 @@ from journal.ports import PublishError
 
 # Pages that change on every edition must not be cached for long; editions
 # themselves never change once written.
-MUTABLE = {"index.html", "editions.json", "seen.json", "edicoes/index.html"}
+MUTABLE = {
+    "index.html",
+    "artigos.html",
+    "editions.json",
+    "seen.json",
+    "edicoes/index.html",
+}
 SHORT_CACHE = "public, max-age=300"
 LONG_CACHE = "public, max-age=31536000, immutable"
 MISSING = {"404", "NoSuchKey", "NotFound"}

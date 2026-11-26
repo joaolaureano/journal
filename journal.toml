@@ -11,6 +11,7 @@ timezone = "America/Sao_Paulo"
 type = "rss"
 name = "Pesquisa FAPESP"
 section = "Ciência"
+kind = "artigo"
 url = "https://revistapesquisa.fapesp.br/feed/"
 full_text = true
 
@@ -25,6 +26,7 @@ full_text = true
 type = "rss"
 name = "IEEE Spectrum"
 section = "Ciência"
+kind = "artigo"
 url = "https://spectrum.ieee.org/feeds/feed.rss"
 full_text = true
 
@@ -48,6 +50,7 @@ full_text = true
 type = "rss"
 name = "Agência Pública"
 section = "Brasil e mundo"
+kind = "artigo"
 url = "https://apublica.org/feed/"
 full_text = true
 
@@ -55,6 +58,7 @@ full_text = true
 type = "rss"
 name = "The Conversation Brasil"
 section = "Brasil e mundo"
+kind = "artigo"
 url = "https://theconversation.com/br/articles.atom"
 full_text = true
 
@@ -132,6 +136,7 @@ full_text = true
 type = "rss"
 name = "Krebs on Security"
 section = "Tecnologia"
+kind = "artigo"
 url = "https://krebsonsecurity.com/feed/"
 full_text = true
 
@@ -141,12 +146,14 @@ full_text = true
 type = "rss"
 name = "Hacker News Best"
 section = "Blogs técnicos"
+kind = "artigo"
 url = "https://hnrss.org/best"
 
 [[sources]]
 type = "rss"
 name = "Martin Fowler"
 section = "Blogs técnicos"
+kind = "artigo"
 url = "https://martinfowler.com/feed.atom"
 full_text = true
 
@@ -154,6 +161,7 @@ full_text = true
 type = "rss"
 name = "Simon Willison"
 section = "Blogs técnicos"
+kind = "artigo"
 url = "https://simonwillison.net/atom/everything/"
 full_text = true
 
@@ -161,6 +169,7 @@ full_text = true
 type = "rss"
 name = "Julia Evans"
 section = "Blogs técnicos"
+kind = "artigo"
 url = "https://jvns.ca/atom.xml"
 full_text = true
 
@@ -168,6 +177,7 @@ full_text = true
 type = "rss"
 name = "The Pragmatic Engineer"
 section = "Blogs técnicos"
+kind = "artigo"
 url = "https://blog.pragmaticengineer.com/rss/"
 full_text = true
 
@@ -175,6 +185,7 @@ full_text = true
 type = "rss"
 name = "Cloudflare Blog"
 section = "Blogs técnicos"
+kind = "artigo"
 url = "https://blog.cloudflare.com/rss/"
 full_text = true
 
@@ -182,6 +193,7 @@ full_text = true
 type = "rss"
 name = "Netflix TechBlog"
 section = "Blogs técnicos"
+kind = "artigo"
 url = "https://netflixtechblog.com/feed"
 full_text = true
 

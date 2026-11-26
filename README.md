@@ -45,6 +45,10 @@ Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedag
 - Com `section` nas fontes, a edição sai em blocos por seção, na ordem da config; fontes sem seção
   vão para "Outras".
   Abaixo da data da edição, um índice leva direto a cada seção.
+- Notícias e artigos: com `kind = "artigo"` numa fonte (qualquer tipo, como `section`), seus itens
+  vão para `artigos.html`, a página de artigos da edição; o resto fica em `index.html`. Abas
+  "Notícias" e "Artigos" abaixo do nome do jornal alternam entre as duas, e artigos com texto
+  completo mostram o tempo de leitura. O limite por seção conta notícias e artigos à parte.
 - Resumos: sem o rodapé "O post … apareceu primeiro em …" do WordPress e com no máximo ~400
   caracteres. Sem imagem nos campos de mídia, vale a primeira do texto completo do feed.
   Estatísticas do hnrss.org ("Article URL: …", "Points: …") não contam como resumo.
@@ -84,6 +88,7 @@ url = "https://www.nature.com/nature.rss"
 timeout = 10                                # opcional, segundos (> 0)
 full_text = false                           # opcional: mostra o texto completo do feed
 section = "Ciência"                         # opcional, vale para qualquer tipo de fonte
+kind = "noticia"                            # opcional: "noticia" (padrão) ou "artigo"
 
 [publisher]
 type = "static-site"

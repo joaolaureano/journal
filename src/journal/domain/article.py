@@ -4,6 +4,7 @@ from datetime import datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 TRACKING_PARAMS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
+KINDS = ("noticia", "artigo")  # news to skim, articles to read calmly
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class Article:
     image_credit: str | None = None
     section: str | None = None  # e.g. "Ciência"; set from the source's configuration
     body: str | None = None  # full text as safe HTML, already rebuilt by the source
+    kind: str = "noticia"  # one of KINDS
     id: str = field(init=False)
 
     def __post_init__(self) -> None:
@@ -27,6 +29,8 @@ class Article:
             raise ValueError(f"article url must be absolute http(s): {self.url!r}")
         if self.image is not None and not is_http_url(self.image):
             raise ValueError(f"article image must be absolute http(s): {self.image!r}")
+        if self.kind not in KINDS:
+            raise ValueError(f"article kind must be one of {KINDS}: {self.kind!r}")
         if self.published_at.utcoffset() is None:
             raise ValueError("article published_at must be timezone-aware")
         object.__setattr__(

@@ -95,3 +95,13 @@ def test_image_caption_and_credit():
     )
     assert (a.image_caption, a.image_credit) == ("Dimorphos", "ESA")
     assert (make().image_caption, make().image_credit) == (None, None)
+
+
+def test_kind_defaults_to_news():
+    assert make().kind == "noticia"
+    assert make(kind="artigo").kind == "artigo"
+
+
+def test_unknown_kind_rejected():
+    with pytest.raises(ValueError, match="kind"):
+        make(kind="blog")

@@ -33,11 +33,11 @@ def read_index(folder):
 
 
 def pages(out, archive=False):
-    """Every page; without the archive, only pages that show articles."""
+    """Every page; without the archive, only pages that show news (the default kind)."""
     return [
         p.read_text(encoding="utf-8")
         for p in out.rglob("*.html")
-        if archive or p != out / "edicoes" / "index.html"
+        if archive or (p != out / "edicoes" / "index.html" and p.name != "artigos.html")
     ]
 
 
@@ -75,6 +75,7 @@ def test_writes_articles_json_in_order(out):
         "image_caption": None,
         "image_credit": None,
         "section": None,
+        "kind": "noticia",
     }
 
 
@@ -100,7 +101,8 @@ def test_index_lists_articles_in_order_with_links(out):
 
 def test_empty_site_says_no_articles(out):
     folder = publish(out)
-    assert "Nenhum artigo publicado." in (folder / "index.html").read_text()
+    assert "Nenhuma notícia publicada." in (folder / "index.html").read_text()
+    assert "Nenhum artigo nesta edição." in (folder / "artigos.html").read_text()
 
 
 def test_article_page_content(out):
@@ -476,3 +478,52 @@ def test_pages_ask_not_to_be_indexed(out):
     publish(out, article(summary="x"))
     for page in pages(out, archive=True):
         assert '<meta name="robots" content="noindex, nofollow">' in page
+
+
+# news and articles
+
+
+def test_news_and_articles_get_their_own_pages(out):
+    news = article("https://a.com/n", title="Notícia", summary="n")
+    essay = article("https://a.com/e", title="Ensaio", summary="e", kind="artigo")
+    folder = publish(out, news, essay)
+    for where in (folder, out):
+        index = (where / "index.html").read_text(encoding="utf-8")
+        artigos = (where / "artigos.html").read_text(encoding="utf-8")
+        assert "Notícia" in index and "Ensaio" not in index
+        assert "Ensaio" in artigos and ">Notícia<" not in artigos
+
+
+def test_tabs_mark_the_current_page(out):
+    folder = publish(out, article(summary="x"))
+    artigos = (folder / "artigos.html").read_text(encoding="utf-8")
+    index = (folder / "index.html").read_text(encoding="utf-8")
+    assert '<a href="artigos.html" aria-current="page">Artigos</a>' in artigos
+    assert '<a href="index.html">Notícias</a>' in artigos
+    assert '<a href="index.html" aria-current="page">Notícias</a>' in index
+
+
+def test_articles_show_reading_time(out):
+    body = "<p>" + " ".join(["palavra"] * 2400) + "</p>"
+    long = article("https://a.com/l", summary="s", body=body, kind="artigo")
+    bare = article("https://a.com/b", summary="s", kind="artigo")
+    news = article("https://a.com/n", summary="s", body=body)
+    folder = publish(out, long, bare, news)
+    artigos = (folder / "artigos.html").read_text(encoding="utf-8")
+    assert artigos.count("min de leitura") == 1 and "12 min de leitura" in artigos
+    assert "min de leitura" not in (folder / "index.html").read_text(encoding="utf-8")
+
+
+def test_article_page_links_back_to_its_kind(out):
+    essay = article(summary="e", kind="artigo")
+    page = (publish(out, essay) / "articles" / f"{essay.id}.html").read_text()
+    assert 'href="../artigos.html"' in page
+
+
+def test_root_index_is_written_last(out):
+    written = []
+    storage = LocalStorage(out)
+    original = storage.write
+    storage.write = lambda key, data: (written.append(key), original(key, data))[1]
+    StaticSitePublisher(storage).publish(edition(article()))
+    assert written[-2:] == ["artigos.html", "index.html"]
