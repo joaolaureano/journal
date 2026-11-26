@@ -174,6 +174,8 @@ def plain_text(html: str) -> str:
 def summary_text(html: str) -> str:
     """Plain text without the WordPress footer, cut at a word near SUMMARY_LIMIT."""
     text = WORDPRESS_FOOTER.sub("", plain_text(html))
+    if text.casefold() == "comments":  # Hacker News and Lobsters: only a link
+        return ""
     if len(text) <= SUMMARY_LIMIT:
         return text
     cut = text[:SUMMARY_LIMIT].rsplit(" ", 1)[0].rstrip(" ,;:.-")

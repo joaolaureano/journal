@@ -87,7 +87,7 @@ def test_non_ascii_kept_as_utf8(out):
 
 def test_index_lists_articles_in_order_with_links(out):
     a = article("https://a.com/1", title="Primeiro", summary="Resumo um")
-    b = article("https://a.com/2", title="Segundo")
+    b = article("https://a.com/2", title="Segundo", summary="Resumo dois")
     folder = publish(out, a, b)
     index = (folder / "index.html").read_text(encoding="utf-8")
     assert index.index("Primeiro") < index.index("Segundo")
@@ -224,7 +224,7 @@ def test_edition_folder_named_by_date(out):
 
 def test_front_page_shows_latest_edition_with_links_into_it(out):
     publish(out, article("https://a.com/old"), day=date(2026, 11, 25))
-    new = article("https://a.com/new", title="Nova")
+    new = article("https://a.com/new", title="Nova", summary="Resumo")
     publish(out, new)
     front = (out / "index.html").read_text(encoding="utf-8")
     assert "Nova" in front and "Edição de 26 nov 2026" in front
@@ -434,3 +434,12 @@ def test_section_index_links_to_each_section_in_order(out):
 def test_no_section_index_without_sections(out):
     page = (publish(out, article()) / "index.html").read_text(encoding="utf-8")
     assert 'class="sections"' not in page
+
+
+def test_article_without_summary_or_image_links_to_its_source(out):
+    bare = article("https://news.example/x", title="Só link")
+    folder = publish(out, bare)
+    index = (folder / "index.html").read_text(encoding="utf-8")
+    assert '<a href="https://news.example/x" rel="noopener noreferrer">Só link' in index
+    assert f"articles/{bare.id}.html" not in index
+    assert (folder / "articles" / f"{bare.id}.html").is_file()

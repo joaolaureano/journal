@@ -237,9 +237,14 @@ def _count(n: int) -> str:
 def _list_item(a: Article, base: str, tz: tzinfo) -> str:
     w = _when(a, tz)
     summary = f'<p class="summary">{escape(a.summary)}</p>' if a.summary else ""
+    # Nothing to show on the article page: go straight to the source.
+    if a.summary or a.image:
+        link = f'href="{base}articles/{a.id}.html"'
+    else:
+        link = f'href="{escape(a.url)}" rel="noopener noreferrer"'
     return (
         f"<li>{_img(a, 'thumb')}"
-        f'<h2><a href="{base}articles/{a.id}.html">{escape(a.title)}</a></h2>'
+        f"<h2><a {link}>{escape(a.title)}</a></h2>"
         f'<p class="meta">{escape(a.source)} · '
         f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}</li>'
     )

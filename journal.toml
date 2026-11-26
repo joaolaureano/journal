@@ -174,15 +174,9 @@ url = "https://netflixtechblog.com/feed"
 
 [[sources]]
 type = "rss"
-name = "Sul21"
+name = "O Sul"
 section = "Rio Grande do Sul"
-url = "https://sul21.com.br/feed/"
-
-[[sources]]
-type = "rss"
-name = "Jornal do Comércio"
-section = "Rio Grande do Sul"
-url = "https://www.jornaldocomercio.com/rss"
+url = "https://www.osul.com.br/feed/"
 
 [[sources]]
 type = "rss"

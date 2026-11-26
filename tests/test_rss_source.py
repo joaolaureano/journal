@@ -213,3 +213,10 @@ def test_persistent_failure_gives_up_after_the_retries(sleeps):
         server.shutdown()
     assert requests == [500, 500, 500]
     assert sleeps == [1, 2]
+
+
+@pytest.mark.parametrize(
+    "html", ['<a href="https://n.example/1">Comments</a>', "comments"]
+)
+def test_comments_only_summary_is_empty(html):
+    assert summary_text(html) == ""
