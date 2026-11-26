@@ -105,3 +105,8 @@ def test_kind_defaults_to_news():
 def test_unknown_kind_rejected():
     with pytest.raises(ValueError, match="kind"):
         make(kind="blog")
+
+
+def test_warmup_is_optional():
+    assert make().warmup is None
+    assert make(warmup="Um resumo curto.").warmup == "Um resumo curto."

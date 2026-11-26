@@ -86,4 +86,20 @@ def test_second_build_same_day_adds_a_revision(tmp_path, capsys):
     manifest = json.loads((tmp_path / "dist" / "editions.json").read_text("utf-8"))
     assert [e["revision"] for e in manifest] == [1, 2]
     assert [e["articles"] for e in manifest][0] == manifest[1]["articles"] > 0
-    assert "(0 already in earlier editions)" in capsys.readouterr().out
+    assert "(0 already in earlier editions, 0 AI warm-ups)" in capsys.readouterr().out
+
+
+def test_summarizer_needs_the_api_key(tmp_path, monkeypatch, capsys):
+    from journal.cli import summarizer
+    from journal.config import load_config
+
+    path = config(tmp_path, ("One", (FIXTURES / "feed.xml").as_uri()))
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("[summarizer]\nmax_calls = 3\ntimeout = 9\n")
+    cfg = load_config(path)
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    assert summarizer(cfg) is None
+    assert "DEEPSEEK_API_KEY is not set" in capsys.readouterr().err
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+    s = summarizer(cfg, cache="storage")
+    assert (s.api_key, s.cache, s._calls_left) == ("k", "storage", 3)

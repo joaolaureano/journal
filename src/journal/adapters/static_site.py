@@ -284,9 +284,15 @@ def _count(n: int) -> str:
 
 def _list_item(a: Article, base: str, tz: tzinfo) -> str:
     w = _when(a, tz)
-    summary = f'<p class="summary">{escape(a.summary)}</p>' if a.summary else ""
+    if a.warmup:
+        summary = (
+            '<p class="summary warmup"><span class="ai">Resumo por IA</span> '
+            f"{escape(a.warmup)}</p>"
+        )
+    else:
+        summary = f'<p class="summary">{escape(a.summary)}</p>' if a.summary else ""
     # Nothing to show on the article page: go straight to the source.
-    if a.summary or a.image:
+    if a.summary or a.image or a.warmup:
         link = f'href="{base}articles/{a.id}.html"'
     else:
         link = f'href="{escape(a.url)}" rel="noopener noreferrer"'
@@ -325,10 +331,22 @@ def _article_page(
         url=escape(a.url),
         back=f"../{LIST_PAGES[a.kind]}",
         image=_figure(a),
+        warmup=_warmup(a),
         **_when(a, tz),
     )
     menu = _menu(manifest, root, entry)
     return _page(f"{a.title} · Journal", content, root, menu)
+
+
+def _warmup(a: Article) -> str:
+    """The AI paragraph, always labelled as such and credited to its one source."""
+    if not a.warmup:
+        return ""
+    return (
+        '<aside class="warmup">'
+        f'<p class="ai">Resumo gerado por IA a partir de {escape(a.source)}</p>'
+        f"<p>{escape(a.warmup)}</p></aside>"
+    )
 
 
 def _index_json(articles: Sequence[Article]) -> str:
@@ -345,6 +363,7 @@ def _index_json(articles: Sequence[Article]) -> str:
             "image_credit": a.image_credit,
             "section": a.section,
             "kind": a.kind,
+            "warmup": a.warmup,
         }
         for a in articles
     ]

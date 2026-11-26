@@ -140,6 +140,8 @@ resource "aws_iam_role" "build" {
   permissions_boundary = var.permissions_boundary
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "build" {
   statement {
     sid       = "WriteSite"
@@ -151,6 +153,12 @@ data "aws_iam_policy_document" "build" {
     sid       = "ListSite"
     actions   = ["s3:ListBucket"]
     resources = [aws_s3_bucket.site.arn]
+  }
+  statement {
+    # Chave da DeepSeek (SecureString criado à mão; nunca no repositório).
+    sid       = "ReadSummarizerKey"
+    actions   = ["ssm:GetParameter"]
+    resources = ["arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/${var.name}/deepseek-api-key"]
   }
   statement {
     sid       = "Logs"
@@ -183,7 +191,8 @@ resource "aws_lambda_function" "build" {
 
   environment {
     variables = {
-      JOURNAL_BUCKET = aws_s3_bucket.site.id
+      JOURNAL_BUCKET                 = aws_s3_bucket.site.id
+      JOURNAL_DEEPSEEK_KEY_PARAMETER = "/${var.name}/deepseek-api-key"
     }
   }
 

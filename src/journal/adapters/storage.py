@@ -6,8 +6,9 @@ from typing import Protocol, runtime_checkable
 
 from journal.ports import PublishError
 
-# Files that mark a directory as a journal site (articles.json: layout before editions).
-SITE_MARKERS = ("editions.json", "articles.json")
+# Entries that mark a directory as a journal site (articles.json: layout before
+# editions; llm-cache/: AI text cached before the first publish).
+SITE_MARKERS = ("editions.json", "articles.json", "llm-cache")
 
 
 @runtime_checkable
@@ -60,7 +61,7 @@ class LocalStorage:
             root.is_dir()
             and (
                 not any(root.iterdir())
-                or any((root / m).is_file() for m in SITE_MARKERS)
+                or any((root / m).exists() for m in SITE_MARKERS)
             )
         ):
             raise PublishError(f"refusing to write to {root}: not a journal site")

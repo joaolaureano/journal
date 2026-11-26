@@ -1,11 +1,11 @@
 # Deploy na AWS
 
-Uma Lambda agendada (EventBridge Scheduler, 8h de São Paulo) gera a edição do dia e grava o
+Uma Lambda agendada (EventBridge Scheduler, 8h de São Paulo, de segunda a sábado) gera a edição do dia e grava o
 site num bucket S3 privado com versionamento; o CloudFront serve o site. Tudo cabe no free tier
 para uma execução por dia.
 
 ```
-EventBridge Scheduler ──(8h, America/Sao_Paulo)──> Lambda (journal.aws_lambda.handler)
+EventBridge Scheduler ──(8h seg-sáb, America/Sao_Paulo)──> Lambda (journal.aws_lambda.handler)
                                                      │  busca as fontes
                                                      ▼
                          CloudFront ──(OAC)──> S3: index.html, edicoes/, editions.json, seen.json
@@ -42,6 +42,18 @@ S3, crie um bucket privado com versionamento, copie `backend.tf.example` para `b
 
 O provider da AWS do OpenTofu não lê perfis do `aws login`; exporte a sessão antes:
 `eval "$(aws configure export-credentials --profile <perfil> --format env)"`.
+
+## Chave da DeepSeek (aquecimento dos artigos)
+
+A função lê a chave do parâmetro `/journal/deepseek-api-key` (um `SecureString`) a cada execução.
+Crie-o uma vez, fora do repositório, sem deixar a chave no histórico do shell:
+
+```sh
+read -rs KEY && aws ssm put-parameter --name /journal/deepseek-api-key \
+  --type SecureString --value "$KEY" && unset KEY
+```
+
+Sem o parâmetro, a edição sai sem aquecimento e o log diz por quê.
 
 ## Atualizar (código ou fontes)
 

@@ -25,11 +25,11 @@ The `s3` storage SHALL implement the static site storage contract on keys under 
 - **THEN** the edition is published to that bucket and the handler returns its date and article count
 
 ### Requirement: Daily schedule and hosting
-The deployment (OpenTofu configuration in `deploy/`) SHALL create a private, versioned bucket served only through CloudFront, a function running the handler, and a schedule invoking it daily at 08:00 in `America/Sao_Paulo`, both configurable.
+The deployment (OpenTofu configuration in `deploy/`) SHALL create a private, versioned bucket served only through CloudFront, a function running the handler, and a schedule invoking it Monday to Saturday at 08:00 in `America/Sao_Paulo`, never on Sunday, both configurable.
 
 #### Scenario: Default schedule
 - **WHEN** the template is deployed with default parameters
-- **THEN** the function runs every day at 08:00 São Paulo time
+- **THEN** the function runs Monday to Saturday at 08:00 São Paulo time and not on Sunday
 
 ### Requirement: Optional permissions boundary
 The deployment SHALL accept an optional permissions boundary ARN and, when given, attach it to every IAM role it creates; every resource name SHALL start with the configured name prefix and every role SHALL carry the `Project` tag with that prefix, so a tag-based boundary can scope the roles to their own resources.
@@ -63,3 +63,14 @@ The deployment SHALL create the CI role only when a GitHub subject prefix is giv
 #### Scenario: No subject prefix
 - **WHEN** the deployment runs without `github_subject_prefix`
 - **THEN** no CI role is created
+
+### Requirement: Summarizer key from SSM
+When `DEEPSEEK_API_KEY` is unset and `JOURNAL_DEEPSEEK_KEY_PARAMETER` names an SSM parameter, the handler SHALL read that parameter with decryption and use it as the key. If the read fails, it SHALL log the reason and build without warm-ups. The deployment SHALL set that variable to `/<name>/deepseek-api-key` and allow the function to read only that parameter.
+
+#### Scenario: Key in SSM
+- **WHEN** the handler runs with `JOURNAL_DEEPSEEK_KEY_PARAMETER` set and the parameter readable
+- **THEN** the build uses the parameter's value as `DEEPSEEK_API_KEY`
+
+#### Scenario: Parameter missing
+- **WHEN** the parameter cannot be read
+- **THEN** the edition is published without warm-ups and the reason is logged

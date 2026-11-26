@@ -1,3 +1,4 @@
+import threading
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -299,3 +300,67 @@ def test_news_do_not_push_articles_out_of_a_section():
         "https://n.com/10",
         "https://e.com/1",
     ]
+
+
+# AI warm-up
+
+
+class Summarizer:
+    def __init__(self, answers):
+        self.answers = answers  # url -> text, None, "slow" or an exception to raise
+        self.asked = []
+
+    def warmup(self, a):
+        self.asked.append(a.url)
+        answer = self.answers.get(a.url, "Resumo.")
+        if isinstance(answer, Exception):
+            raise answer
+        if answer == "slow":
+            threading.Event().wait(1)
+            return "late"
+        return answer
+
+
+def warm(summarizer, *items, timeout=5):
+    publisher = FakePublisher()
+    report = BuildJournal(
+        [FakeSource(list(items))],
+        publisher,
+        summarizer=summarizer,
+        warmup_timeout=timeout,
+    ).run()
+    return {a.url: a.warmup for a in publisher.published}, report
+
+
+def test_only_articles_get_a_warmup():
+    s = Summarizer({})
+    news, art = article("https://a.com/n"), article("https://a.com/a", kind="artigo")
+    warmups, report = warm(s, news, art)
+    assert warmups == {"https://a.com/n": None, "https://a.com/a": "Resumo."}
+    assert s.asked == ["https://a.com/a"] and report.warmups == 1
+
+
+def test_warmup_failure_only_skips_that_article():
+    s = Summarizer(
+        {"https://a.com/1": RuntimeError("API down"), "https://a.com/3": None}
+    )
+    items = [article(f"https://a.com/{i}", kind="artigo") for i in (1, 2, 3)]
+    warmups, report = warm(s, *items)
+    assert warmups == {
+        "https://a.com/1": None,
+        "https://a.com/2": "Resumo.",
+        "https://a.com/3": None,
+    }
+    assert report.warmup_errors == ["API down"]
+
+
+def test_slow_warmup_is_dropped_after_the_timeout():
+    s = Summarizer({"https://a.com/1": "slow"})
+    warmups, report = warm(s, article("https://a.com/1", kind="artigo"), timeout=0.05)
+    assert warmups == {"https://a.com/1": None}
+    assert report.warmup_errors == ["warm-up timed out: 1 articles without it"]
+
+
+def test_no_summarizer_no_warmups():
+    publisher, report = build(FakeSource([article(kind="artigo")]))
+    assert publisher.published[0].warmup is None and report.warmup_errors == []

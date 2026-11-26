@@ -97,6 +97,7 @@ class Config:
     max_age_days: int | None = None
     max_per_section: int | None = None
     timezone: tzinfo = field(default_factory=lambda: ZoneInfo(DEFAULT_TIMEZONE))
+    summarizer: dict[str, Any] | None = None  # [summarizer] options; None: no AI text
 
 
 def load_config(path: str | Path) -> Config:
@@ -129,7 +130,38 @@ def load_config(path: str | Path) -> Config:
         article_filter=article_filter,
         **limits,
         timezone=timezone,
+        summarizer=_summarizer(data.get("summarizer"), path),
     )
+
+
+SUMMARIZER_OPTIONS: OptionTypes = {
+    "model": str,
+    "max_calls": int,
+    "max_input_chars": int,
+    "timeout": (int, float),
+}
+
+
+def _summarizer(table: Any, path: Path) -> dict[str, Any] | None:
+    """Validated [summarizer] options; the adapter is built where the key is known."""
+    if table is None:
+        return None
+    if not isinstance(table, dict):
+        raise ConfigError(f"{path}: [summarizer] must be a table")
+    for key, value in table.items():
+        wanted = SUMMARIZER_OPTIONS.get(key)
+        if wanted is None:
+            raise ConfigError(f"{path}: [summarizer] unknown option {key!r}")
+        if key == "model":
+            valid = isinstance(value, str) and bool(value.strip())
+        else:
+            valid = (
+                isinstance(value, wanted) and not isinstance(value, bool) and value > 0
+            )
+        if not valid:
+            what = "a non-empty string" if key == "model" else "a positive number"
+            raise ConfigError(f"{path}: [summarizer] {key!r} must be {what}")
+    return dict(table)
 
 
 def _timezone(name: Any, path: Path) -> tzinfo:

@@ -88,8 +88,10 @@ para a etapa que motivou o projeto: usar LLM para curar e escrever as notícias.
    - é preciso um orçamento por edição (número máximo de chamadas ou de tokens) e um cache por
      `Article.key`, para que revisões no mesmo dia não paguem de novo pelo mesmo texto. O cache
      pode ficar no próprio storage, como `llm-cache/<key>.json`.
-8. **Modelo:** não foi escolhido. Na próxima sessão, consulte a skill `claude-api` (ou a
-   documentação oficial) antes de escolher modelos e preços; não decida de memória.
+8. **Modelo (decidido em 2026-11-26):** DeepSeek, `deepseek-flash` sem raciocínio, chamado com
+   `urllib` (`adapters/deepseek.py`), o que resolve o item 5 sem dependência nova. Orçamento: até
+   US$ 5/mês. Confira preços em <https://api-docs.deepseek.com/quick_start/pricing> antes de
+   mudar limites; não decida de memória.
 
 ## 4. Desenho proposto (para virar proposta no OpenSpec)
 
@@ -137,7 +139,10 @@ Divida em mudanças pequenas, na ordem abaixo; cada uma entrega algo visível.
 
 ## 5. Ordem sugerida das mudanças
 
-1. Aquecimento dos artigos (§4.1), com chave, cache, orçamento e falha resolvidos aqui.
+1. ~~Aquecimento dos artigos (§4.1)~~: feito em 2026-11-26
+   (`openspec/changes/archive/2026-11-26-add-article-warmup/`). Porta `SummarizerPort`,
+   cache em `llm-cache/warmup/`, orçamento em `[summarizer]`, chave em
+   `/journal/deepseek-api-key`.
 2. Agrupamento e ranking, mostrando só "3 fontes cobrem isto", sem texto novo.
 3. Síntese com citações.
 4. Divergências em destaque.
@@ -152,8 +157,7 @@ Divida em mudanças pequenas, na ordem abaixo; cada uma entrega algo visível.
   ou mais fontes?
 - **Os itens originais:** continuam acessíveis numa lista "todas as notícias da edição", ou somem
   da navegação e ficam só como fontes das histórias?
-- **Orçamento mensal** aceitável para a API.
-- **Modelos** (§3.8).
+- ~~Orçamento mensal~~ e ~~modelos~~: decididos (§3.8).
 
 ## 7. Pendências sem LLM
 

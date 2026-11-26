@@ -316,3 +316,21 @@ def test_s3_storage_from_configuration(tmp_path, monkeypatch):
     text = rss() + PUBLISHER + 'storage = { type = "s3", bucket = "meu-jornal" }\n'
     storage = load_config(write(tmp_path, text)).publisher.storage
     assert isinstance(storage, s3.S3Storage) and storage.bucket == "meu-jornal"
+
+
+def test_summarizer_options(tmp_path):
+    text = rss() + PUBLISHER + "[summarizer]\nmax_calls = 10\ntimeout = 90\n"
+    assert load_config(write(tmp_path, text)).summarizer == {
+        "max_calls": 10,
+        "timeout": 90,
+    }
+    assert load_config(write(tmp_path, rss() + PUBLISHER)).summarizer is None
+
+
+@pytest.mark.parametrize(
+    "line", ["max_calls = 0", "max_call = 5", 'model = ""', "timeout = true"]
+)
+def test_invalid_summarizer_option(tmp_path, line):
+    key = line.split()[0]
+    with pytest.raises(ConfigError, match=f"'{key}'"):
+        load_config(write(tmp_path, rss() + PUBLISHER + f"[summarizer]\n{line}\n"))

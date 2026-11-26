@@ -76,6 +76,7 @@ def test_writes_articles_json_in_order(out):
         "image_credit": None,
         "section": None,
         "kind": "noticia",
+        "warmup": None,
     }
 
 
@@ -337,6 +338,12 @@ def test_accepts_site_from_before_editions(tmp_path):
     assert (tmp_path / "editions.json").is_file()
 
 
+def test_accepts_folder_with_only_the_llm_cache(tmp_path):
+    (tmp_path / "llm-cache" / "warmup").mkdir(parents=True)
+    publisher(tmp_path).publish(edition(article()))
+    assert (tmp_path / "editions.json").is_file()
+
+
 def test_publishes_into_empty_directory(out):
     out.mkdir()
     publish(out, article())
@@ -551,3 +558,25 @@ def test_root_index_is_written_last(out):
     storage.write = lambda key, data: (written.append(key), original(key, data))[1]
     StaticSitePublisher(storage).publish(edition(article()))
     assert written[-2:] == ["artigos.html", "index.html"]
+
+
+# AI warm-up
+
+
+def test_warmup_replaces_summary_and_is_labelled(out):
+    a = article(kind="artigo", summary="Do feed.", warmup="Da IA <b>x</b>.")
+    folder = publish(out, a)
+    listing = (folder / "artigos.html").read_text(encoding="utf-8")
+    assert "Resumo por IA</span> Da IA &lt;b&gt;x&lt;/b&gt;." in listing
+    assert "Do feed." not in listing and "<b>x" not in listing
+    page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
+    label = "Resumo gerado por IA a partir de fake"
+    assert page.index(label) < page.index("Da IA &lt;b&gt;") < page.index("Do feed.")
+    assert read_index(folder)[0]["warmup"] == "Da IA <b>x</b>."
+
+
+def test_article_without_warmup_has_no_ai_label(out):
+    a = article(kind="artigo", summary="Do feed.")
+    folder = publish(out, a)
+    for name in ("artigos.html", f"articles/{a.id}.html"):
+        assert "por IA" not in (folder / name).read_text(encoding="utf-8")

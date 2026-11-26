@@ -121,6 +121,26 @@ palavras ou frases inteiras ("juros" não casa com "conjuros"). `exclude` vence 
 chaves são opcionais. Com ou sem filtro, artigos datados mais de um dia no futuro são
 descartados (data errada no feed). O comando mostra quantos artigos passaram: `published 5 of 996 articles`.
 
+### Aquecimento por IA (opcional)
+
+Com a seção `[summarizer]` e a variável `DEEPSEEK_API_KEY`, cada item de `kind = "artigo"` ganha
+um parágrafo curto escrito pelo DeepSeek (`deepseek-flash`, sem raciocínio) a partir do texto do
+próprio feed. Ele aparece no lugar do resumo em `artigos.html` e acima do texto na página do
+artigo, sempre marcado como IA. Notícias não passam pelo modelo.
+
+```toml
+[summarizer]
+model = "deepseek-flash"
+max_calls = 50           # chamadas pagas por edição
+max_input_chars = 16000  # texto enviado por artigo, no máximo
+timeout = 180            # segundos para a etapa inteira
+```
+
+O texto vai para a API só com a biblioteca padrão (`urllib`). As respostas ficam em cache em
+`llm-cache/warmup/` no próprio armazenamento do site, então uma revisão no mesmo dia não paga de
+novo. Sem chave, com o orçamento estourado, com erro ou timeout, o artigo sai como antes e o
+motivo vai para o log (`warm-up failed: ...`).
+
 ## Escrevendo um plugin
 
 Um plugin é um pacote Python instalado no mesmo ambiente que oferece tipos novos de fonte ou
@@ -156,7 +176,7 @@ API pública para plugins: `journal.config.AdapterType`, `journal.domain` (`Arti
 
 ## AWS
 
-Edição diária às 8h numa Lambda, site no S3 + CloudFront: veja [deploy/README.md](deploy/README.md).
+Edição de segunda a sábado às 8h numa Lambda, site no S3 + CloudFront: veja [deploy/README.md](deploy/README.md).
 Com o CI ligado, um push na `main` publica o código e o `journal.toml` na Lambda.
 Armazenamento no S3 também pela config: `storage = { type = "s3", bucket = "...", prefix = "" }`
 (requer `journal[aws]`).
@@ -190,6 +210,11 @@ Quem usa o journal é responsável por:
   `journal.toml` deste repositório liga em mais fontes, para leitura pessoal;
 - manter o crédito e o link para a fonte original ao publicar o site;
 - identificar como tal qualquer resumo gerado por IA e não atribuir à fonte o que ela não disse.
+
+Com `[summarizer]`, o texto dos artigos é enviado à API da DeepSeek. O parágrafo gerado vem
+marcado como "Resumo gerado por IA a partir de <fonte>", ao lado do link para o original. O
+conteúdo do feed é passado ao modelo como dado, nunca como instrução, e a resposta entra na página
+como texto escapado, nunca como HTML.
 
 Este projeto não é afiliado a nenhuma das fontes citadas na configuração.
 

@@ -13,7 +13,7 @@ variable "region" {
 variable "schedule_expression" {
   description = "Quando gerar a edição (sintaxe do EventBridge Scheduler)."
   type        = string
-  default     = "cron(0 8 * * ? *)"
+  default     = "cron(0 8 ? * MON-SAT *)" # domingo não tem edição
 }
 
 variable "schedule_timezone" {

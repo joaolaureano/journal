@@ -226,6 +226,15 @@ full_text = true
 max_age_days = 2      # só notícias dos últimos 2 dias
 max_per_section = 10  # no máximo 10 por seção, as mais recentes
 
+[summarizer]
+# Parágrafo de aquecimento dos artigos, escrito por IA (DeepSeek). Precisa de
+# DEEPSEEK_API_KEY no ambiente (na Lambda, vem do SSM); sem ela, nada muda.
+# Orçamento por edição: ~US$ 0,03 típico, ~US$ 0,11 no pior caso.
+model = "deepseek-flash"
+max_calls = 50           # chamadas pagas por edição; o que está em cache não conta
+max_input_chars = 16000  # texto do artigo enviado, no máximo
+timeout = 180            # segundos para a etapa inteira; o que faltar sai sem
+
 [publisher]
 type = "static-site"
 storage = { type = "local", out = "dist" }  # relativo a este arquivo
