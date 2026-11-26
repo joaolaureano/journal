@@ -31,3 +31,13 @@ ol.articles .summary {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+img { max-width: 100%; height: auto; }
+ol.articles li::after { content: ""; display: block; clear: both; }
+ol.articles .thumb {
+  float: right;
+  width: 7rem;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  margin: 0.25rem 0 0.5rem 1rem;
+}
+article .photo { display: block; margin: 1rem 0; }  /* nunca maior que o original */

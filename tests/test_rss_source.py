@@ -83,3 +83,15 @@ def test_slow_feed_raises_source_error():
 def test_non_feed_content_raises_source_error():
     with pytest.raises(SourceError, match="not-a-feed.html"):
         source("not-a-feed.html").fetch()
+
+
+def test_image_comes_from_feed_media():
+    images = {a.title: a.image for a in source("images.xml").fetch()}
+    assert images == {
+        "Thumbnail": "https://cdn.example.com/t.jpg",
+        "Enclosure": "https://cdn.example.com/e.jpg",
+        "Audio": None,
+        "Summary image": None,
+        "Bad media": None,
+        "Content first": "https://cdn.example.com/c.jpg",
+    }

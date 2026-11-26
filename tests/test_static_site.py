@@ -46,6 +46,7 @@ def test_writes_articles_json_in_order(out):
         "summary": "",
         "source": "fake",
         "published_at": "2026-01-01T00:00:00+00:00",
+        "image": None,
     }
 
 
@@ -104,6 +105,31 @@ def test_feed_text_is_escaped(out):
     for page in pages(out):
         assert "<script" not in page and "<img" not in page
         assert "&lt;script&gt;alert(1)&lt;/script&gt;" in page
+
+
+def test_image_shown_in_list_and_article_page(out):
+    a = article(image="https://cdn.example.com/a.jpg")
+    StaticSitePublisher(out).publish([a])
+    assert read_index(out)[0]["image"] == "https://cdn.example.com/a.jpg"
+    for page in pages(out):
+        img = re.search(r"<img [^>]*>", page).group(0)
+        assert 'src="https://cdn.example.com/a.jpg"' in img
+        assert 'alt=""' in img
+        assert 'loading="lazy"' in img
+        assert 'referrerpolicy="no-referrer"' in img
+
+
+def test_no_image_element_without_image(out):
+    StaticSitePublisher(out).publish([article()])
+    assert not any("<img" in page for page in pages(out))
+
+
+def test_image_url_is_escaped(out):
+    a = article(image='https://cdn.example.com/a.jpg?q="><script>x()</script>')
+    StaticSitePublisher(out).publish([a])
+    for page in pages(out):
+        assert "<script" not in page
+        assert "&quot;&gt;&lt;script&gt;" in page
 
 
 def test_site_is_self_contained(out):

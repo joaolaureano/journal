@@ -119,8 +119,10 @@ uv run ruff format --check .
 
 ## Uso responsável
 
-O journal só exibe o que cada feed distribui: título, resumo, nome da fonte e um link para o
-original. Ele não baixa a página do artigo, PDFs nem imagens.
+O journal só exibe o que cada feed distribui: título, resumo, imagem (quando o feed traz uma),
+nome da fonte e um link para o original. Ele não baixa a página do artigo, PDFs nem imagens: a
+imagem é carregada direto do site de origem por quem abre a página, então o site publicado faz
+requisições a esses domínios.
 
 Quem usa o journal é responsável por:
 

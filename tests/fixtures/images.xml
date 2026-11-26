@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+<channel>
+<title>Images</title>
+<link>https://example.com/</link>
+<description>Image cases</description>
+<item>
+  <title>Thumbnail</title>
+  <link>https://example.com/thumb</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <media:thumbnail url="https://cdn.example.com/t.jpg" width="240" height="135"/>
+</item>
+<item>
+  <title>Enclosure</title>
+  <link>https://example.com/enclosure</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <enclosure url="https://cdn.example.com/e.jpg" type="image/jpeg" length="0"/>
+</item>
+<item>
+  <title>Audio</title>
+  <link>https://example.com/audio</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <enclosure url="https://cdn.example.com/a.mp3" type="audio/mpeg" length="0"/>
+</item>
+<item>
+  <title>Summary image</title>
+  <link>https://example.com/summary</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <description>&lt;img src="https://cdn.example.com/s.jpg"/&gt; Text</description>
+</item>
+<item>
+  <title>Bad media</title>
+  <link>https://example.com/bad</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <media:content url="ftp://cdn.example.com/b.jpg" medium="image"/>
+</item>
+<item>
+  <title>Content first</title>
+  <link>https://example.com/content</link>
+  <pubDate>Mon, 02 Nov 2026 10:00:00 GMT</pubDate>
+  <media:content url="https://cdn.example.com/video.mp4" type="video/mp4"/>
+  <media:content url="https://cdn.example.com/c.jpg" medium="image"/>
+  <media:thumbnail url="https://cdn.example.com/c-thumb.jpg"/>
+</item>
+</channel>
+</rss>

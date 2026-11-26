@@ -72,3 +72,16 @@ def test_article_is_immutable():
     with pytest.raises(dataclasses.FrozenInstanceError):
         a.title = "Other"
     assert a.title == "Title"
+
+
+def test_image_is_optional():
+    assert make().image is None
+    assert make(image="https://cdn.example.com/a.jpg").image == (
+        "https://cdn.example.com/a.jpg"
+    )
+
+
+@pytest.mark.parametrize("image", ["javascript:alert(1)", "/a.jpg", "data:image/png,x"])
+def test_non_http_image_rejected(image):
+    with pytest.raises(ValueError):
+        make(image=image)

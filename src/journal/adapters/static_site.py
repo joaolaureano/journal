@@ -89,13 +89,23 @@ def _when(article: Article) -> dict[str, str]:
     return {"iso": d.isoformat(), "date": shown}
 
 
+def _img(article: Article, css_class: str) -> str:
+    if not article.image:
+        return ""
+    return (
+        f'<img class="{css_class}" src="{escape(article.image)}" alt="" '
+        'loading="lazy" referrerpolicy="no-referrer">'
+    )
+
+
 def _index_page(articles: Sequence[Article]) -> str:
     items = []
     for a in articles:
         w = _when(a)
         summary = f'<p class="summary">{escape(a.summary)}</p>' if a.summary else ""
         items.append(
-            f'<li><h2><a href="articles/{a.id}.html">{escape(a.title)}</a></h2>'
+            f"<li>{_img(a, 'thumb')}"
+            f'<h2><a href="articles/{a.id}.html">{escape(a.title)}</a></h2>'
             f'<p class="meta">{escape(a.source)} · '
             f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}</li>'
         )
@@ -114,6 +124,7 @@ def _article_page(a: Article) -> str:
         source=escape(a.source),
         summary=escape(a.summary),
         url=escape(a.url),
+        image=_img(a, "photo"),
         **_when(a),
     )
     return _page(f"{a.title} · Journal", content, root="../")
@@ -128,6 +139,7 @@ def _index_json(articles: Sequence[Article]) -> str:
             "summary": a.summary,
             "source": a.source,
             "published_at": a.published_at.isoformat(),
+            "image": a.image,
         }
         for a in articles
     ]

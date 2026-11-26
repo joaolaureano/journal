@@ -5,7 +5,7 @@ from html.parser import HTMLParser
 
 import feedparser
 
-from journal.domain import Article
+from journal.domain import Article, is_http_url
 from journal.ports import SourceError
 
 log = logging.getLogger(__name__)
@@ -51,7 +51,26 @@ class RssSource:
             summary=plain_text(entry.get("summary", "")),
             source=self.name,
             published_at=datetime(*when[:6], tzinfo=UTC),
+            image=_image(entry),
         )
+
+
+def _image(entry) -> str | None:
+    """First valid image URL from the entry's media fields, never from summary HTML."""
+    candidates = [
+        m.get("url")
+        for m in entry.get("media_content", [])
+        if m.get("medium") == "image"
+        or (m.get("type") or "").startswith("image/")
+        or not (m.get("medium") or m.get("type"))
+    ]
+    candidates += [t.get("url") for t in entry.get("media_thumbnail", [])]
+    candidates += [
+        e.get("href")
+        for e in entry.get("enclosures", [])
+        if (e.get("type") or "").startswith("image/")
+    ]
+    return next((u for u in candidates if u and is_http_url(u)), None)
 
 
 class _TextCollector(HTMLParser):
