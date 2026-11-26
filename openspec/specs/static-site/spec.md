@@ -62,13 +62,16 @@ All article text and URLs placed in pages SHALL be HTML-escaped, so markup comin
 - **THEN** its article page contains `<p>Um <strong>dois</strong></p>`
 
 ### Requirement: Site is self-contained and portable
-Publishing SHALL write `style.css`, and every page SHALL use only relative links to other pages and to the stylesheet, declare its language as `pt-BR`, and include no scripts, so the site works when opened from disk and from any static host. The stylesheet link SHALL carry a version taken from the stylesheet's content (`style.css?v=<hash>`), so a changed stylesheet is fetched again despite its year-long cache.
+Publishing SHALL write the stylesheet as `style.css` and as `style.<hash>.css`, `<hash>` being the first 10 hex digits of its SHA-256, and every page SHALL link `style.<hash>.css`, so a changed stylesheet is a new file that no cache holds. Pages SHALL use only relative links to other pages and to the stylesheet, declare `pt-BR` and include no scripts, so the site works from disk and from any static host.
 
 #### Scenario: Pages use relative links
 - **WHEN** a site is published
-- **THEN** `style.css` exists and every page references it with a relative path
-- **AND** the reference ends in `?v=` followed by the start of the stylesheet's SHA-256
+- **THEN** `style.css` and `style.<hash>.css` exist and every page references the latter with a relative path
 - **AND** no page contains a `<script>` element or an absolute link to another page of the site
+
+#### Scenario: Changed stylesheet, new file
+- **WHEN** the stylesheet's content changes between two publications
+- **THEN** the second publication's pages link a stylesheet file with a different name
 
 ### Requirement: Unrelated directories are never replaced
 Publishing to local storage SHALL raise the publish error and leave the directory untouched when the output directory exists, is not empty and holds neither `editions.json` nor `articles.json` (a site from before editions). Storage keys SHALL never resolve outside the output directory.
@@ -237,11 +240,15 @@ Publishing SHALL write the edition's `artigos.html` and the site's root `artigos
 - **THEN** its `artigos.html` exists and says that there are no articles
 
 ### Requirement: News and articles tabs
-Both list pages SHALL show, below the masthead, a navigation labelled "Notícias" and "Artigos" linking to `index.html` and `artigos.html` of the same folder, with `aria-current="page"` on the page's own tab.
+Both list pages SHALL show, between the edition date and the section index, a navigation labelled "Notícias" and "Artigos" linking to `index.html` and `artigos.html` of the same folder, with `aria-current="page"` on the page's own tab.
 
 #### Scenario: Tabs on the articles page
 - **WHEN** an edition is published
 - **THEN** its `artigos.html` has a link to `index.html` and a link to `artigos.html` marked `aria-current="page"`
+
+#### Scenario: Tabs below the edition date
+- **WHEN** an edition with sections is published
+- **THEN** in its `index.html` the tabs come after "Edição de" and before the section index
 
 ### Requirement: Reading time of articles
 On the articles page, an item with a body SHALL show its reading time after the date: the body's word count divided by 200, rounded, at least 1, as `N min de leitura`. Items without body SHALL show none.

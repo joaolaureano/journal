@@ -9,4 +9,4 @@
 ## 2. Ship
 
 - [x] 2.1 Suite, ruff, validate; commit, push, deploy, publish
-- [ ] 2.2 Invalidate `/style.css` in CloudFront; check the live page in a fresh browser; archive
+- [x] 2.2 Invalidate `/style.css` in CloudFront; check the live page in a fresh browser; archive
