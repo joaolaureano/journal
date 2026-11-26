@@ -46,12 +46,18 @@ Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedag
   vão para "Outras".
 - Resumos: sem o rodapé "O post … apareceu primeiro em …" do WordPress e com no máximo ~400
   caracteres. Sem imagem nos campos de mídia, vale a primeira do texto completo do feed.
+- Toda página tem um menu fixo à esquerda com as 30 edições mais recentes (DD/MM/AAAA), a última
+  edição e o arquivo. Aberto em telas largas, fechado no celular; o botão ☰ abre e fecha, só com
+  CSS. Edições antigas mantêm o menu de quando foram geradas.
 - Edições nunca são sobrescritas: rodar de novo no mesmo dia cria uma revisão nova.
 - Uma notícia que saiu numa edição de um dia anterior não volta nas seguintes (`seen.json`, mesma
   normalização de URL da deduplicação, guardado por 90 dias). Uma revisão do mesmo dia refaz o dia
   inteiro, então pode repetir o que a revisão anterior trouxe.
 - A edição é gravada primeiro; `editions.json` e `index.html` por último. Se falhar no meio, o
   site continua apontando para a edição anterior.
+- Uma fonte que falha de forma passageira (rede, tempo esgotado, HTTP 5xx/408/429, resposta cortada
+  ou feed quebrado) é tentada mais duas vezes, após 1 s e 2 s; um 403 ou 404 desiste na hora. Fonte
+  que continua falhando fica de fora da edição e aparece no log.
 - Se nenhuma fonte responder, o comando sai com código 1 e não toca em `dist/`.
 - Por segurança, o build se recusa a escrever num diretório que já tenha outros arquivos e não seja
   um site do journal.
@@ -137,6 +143,7 @@ API pública para plugins: `journal.config.AdapterType`, `journal.domain` (`Arti
 ## AWS
 
 Edição diária às 8h numa Lambda, site no S3 + CloudFront: veja [deploy/README.md](deploy/README.md).
+Com o CI ligado, um push na `main` publica o código e o `journal.toml` na Lambda.
 Armazenamento no S3 também pela config: `storage = { type = "s3", bucket = "...", prefix = "" }`
 (requer `journal[aws]`).
 
@@ -150,6 +157,8 @@ uv run pytest               # testes
 uv run ruff check .         # lint
 uv run ruff format --check .
 ```
+
+O GitHub Actions (`.github/workflows/ci.yml`) roda o lint e os testes em todo push e pull request.
 
 ## Uso responsável
 
