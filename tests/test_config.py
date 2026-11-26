@@ -2,7 +2,7 @@ from importlib.metadata import EntryPoint, EntryPoints
 from pathlib import Path
 
 import pytest
-from fakes import FakeSource
+from fakes import FakeSource, article
 
 from journal import config
 from journal.adapters.rss import RssSource
@@ -171,3 +171,41 @@ def test_non_string_type_rejected(tmp_path):
     text = "[[sources]]\ntype = [1]\n" + PUBLISHER
     with pytest.raises(ConfigError, match="'type' must be a string"):
         load_config(write(tmp_path, text))
+
+
+# [filter]
+
+
+def test_no_filter_by_default(tmp_path):
+    cfg = load_config(write(tmp_path, rss() + PUBLISHER))
+    assert cfg.article_filter is None and cfg.max_articles is None
+
+
+def test_filter_from_configuration(tmp_path):
+    text = rss() + PUBLISHER + '[filter]\ninclude = ["selic"]\nmax_articles = 5\n'
+    cfg = load_config(write(tmp_path, text))
+    assert cfg.max_articles == 5
+    assert cfg.article_filter.matches(article(title="Copom mantém a Selic"))
+    assert not cfg.article_filter.matches(article(title="Futebol"))
+
+
+@pytest.mark.parametrize(
+    "table, key",
+    [
+        ("max_articles = 0", "max_articles"),
+        ("max_articles = true", "max_articles"),
+        ('max_articles = "5"', "max_articles"),
+        ('include = "selic"', "include"),
+        ('include = [""]', "include"),
+        ("exclude = [1]", "exclude"),
+        ('inclde = ["selic"]', "inclde"),
+    ],
+)
+def test_invalid_filter_rejected(tmp_path, table, key):
+    with pytest.raises(ConfigError, match=key):
+        load_config(write(tmp_path, rss() + PUBLISHER + f"[filter]\n{table}\n"))
+
+
+def test_filter_must_be_table(tmp_path):
+    with pytest.raises(ConfigError, match=r"\[filter\]"):
+        load_config(write(tmp_path, 'filter = "selic"\n' + rss() + PUBLISHER))

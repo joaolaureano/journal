@@ -6,13 +6,15 @@ from journal.cli import main
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def config(tmp_path, *feeds, out="dist"):
+def config(tmp_path, *feeds, out="dist", extra=""):
     sources = "".join(
         f'[[sources]]\ntype = "rss"\nname = "{name}"\nurl = "{url}"\n'
         for name, url in feeds
     )
     path = tmp_path / "journal.toml"
-    path.write_text(sources + f'[publisher]\ntype = "static-site"\nout = "{out}"\n')
+    path.write_text(
+        sources + f'[publisher]\ntype = "static-site"\nout = "{out}"\n' + extra
+    )
     return str(path)
 
 
@@ -27,7 +29,7 @@ def test_build_from_two_sources(tmp_path, capsys):
     assert code == 0
     assert {a["source"] for a in index} == {"One", "Two"}
     assert [a["url"] for a in index].count("https://example.com/first") == 1
-    assert f"published {len(index)} articles" in capsys.readouterr().out
+    assert f"published {len(index)} of {len(index)} articles" in capsys.readouterr().out
 
 
 def test_failing_feed_exits_non_zero_without_output(tmp_path, capsys):
@@ -58,3 +60,15 @@ def test_invalid_config_exits_non_zero_without_output(tmp_path, capsys):
 def test_missing_config_exits_non_zero(tmp_path, capsys):
     assert main(["build", "--config", str(tmp_path / "nope.toml")]) != 0
     assert "nope.toml" in capsys.readouterr().err
+
+
+def test_build_applies_filter_cap(tmp_path, capsys):
+    path = config(
+        tmp_path,
+        ("One", (FIXTURES / "feed.xml").as_uri()),
+        extra="[filter]\nmax_articles = 1\n",
+    )
+    assert main(["build", "--config", path]) == 0
+    index = json.loads((tmp_path / "dist" / "articles.json").read_text("utf-8"))
+    assert len(index) == 1
+    assert "published 1 of " in capsys.readouterr().out

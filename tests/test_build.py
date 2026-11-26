@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from fakes import FakePublisher, FakeSource, article
 
-from journal.app import BuildError, BuildJournal
+from journal.app import BuildError, BuildJournal, KeywordFilter
 from journal.ports import SourceError
 
 
@@ -91,4 +91,41 @@ def test_ties_ordered_by_url():
     assert [x.url for x in publisher.published] == [
         "https://a.com/a",
         "https://a.com/b",
+    ]
+
+
+def test_filter_keeps_matching_articles():
+    source = FakeSource(
+        [
+            article("https://a.com/1", title="Copom mantém a Selic"),
+            article("https://a.com/2", title="Time vence clássico"),
+        ]
+    )
+    publisher = FakePublisher()
+    report = BuildJournal([source], publisher, KeywordFilter(["selic"])).run()
+    assert [x.url for x in publisher.published] == ["https://a.com/1"]
+    assert report.fetched == 2
+
+
+def test_filter_removing_everything_publishes_empty_list():
+    publisher = FakePublisher()
+    publisher.published = None
+    source = FakeSource([article("https://a.com/1", title="Futebol")])
+    BuildJournal([source], publisher, KeywordFilter(["selic"])).run()
+    assert publisher.published == []
+
+
+def test_max_articles_keeps_newest():
+    source = FakeSource(
+        [
+            article("https://a.com/9", published_at=at(9)),
+            article("https://a.com/10", published_at=at(10)),
+            article("https://a.com/11", published_at=at(11)),
+        ]
+    )
+    publisher = FakePublisher()
+    BuildJournal([source], publisher, max_articles=2).run()
+    assert [x.url for x in publisher.published] == [
+        "https://a.com/11",
+        "https://a.com/10",
     ]

@@ -12,6 +12,7 @@ from typing import Any
 
 from journal.adapters.rss import RssSource
 from journal.adapters.static_site import StaticSitePublisher
+from journal.app import KeywordFilter
 from journal.ports import PublisherPort, SourcePort
 
 OptionTypes = dict[str, type | tuple[type, ...]]
@@ -50,6 +51,8 @@ PUBLISHER_TYPES: dict[str, AdapterType] = {
 class Config:
     sources: list[SourcePort]
     publisher: PublisherPort
+    article_filter: KeywordFilter | None = None
+    max_articles: int | None = None
 
 
 def load_config(path: str | Path) -> Config:
@@ -68,6 +71,7 @@ def load_config(path: str | Path) -> Config:
     if not isinstance(publisher, dict):
         raise ConfigError(f"{path}: a [publisher] table is required")
 
+    article_filter, max_articles = _filter(data.get("filter"), path)
     config_dir = path.resolve().parent
     return Config(
         sources=[
@@ -77,7 +81,34 @@ def load_config(path: str | Path) -> Config:
         publisher=_build(
             publisher, PUBLISHER_TYPES, "journal.publishers", "publisher", config_dir
         ),
+        article_filter=article_filter,
+        max_articles=max_articles,
     )
+
+
+def _filter(table: Any, path: Path) -> tuple[KeywordFilter | None, int | None]:
+    if table is None:
+        return None, None
+    if not isinstance(table, dict):
+        raise ConfigError(f"{path}: [filter] must be a table")
+    if unknown := sorted(table.keys() - {"include", "exclude", "max_articles"}):
+        raise ConfigError(f"{path}: [filter] unknown option {unknown[0]!r}")
+    terms = {}
+    for key in ("include", "exclude"):
+        value = table.get(key, [])
+        if not isinstance(value, list) or not all(
+            isinstance(t, str) and t.strip() for t in value
+        ):
+            raise ConfigError(
+                f"{path}: [filter] {key!r} must be a list of non-empty strings"
+            )
+        terms[key] = value
+    limit = table.get("max_articles")
+    if limit is not None and (
+        not isinstance(limit, int) or isinstance(limit, bool) or limit < 1
+    ):
+        raise ConfigError(f"{path}: [filter] 'max_articles' must be a positive integer")
+    return KeywordFilter(**terms), limit
 
 
 def _build(

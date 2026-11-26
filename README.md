@@ -59,6 +59,21 @@ Para adicionar outra fonte RSS, basta outro bloco `[[sources]]`. Nenhum código 
 
 Tipos embutidos: fonte `rss`, publisher `static-site`. Outros tipos vêm de plugins.
 
+### Filtro (opcional)
+
+Sem a seção `[filter]`, tudo o que as fontes trazem é publicado. Com ela:
+
+```toml
+[filter]
+include = ["selic", "juros", "ibovespa", "banco central"]  # pelo menos um termo
+exclude = ["futebol"]                                       # nenhum destes
+max_articles = 5                                            # só os N mais recentes
+```
+
+Os termos são procurados no título e no resumo, sem diferenciar maiúsculas nem acentos, como
+palavras ou frases inteiras ("juros" não casa com "conjuros"). `exclude` vence `include`. Todas as
+chaves são opcionais. O comando mostra quantos artigos passaram: `published 5 of 996 articles`.
+
 ## Escrevendo um plugin
 
 Um plugin é um pacote Python instalado no mesmo ambiente que oferece tipos novos de fonte ou

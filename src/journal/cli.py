@@ -19,13 +19,18 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         config = load_config(args.config)
-        report = BuildJournal(config.sources, config.publisher).run()
+        report = BuildJournal(
+            config.sources,
+            config.publisher,
+            config.article_filter,
+            config.max_articles,
+        ).run()
     except (ConfigError, BuildError, PublishError) as exc:
         print(f"build failed: {exc}", file=sys.stderr)
         return 1
     for error in report.errors:
         print(f"source failed: {error}", file=sys.stderr)
-    print(f"published {len(report.articles)} articles")
+    print(f"published {len(report.articles)} of {report.fetched} articles")
     return 0
 
 

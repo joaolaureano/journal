@@ -128,6 +128,12 @@ type = "rss"
 name = "Correio do Povo"
 url = "https://news.google.com/rss/search?q=site:correiodopovo.com.br&hl=pt-BR&gl=BR&ceid=BR:pt-419"
 
+# Filtro opcional (veja o README). Exemplo, desativado:
+# [filter]
+# include = ["selic", "juros", "ibovespa"]
+# exclude = ["futebol"]
+# max_articles = 5
+
 [publisher]
 type = "static-site"
 out = "dist"  # relativo a este arquivo
