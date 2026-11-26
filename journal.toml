@@ -103,11 +103,6 @@ type = "rss"
 name = "Krebs on Security"
 url = "https://krebsonsecurity.com/feed/"
 
-[[sources]]
-type = "rss"
-name = "Tecnoblog"
-url = "https://tecnoblog.net/feed/"
-
 # --- Rio Grande do Sul ---
 
 [[sources]]
