@@ -1,6 +1,7 @@
 import socket
 import threading
 from datetime import UTC, datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,14 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 def source(name="feed.xml", **kwargs):
     return RssSource((FIXTURES / name).as_uri(), "Fixture", **kwargs)
+
+
+@pytest.fixture(autouse=True)
+def sleeps(monkeypatch):
+    """Records the retry delays instead of waiting."""
+    waited = []
+    monkeypatch.setattr("journal.adapters.rss.time.sleep", waited.append)
+    return waited
 
 
 @pytest.fixture
@@ -125,7 +134,9 @@ def test_truncated_response_raises_source_error():
         thread.start()
         try:
             with pytest.raises(SourceError, match="127.0.0.1"):
-                RssSource(f"http://127.0.0.1:{port}/feed", "Cut", timeout=5).fetch()
+                RssSource(
+                    f"http://127.0.0.1:{port}/feed", "Cut", timeout=5, retries=0
+                ).fetch()
         finally:
             thread.join()
 
@@ -152,3 +163,53 @@ def test_long_summary_is_cut_at_a_word():
     assert len(text) <= SUMMARY_LIMIT + 1
     assert text.endswith("palavra…")
     assert summary_text("curto") == "curto"
+
+
+def serve(statuses):
+    """HTTP server answering each request with the next status; 200 serves feed.xml."""
+    feed = (FIXTURES / "feed.xml").read_bytes()
+    requests = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            status = statuses[min(len(requests), len(statuses) - 1)]
+            requests.append(status)
+            self.send_response(status)
+            self.end_headers()
+            if status == 200:
+                self.wfile.write(feed)
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server, f"http://127.0.0.1:{server.server_port}/feed", requests
+
+
+def test_server_error_then_success_is_retried(sleeps):
+    server, url, requests = serve([503, 200])
+    with server:
+        articles = RssSource(url, "Flaky").fetch()
+        server.shutdown()
+    assert articles and requests == [503, 200]
+    assert sleeps == [1]
+
+
+def test_not_found_is_not_retried(sleeps):
+    server, url, requests = serve([404])
+    with server:
+        with pytest.raises(SourceError, match="404"):
+            RssSource(url, "Gone").fetch()
+        server.shutdown()
+    assert requests == [404] and sleeps == []
+
+
+def test_persistent_failure_gives_up_after_the_retries(sleeps):
+    server, url, requests = serve([500])
+    with server:
+        with pytest.raises(SourceError, match="500"):
+            RssSource(url, "Down").fetch()
+        server.shutdown()
+    assert requests == [500, 500, 500]
+    assert sleeps == [1, 2]

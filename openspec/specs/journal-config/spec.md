@@ -21,7 +21,7 @@ The `rss` source type SHALL take a required `name` (string), a required `url` (s
 - **THEN** the loaded source reads that feed and labels its articles `Nature`
 
 ### Requirement: Built-in static site publisher type
-The `static-site` publisher type SHALL take an optional `storage` table with a `type` and that storage type's options, defaulting to `{ type = "local", out = "dist" }`. As a shorthand, an `out` option SHALL mean local storage in that directory; giving both `out` and `storage` SHALL be rejected. The `local` storage type SHALL take an optional `out` directory (string, default `dist`), resolved against the directory that contains the configuration file. Storage types SHALL also be pluggable, like sources and publishers, under the plugin group `journal.storages`.
+The `static-site` publisher type SHALL take an optional `storage` table with a `type` and that storage type's options, defaulting to `{ type = "local", out = "dist" }`. As a shorthand, an `out` option SHALL mean local storage in that directory; giving both `out` and `storage` SHALL be rejected. Storage types SHALL also be pluggable, like sources and publishers, under the plugin group `journal.storages`.
 
 #### Scenario: Relative output directory
 - **WHEN** a configuration file in `/site` declares `out = "public"`
@@ -150,3 +150,10 @@ The `s3` storage type SHALL take a required `bucket` (string) and an optional `p
 #### Scenario: S3 storage from configuration
 - **WHEN** the publisher declares `storage = { type = "s3", bucket = "meu-jornal" }`
 - **THEN** the static site is written to the bucket `meu-jornal`
+
+### Requirement: Built-in local storage type
+The `local` storage type SHALL take an optional `out` directory (string, default `dist`), resolved against the directory that contains the configuration file.
+
+#### Scenario: Default output directory
+- **WHEN** the local storage declares no `out`
+- **THEN** the publisher writes to `dist` next to the configuration file

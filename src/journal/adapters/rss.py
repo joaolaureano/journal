@@ -1,6 +1,8 @@
 import http.client
 import logging
 import re
+import time
+import urllib.error
 import urllib.request
 from datetime import UTC, datetime
 from html.parser import HTMLParser
@@ -13,33 +15,45 @@ from journal.ports import SourceError
 log = logging.getLogger(__name__)
 
 SUMMARY_LIMIT = 400  # characters; feeds that ship the whole text are cut here
+RETRY_STATUSES = {408, 429}  # plus every 5xx; other 4xx answers are final
 # Footer WordPress appends to every summary: "O post X apareceu primeiro em Y."
 WORDPRESS_FOOTER = re.compile(
     r"\s*(?:O post .+ apareceu primeiro em|The post .+ appeared first on) .+?\.?\s*$"
 )
 
 
+class _Transient(Exception):
+    """A failure worth another attempt; becomes a SourceError when attempts run out."""
+
+
 class RssSource:
     """Reads one RSS/Atom feed from any URL urllib opens (http, https, file)."""
 
-    def __init__(self, location: str, name: str, timeout: float = 10):
+    def __init__(
+        self,
+        location: str,
+        name: str,
+        timeout: float = 10,
+        retries: int = 2,
+        backoff: float = 1,
+    ):
         self.location = location
         self.name = name
         self.timeout = timeout
+        self.retries = retries
+        self.backoff = backoff
 
     def fetch(self) -> list[Article]:
-        request = urllib.request.Request(
-            self.location, headers={"User-Agent": "journal/0.1"}
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                content = response.read()
-        # HTTPException covers IncompleteRead: the server cut the transfer midway.
-        except (OSError, ValueError, http.client.HTTPException) as exc:
-            raise SourceError(f"cannot fetch feed {self.location}: {exc}") from exc
-        parsed = feedparser.parse(content)
-        if not parsed.version:
-            raise SourceError(f"not an RSS/Atom feed: {self.location}")
+        for attempt in range(self.retries + 1):
+            try:
+                parsed = self._fetch_feed()
+                break
+            except _Transient as exc:
+                if attempt == self.retries:
+                    raise SourceError(str(exc)) from exc.__cause__
+                delay = self.backoff * 2**attempt
+                log.info("retrying %s in %ss: %s", self.location, delay, exc)
+                time.sleep(delay)
         articles = []
         for entry in parsed.entries:
             try:
@@ -49,6 +63,28 @@ class RssSource:
             except ValueError as exc:
                 log.warning("skipping entry from %s: %s", self.location, exc)
         return articles
+
+    def _fetch_feed(self):
+        request = urllib.request.Request(
+            self.location, headers={"User-Agent": "journal/0.1"}
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                content = response.read()
+        except urllib.error.HTTPError as exc:
+            message = f"cannot fetch feed {self.location}: {exc}"
+            if exc.code >= 500 or exc.code in RETRY_STATUSES:
+                raise _Transient(message) from exc
+            raise SourceError(message) from exc
+        # HTTPException covers IncompleteRead: the server cut the transfer midway.
+        except (OSError, http.client.HTTPException) as exc:
+            raise _Transient(f"cannot fetch feed {self.location}: {exc}") from exc
+        except ValueError as exc:  # malformed URL: retrying cannot help
+            raise SourceError(f"cannot fetch feed {self.location}: {exc}") from exc
+        parsed = feedparser.parse(content)
+        if not parsed.version:  # sometimes a half-written file on the server
+            raise _Transient(f"not an RSS/Atom feed: {self.location}")
+        return parsed
 
     def _to_article(self, entry) -> Article:
         when = entry.get("published_parsed") or entry.get("updated_parsed")
