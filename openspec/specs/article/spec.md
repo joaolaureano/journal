@@ -7,7 +7,7 @@ Define o que é um artigo no journal: os campos que todo artigo carrega, como el
 ## Requirements
 
 ### Requirement: Article fields
-An article SHALL carry an id, a title, a URL, a summary, a source name, a publication timestamp, an optional section name and an optional body (both absent by default). The body is HTML that the source has already reduced to safe markup.
+An article SHALL carry an id, a title, a URL, a summary, a source name, a publication timestamp, an optional section name and an optional body (both absent by default), and a kind, `noticia` (the default) or `artigo`. The body is HTML that the source has already reduced to safe markup.
 
 #### Scenario: Article created with all fields
 - **WHEN** an article is created with title, URL, summary, source and publication timestamp
@@ -21,6 +21,14 @@ An article SHALL carry an id, a title, a URL, a summary, a source name, a public
 #### Scenario: Body is optional
 - **WHEN** an article is created without a body
 - **THEN** its body is absent
+
+#### Scenario: Kind defaults to news
+- **WHEN** an article is created without a kind
+- **THEN** its kind is `noticia`
+
+#### Scenario: Unknown kind
+- **WHEN** an article is created with kind `blog`
+- **THEN** creation fails with a validation error
 
 ### Requirement: Article identity derives from URL
 The article id SHALL be derived deterministically from its URL, so the same URL always yields the same id across builds and sources, and different URLs yield different ids.

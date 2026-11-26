@@ -165,3 +165,14 @@ The `local` storage type SHALL take an optional `out` directory (string, default
 #### Scenario: Default output directory
 - **WHEN** the local storage declares no `out`
 - **THEN** the publisher writes to `dist` next to the configuration file
+
+### Requirement: Any source can declare its kind
+Every source entry, whatever its type, MAY have a `kind`, `"noticia"` or `"artigo"`, which its articles carry; without it they are news. Any other value SHALL be rejected with a configuration error mentioning `kind`.
+
+#### Scenario: Blog as article source
+- **WHEN** an `rss` source declares `kind = "artigo"`
+- **THEN** its articles have kind `artigo`
+
+#### Scenario: Invalid kind
+- **WHEN** a source declares `kind = "blog"`
+- **THEN** loading fails with a configuration error naming `kind`
