@@ -1,6 +1,6 @@
 import json
 import re
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from fakes import article, edition
@@ -370,3 +370,47 @@ def test_edition_grouped_by_section_with_headings(out):
 def test_no_section_headings_without_sections(out):
     folder = publish(out, article())
     assert "<h1>" not in (folder / "index.html").read_text(encoding="utf-8")
+
+
+# editions menu
+
+
+def menu(page):
+    return re.search(r'<nav class="editions-menu".*?</nav>', page, re.S).group(0)
+
+
+def test_menu_lists_editions_newest_first_and_marks_current(out):
+    publish(out, article("https://a.com/old"), day=date(2026, 11, 25))
+    publish(out, article("https://a.com/new"))
+    front = menu((out / "index.html").read_text(encoding="utf-8"))
+    assert front.index("26/11/2026") < front.index("25/11/2026")
+    assert front.count('aria-current="page"') == 1
+    assert '<a href="edicoes/2026-11-26/index.html" aria-current="page">' in front
+    assert 'href="index.html">Última edição' in front
+    assert 'href="edicoes/index.html">Todas as edições' in front
+    page = (out / "edicoes" / "2026-11-26" / "index.html").read_text(encoding="utf-8")
+    assert 'href="../../edicoes/2026-11-25/index.html">25/11/2026' in menu(page)
+
+
+def test_menu_shows_revision_number(out):
+    publish(out, article("https://a.com/1"))
+    publish(out, article("https://a.com/2"))
+    front = menu((out / "index.html").read_text(encoding="utf-8"))
+    assert 'aria-current="page">26/11/2026 · 2</a>' in front
+    assert ">26/11/2026</a>" in front
+
+
+def test_menu_keeps_the_30_most_recent(out):
+    for back in range(30, -1, -1):
+        publish(out, article(), day=DAY - timedelta(days=back))
+    front = menu((out / "index.html").read_text(encoding="utf-8"))
+    assert len(re.findall(r"<li>", front)) == 30
+    assert "28/10/2026" in front and "27/10/2026" not in front
+
+
+def test_every_page_has_the_menu(out):
+    a = article()
+    folder = publish(out, a)
+    assert all('class="editions-menu"' in page for page in pages(out, archive=True))
+    page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
+    assert 'href="../../../edicoes/2026-11-26/index.html" aria-current' in menu(page)
