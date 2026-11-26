@@ -14,11 +14,19 @@ The configuration SHALL be a TOML file with a non-empty `[[sources]]` array and 
 - **THEN** loading it yields two sources, in declared order, and one publisher
 
 ### Requirement: Built-in RSS source type
-The `rss` source type SHALL take a required `name` (string), a required `url` (string) and an optional `timeout` in seconds (number greater than 0, default 10).
+The `rss` source type SHALL take a required `name` (string), a required `url` (string), an optional `timeout` in seconds (number greater than 0, default 10) and an optional `full_text` (boolean, default false) that keeps the feed's full text as the article body.
 
 #### Scenario: RSS source from configuration
 - **WHEN** a source entry is `type = "rss"`, `name = "Nature"`, `url = "https://www.nature.com/nature.rss"`
 - **THEN** the loaded source reads that feed and labels its articles `Nature`
+
+#### Scenario: Full text is opt-in
+- **WHEN** a source entry has no `full_text`
+- **THEN** its articles have no body
+
+#### Scenario: Invalid full_text
+- **WHEN** an `rss` source has `full_text = "yes"`
+- **THEN** loading fails with a configuration error naming `full_text`
 
 ### Requirement: Built-in static site publisher type
 The `static-site` publisher type SHALL take an optional `storage` table with a `type` and that storage type's options, defaulting to `{ type = "local", out = "dist" }`. As a shorthand, an `out` option SHALL mean local storage in that directory; giving both `out` and `storage` SHALL be rejected. Storage types SHALL also be pluggable, like sources and publishers, under the plugin group `journal.storages`.
