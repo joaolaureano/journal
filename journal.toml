@@ -103,6 +103,43 @@ type = "rss"
 name = "Krebs on Security"
 url = "https://krebsonsecurity.com/feed/"
 
+# --- Blogs técnicos ---
+
+[[sources]]
+type = "rss"
+name = "Hacker News Best"
+url = "https://hnrss.org/best"
+
+[[sources]]
+type = "rss"
+name = "Martin Fowler"
+url = "https://martinfowler.com/feed.atom"
+
+[[sources]]
+type = "rss"
+name = "Simon Willison"
+url = "https://simonwillison.net/atom/everything/"
+
+[[sources]]
+type = "rss"
+name = "Julia Evans"
+url = "https://jvns.ca/atom.xml"
+
+[[sources]]
+type = "rss"
+name = "InfoQ"
+url = "https://feed.infoq.com/"
+
+[[sources]]
+type = "rss"
+name = "Cloudflare Blog"
+url = "https://blog.cloudflare.com/rss/"
+
+[[sources]]
+type = "rss"
+name = "Netflix TechBlog"
+url = "https://netflixtechblog.com/feed"
+
 # --- Rio Grande do Sul ---
 
 [[sources]]
