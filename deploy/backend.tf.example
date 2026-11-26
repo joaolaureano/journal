@@ -1,0 +1,10 @@
+# Copie para backend.tf para guardar o estado do OpenTofu no S3 em vez de localmente.
+# O bucket de estado precisa existir antes (crie à mão, com versionamento ligado).
+terraform {
+  backend "s3" {
+    bucket       = "meu-bucket-de-estado"
+    key          = "journal/terraform.tfstate"
+    region       = "sa-east-1"
+    use_lockfile = true # OpenTofu >= 1.10
+  }
+}

@@ -14,24 +14,29 @@ EventBridge Scheduler ──(8h, America/Sao_Paulo)──> Lambda (journal.aws_l
 ## Pré-requisitos
 
 - Conta AWS e credenciais configuradas (`aws configure` ou `aws sso login`)
-- [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+- [OpenTofu](https://opentofu.org/docs/intro/install/) 1.6 ou mais novo
 - [uv](https://docs.astral.sh/uv/)
 
 ## Primeiro deploy
 
 ```sh
-./deploy/build.sh                                # empacota em build/
-sam deploy --guided --template-file deploy/template.yaml
+./deploy/build.sh            # empacota em build/ (precisa existir antes do plan)
+cd deploy
+tofu init
+tofu apply                   # mostra o plano e pede confirmação
 ```
 
-No `--guided`: escolha um nome de stack (ex.: `journal`), a região (ex.: `sa-east-1`), aceite
-criar o papel IAM e salve as respostas em `samconfig.toml`. No fim, `SiteUrl` é o endereço do
-jornal. O CloudFront leva alguns minutos para ficar disponível.
+No fim, `site_url` é o endereço do jornal. O CloudFront leva alguns minutos para ficar
+disponível. Variáveis (`name`, `region`, `schedule_expression`, `schedule_timezone`,
+`log_retention_days`) têm padrão em `variables.tf`; mude com `-var` ou um `terraform.tfvars`.
+
+O estado fica em `deploy/terraform.tfstate` (fora do git). Para guardar no S3, copie
+`backend.tf.example` para `backend.tf`, ajuste o bucket e rode `tofu init -migrate-state`.
 
 ## Atualizar (código ou fontes)
 
 ```sh
-./deploy/build.sh && sam deploy --template-file deploy/template.yaml
+./deploy/build.sh && (cd deploy && tofu apply)
 ```
 
 O `journal.toml` vai dentro do pacote: mudou uma fonte, rode de novo.
@@ -39,7 +44,7 @@ O `journal.toml` vai dentro do pacote: mudou uma fonte, rode de novo.
 ## Rodar na hora, sem esperar as 8h
 
 ```sh
-aws lambda invoke --function-name <FunctionName> /dev/stdout
+aws lambda invoke --function-name "$(cd deploy && tofu output -raw function_name)" /dev/stdout
 ```
 
 Rodar de novo no mesmo dia cria uma revisão (`edicoes/AAAA-MM-DD-2/`); nada é sobrescrito.
@@ -47,7 +52,7 @@ Rodar de novo no mesmo dia cria uma revisão (`edicoes/AAAA-MM-DD-2/`); nada é 
 ## Logs
 
 ```sh
-sam logs --stack-name journal --tail
+aws logs tail /aws/lambda/journal-build --follow
 ```
 
 ## Como funciona
@@ -64,4 +69,4 @@ sam logs --stack-name journal --tail
 
 ## Remover tudo
 
-Esvazie o bucket (inclusive versões) e rode `sam delete --stack-name journal`.
+Esvazie o bucket (inclusive versões) e rode `cd deploy && tofu destroy`.

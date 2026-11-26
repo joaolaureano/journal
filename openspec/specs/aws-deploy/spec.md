@@ -25,7 +25,7 @@ The `s3` storage SHALL implement the static site storage contract on keys under 
 - **THEN** the edition is published to that bucket and the handler returns its date and article count
 
 ### Requirement: Daily schedule and hosting
-The deployment template SHALL create a private, versioned bucket served only through CloudFront, a function running the handler, and a schedule invoking it daily at 08:00 in `America/Sao_Paulo`, both configurable.
+The deployment (OpenTofu configuration in `deploy/`) SHALL create a private, versioned bucket served only through CloudFront, a function running the handler, and a schedule invoking it daily at 08:00 in `America/Sao_Paulo`, both configurable.
 
 #### Scenario: Default schedule
 - **WHEN** the template is deployed with default parameters
