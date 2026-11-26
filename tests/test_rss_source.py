@@ -1,4 +1,5 @@
 import socket
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -95,3 +96,24 @@ def test_image_comes_from_feed_media():
         "Bad media": None,
         "Content first": "https://cdn.example.com/c.jpg",
     }
+
+
+def test_truncated_response_raises_source_error():
+    with socket.create_server(("127.0.0.1", 0)) as server:
+        port = server.getsockname()[1]
+
+        def cut_transfer():
+            conn, _ = server.accept()
+            with conn:
+                conn.recv(4096)
+                conn.sendall(
+                    b"HTTP/1.1 200 OK\r\nContent-Length: 100000\r\n\r\n<rss version="
+                )
+
+        thread = threading.Thread(target=cut_transfer)
+        thread.start()
+        try:
+            with pytest.raises(SourceError, match="127.0.0.1"):
+                RssSource(f"http://127.0.0.1:{port}/feed", "Cut", timeout=5).fetch()
+        finally:
+            thread.join()

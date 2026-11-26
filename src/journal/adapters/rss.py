@@ -1,3 +1,4 @@
+import http.client
 import logging
 import urllib.request
 from datetime import UTC, datetime
@@ -26,7 +27,8 @@ class RssSource:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 content = response.read()
-        except (OSError, ValueError) as exc:
+        # HTTPException covers IncompleteRead: the server cut the transfer midway.
+        except (OSError, ValueError, http.client.HTTPException) as exc:
             raise SourceError(f"cannot fetch feed {self.location}: {exc}") from exc
         parsed = feedparser.parse(content)
         if not parsed.version:
