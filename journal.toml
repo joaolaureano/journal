@@ -190,6 +190,12 @@ name = "Litoral na Rede"
 section = "Rio Grande do Sul"
 url = "https://litoralnarede.com.br/feed/"
 
+[[sources]]
+type = "rss"
+name = "Correio do Povo"
+section = "Rio Grande do Sul"
+url = "https://www.correiodopovo.com.br/cmlink/ultimas-1.1100282"
+
 # Filtro (veja o README). include/exclude seguem desativados:
 [filter]
 # include = ["selic", "juros", "ibovespa"]
