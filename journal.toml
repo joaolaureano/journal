@@ -115,24 +115,6 @@ type = "rss"
 name = "Sul21"
 url = "https://sul21.com.br/feed/"
 
-# Sem RSS próprio: busca do Google News restrita ao site. Ficam por último
-# para espaçar as requisições ao Google News, que responde 429 se forem muitas.
-
-[[sources]]
-type = "rss"
-name = "GZH"
-url = "https://news.google.com/rss/search?q=site:gauchazh.clicrbs.com.br&hl=pt-BR&gl=BR&ceid=BR:pt-419"
-
-[[sources]]
-type = "rss"
-name = "Jornal do Comércio"
-url = "https://news.google.com/rss/search?q=site:jornaldocomercio.com&hl=pt-BR&gl=BR&ceid=BR:pt-419"
-
-[[sources]]
-type = "rss"
-name = "Correio do Povo"
-url = "https://news.google.com/rss/search?q=site:correiodopovo.com.br&hl=pt-BR&gl=BR&ceid=BR:pt-419"
-
 # Filtro opcional (veja o README). Exemplo, desativado:
 # [filter]
 # include = ["selic", "juros", "ibovespa"]
