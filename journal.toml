@@ -120,6 +120,11 @@ type = "rss"
 name = "Jornal do Comércio"
 url = "https://www.jornaldocomercio.com/rss"
 
+[[sources]]
+type = "rss"
+name = "Litoral na Rede"
+url = "https://litoralnarede.com.br/feed/"
+
 # Filtro opcional (veja o README). Exemplo, desativado:
 # [filter]
 # include = ["selic", "juros", "ibovespa"]
