@@ -80,7 +80,7 @@ storage = { type = "local", out = "dist" }  # opcional; `out` relativo ao arquiv
 
 Para adicionar outra fonte RSS, basta outro bloco `[[sources]]`. Nenhum código muda.
 
-Tipos embutidos: fonte `rss`, publisher `static-site`, armazenamento `local`. Outros tipos vêm de
+Tipos embutidos: fonte `rss`, publisher `static-site`, armazenamento `local` e `s3`. Outros tipos vêm de
 plugins.
 
 ### Filtro (opcional)
@@ -133,6 +133,12 @@ tipo, e recusa um `type` oferecido por mais de um pacote.
 API pública para plugins: `journal.config.AdapterType`, `journal.domain` (`Article`, `Edition`),
 `journal.ports` (`SourcePort`, `PublisherPort`, `SourceError`, `PublishError`) e
 `journal.adapters.storage.StoragePort` (`exists`, `read`, `write`) para novos armazenamentos.
+
+## AWS
+
+Edição diária às 8h numa Lambda, site no S3 + CloudFront: veja [deploy/README.md](deploy/README.md).
+Armazenamento no S3 também pela config: `storage = { type = "s3", bucket = "...", prefix = "" }`
+(requer `journal[aws]`).
 
 ## Desenvolvimento
 

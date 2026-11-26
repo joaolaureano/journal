@@ -285,3 +285,14 @@ def test_invalid_section_rejected(tmp_path, value):
 def test_max_per_section_from_configuration(tmp_path):
     text = rss() + PUBLISHER + "[filter]\nmax_per_section = 3\n"
     assert load_config(write(tmp_path, text)).max_per_section == 3
+
+
+def test_s3_storage_from_configuration(tmp_path, monkeypatch):
+    from journal.adapters import s3
+
+    monkeypatch.setattr(
+        s3.S3Storage, "__init__", lambda self, b, p="": setattr(self, "bucket", b)
+    )
+    text = rss() + PUBLISHER + 'storage = { type = "s3", bucket = "meu-jornal" }\n'
+    storage = load_config(write(tmp_path, text)).publisher.storage
+    assert isinstance(storage, s3.S3Storage) and storage.bucket == "meu-jornal"

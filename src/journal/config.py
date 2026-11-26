@@ -13,6 +13,7 @@ from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from journal.adapters.rss import RssSource
+from journal.adapters.s3 import S3Storage
 from journal.adapters.static_site import StaticSitePublisher
 from journal.adapters.storage import LocalStorage
 from journal.app import KeywordFilter, Sectioned
@@ -52,6 +53,11 @@ STORAGE_TYPES: dict[str, AdapterType] = {
     "local": AdapterType(
         build=lambda o, config_dir: LocalStorage(config_dir / o.get("out", "dist")),
         optional={"out": str},
+    ),
+    "s3": AdapterType(
+        build=lambda o, _dir: S3Storage(o["bucket"], o.get("prefix", "")),
+        required={"bucket": str},
+        optional={"prefix": str},
     ),
 }
 
