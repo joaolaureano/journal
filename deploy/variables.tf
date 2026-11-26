@@ -33,3 +33,9 @@ variable "permissions_boundary" {
   type        = string
   default     = null
 }
+
+variable "github_subject_prefix" {
+  description = "Prefixo do sub do token OIDC do repositório que publica pelo CI, como repo:dono/journal ou o formato com IDs. Sem ele, não há papel de CI."
+  type        = string
+  default     = null
+}

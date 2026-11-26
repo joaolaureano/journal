@@ -28,7 +28,7 @@ tofu apply                   # mostra o plano e pede confirmação
 
 No fim, `site_url` é o endereço do jornal. O CloudFront leva alguns minutos para ficar
 disponível. Variáveis (`name`, `region`, `schedule_expression`, `schedule_timezone`,
-`log_retention_days`, `permissions_boundary`) têm padrão em `variables.tf`; mude com `-var` ou um
+`log_retention_days`, `permissions_boundary`, `github_subject_prefix`) têm padrão em `variables.tf`; mude com `-var` ou um
 `terraform.tfvars`.
 
 Se a sua conta exige um permissions boundary nos papéis criados, passe o ARN:
@@ -36,16 +36,37 @@ Se a sua conta exige um permissions boundary nos papéis criados, passe o ARN:
 com `name` (bucket `journal-site-*`, função `journal-build`) e os papéis levam a tag
 `Project = name`, o que permite um boundary por tag.
 
-O estado fica em `deploy/terraform.tfstate` (fora do git). Para guardar no S3, copie
-`backend.tf.example` para `backend.tf`, ajuste o bucket e rode `tofu init -migrate-state`.
+O estado fica em `deploy/terraform.tfstate` (fora do git), só na sua máquina. Para guardar no
+S3, crie um bucket privado com versionamento, copie `backend.tf.example` para `backend.tf`
+(também fora do git), ajuste o bucket e rode `tofu init -migrate-state`.
+
+O provider da AWS do OpenTofu não lê perfis do `aws login`; exporte a sessão antes:
+`eval "$(aws configure export-credentials --profile <perfil> --format env)"`.
 
 ## Atualizar (código ou fontes)
+
+Com o CI ligado (abaixo), basta dar push na `main`: o GitHub Actions roda os testes e publica o
+código e o `journal.toml` na função. Sem CI, ou quando mudar a infraestrutura (`deploy/*.tf`):
 
 ```sh
 ./deploy/build.sh && (cd deploy && tofu apply)
 ```
 
-O `journal.toml` vai dentro do pacote: mudou uma fonte, rode de novo.
+## Publicar pelo GitHub Actions
+
+O workflow `.github/workflows/ci.yml` roda `ruff` e `pytest` em todo push e pull request. Num
+push na `main`, se a variável `AWS_DEPLOY_ROLE_ARN` existir no repositório, ele empacota e
+troca o código da função, assumindo um papel por OIDC (sem chave guardada). Para ligar:
+
+1. O provedor OIDC do GitHub (`token.actions.githubusercontent.com`) precisa existir na conta.
+2. `tofu apply -var github_subject_prefix=repo:<dono>/<repo>` cria o papel `journal-deploy-ci`,
+   que só confia no ambiente `production` do repositório e só troca e lê o código da função.
+   Se o repositório usa o formato de `sub` com IDs, passe esse prefixo.
+3. No GitHub, crie o ambiente `production` (só a `main`) e a variável `AWS_DEPLOY_ROLE_ARN` com
+   a saída `deploy_role_arn`. Opcionais: `AWS_REGION` e `JOURNAL_FUNCTION`.
+
+O CI não muda infraestrutura; isso continua sendo `tofu apply`. Depois de uma publicação pelo CI,
+o próximo `tofu apply` local sobe o pacote local de novo, que é o mesmo se estiver em dia.
 
 ## Rodar na hora, sem esperar as 8h
 

@@ -11,3 +11,8 @@ output "function_name" {
   description = "Para rodar na hora (veja deploy/README.md)."
   value       = aws_lambda_function.build.function_name
 }
+
+output "deploy_role_arn" {
+  description = "Vai na variável AWS_DEPLOY_ROLE_ARN do repositório."
+  value       = one(aws_iam_role.ci[*].arn)
+}
