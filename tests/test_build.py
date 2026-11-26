@@ -239,3 +239,48 @@ def test_history_matches_url_variants():
     variant = article("http://www.a.com/x/?utm_source=rss", published_at=NOW)
     publisher, _ = run_at([FakeSource([variant])], history=history)
     assert publisher.published == []
+
+
+def test_editions_grouped_by_configured_section_order():
+    from journal.app import Sectioned
+
+    tech = Sectioned(
+        FakeSource([article("https://t.com/1", published_at=NOW)]), "Tecnologia"
+    )
+    sci = Sectioned(
+        FakeSource([article("https://s.com/1", published_at=NOW - timedelta(hours=1))]),
+        "Ciência",
+    )
+    loose = FakeSource([article("https://l.com/1", published_at=NOW)])
+    publisher, _ = run_at([tech, loose, sci])
+    assert [a.section for a in publisher.published] == ["Tecnologia", "Ciência", None]
+
+
+def test_max_per_section_keeps_newest_of_each():
+    from journal.app import Sectioned
+
+    busy = Sectioned(
+        FakeSource(
+            [article(f"https://b.com/{h}", published_at=at(h)) for h in (9, 10, 11)]
+        ),
+        "Busy",
+    )
+    calm = Sectioned(
+        FakeSource([article("https://c.com/1", published_at=at(8))]), "Calm"
+    )
+    publisher = FakePublisher()
+    BuildJournal([busy, calm], publisher, max_per_section=2).run()
+    assert [a.url for a in publisher.published] == [
+        "https://b.com/11",
+        "https://b.com/10",
+        "https://c.com/1",
+    ]
+
+
+def test_edition_carries_timezone():
+    from zoneinfo import ZoneInfo
+
+    tz = ZoneInfo("America/Sao_Paulo")
+    publisher = FakePublisher()
+    BuildJournal([FakeSource([])], publisher, timezone=tz).run()
+    assert publisher.edition.timezone is tz

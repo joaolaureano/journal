@@ -115,3 +115,6 @@ ul.editions { list-style: none; padding: 0; margin: 0; }
 ul.editions li { padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-family: var(--serif); }
 ul.editions .meta { font: 0.8rem var(--mono); color: var(--muted); }
 p.archive { margin-top: 2.5rem; font: 0.8rem var(--mono); letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* Data da edição, logo abaixo do nome do jornal. */
+p.edition { margin: 0.75rem 0 0; text-align: center; font: 0.8rem var(--mono); color: var(--muted); }

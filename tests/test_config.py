@@ -92,6 +92,7 @@ def test_registered_source_type_is_usable(tmp_path, monkeypatch):
         (rss(extra='ulr = "x"\n') + PUBLISHER, "'ulr'"),
         (rss(extra='timeout = "fast"\n') + PUBLISHER, "'timeout'"),
         (rss(extra="timeout = true\n") + PUBLISHER, "'timeout'"),
+        (rss(extra="timeout = 0\n") + PUBLISHER, "'timeout' must be > 0"),
         (rss() + '[publisher]\ntype = "ftp"\n', "publisher: unknown type 'ftp'"),
     ],
     ids=[
@@ -104,6 +105,7 @@ def test_registered_source_type_is_usable(tmp_path, monkeypatch):
         "unknown-option",
         "wrong-type",
         "bool-is-not-a-number",
+        "timeout-not-positive",
         "unknown-publisher-type",
     ],
 )
@@ -260,3 +262,26 @@ def test_timezone_from_configuration(tmp_path):
 def test_invalid_timezone_rejected(tmp_path, value):
     with pytest.raises(ConfigError, match="timezone"):
         load_config(write(tmp_path, f"timezone = {value}\n" + rss() + PUBLISHER))
+
+
+# sections
+
+
+def test_section_wraps_any_source(tmp_path):
+    from journal.app import Sectioned
+
+    cfg = load_config(write(tmp_path, rss(extra='section = "Ciência"\n') + PUBLISHER))
+    [source] = cfg.sources
+    assert isinstance(source, Sectioned) and source.section == "Ciência"
+    assert isinstance(source.source, RssSource)
+
+
+@pytest.mark.parametrize("value", ['""', "3"])
+def test_invalid_section_rejected(tmp_path, value):
+    with pytest.raises(ConfigError, match="section"):
+        load_config(write(tmp_path, rss(extra=f"section = {value}\n") + PUBLISHER))
+
+
+def test_max_per_section_from_configuration(tmp_path):
+    text = rss() + PUBLISHER + "[filter]\nmax_per_section = 3\n"
+    assert load_config(write(tmp_path, text)).max_per_section == 3

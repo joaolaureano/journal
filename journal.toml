@@ -10,17 +10,20 @@ timezone = "America/Sao_Paulo"
 [[sources]]
 type = "rss"
 name = "Nature"
+section = "Ciência"
 url = "https://www.nature.com/nature.rss"
 
 [[sources]]
 type = "rss"
 name = "ScienceDaily"
+section = "Ciência"
 url = "https://www.sciencedaily.com/rss/top.xml"
 timeout = 15
 
 [[sources]]
 type = "rss"
 name = "BBC Science"
+section = "Ciência"
 url = "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
 
 # --- Brasil e mundo ---
@@ -28,36 +31,43 @@ url = "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
 [[sources]]
 type = "rss"
 name = "Agência Brasil"
+section = "Brasil e mundo"
 url = "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml"
 
 [[sources]]
 type = "rss"
 name = "g1"
+section = "Brasil e mundo"
 url = "https://g1.globo.com/rss/g1/"
 
 [[sources]]
 type = "rss"
 name = "Folha"
+section = "Brasil e mundo"
 url = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml"
 
 [[sources]]
 type = "rss"
 name = "BBC News Brasil"
+section = "Brasil e mundo"
 url = "https://feeds.bbci.co.uk/portuguese/rss.xml"
 
 [[sources]]
 type = "rss"
 name = "Nexo"
+section = "Brasil e mundo"
 url = "https://www.nexojornal.com.br/rss.xml"
 
 [[sources]]
 type = "rss"
 name = "Poder360"
+section = "Brasil e mundo"
 url = "https://www.poder360.com.br/feed/"
 
 [[sources]]
 type = "rss"
 name = "BBC News World"
+section = "Brasil e mundo"
 url = "https://feeds.bbci.co.uk/news/world/rss.xml"
 
 # --- Tecnologia ---
@@ -65,46 +75,55 @@ url = "https://feeds.bbci.co.uk/news/world/rss.xml"
 [[sources]]
 type = "rss"
 name = "BBC Technology"
+section = "Tecnologia"
 url = "https://feeds.bbci.co.uk/news/technology/rss.xml"
 
 [[sources]]
 type = "rss"
 name = "Hacker News"
+section = "Tecnologia"
 url = "https://news.ycombinator.com/rss"
 
 [[sources]]
 type = "rss"
 name = "Lobsters"
+section = "Tecnologia"
 url = "https://lobste.rs/rss"
 
 [[sources]]
 type = "rss"
 name = "LWN"
+section = "Tecnologia"
 url = "https://lwn.net/headlines/rss"
 
 [[sources]]
 type = "rss"
 name = "Ars Technica"
+section = "Tecnologia"
 url = "https://feeds.arstechnica.com/arstechnica/index"
 
 [[sources]]
 type = "rss"
 name = "Hackaday"
+section = "Tecnologia"
 url = "https://hackaday.com/blog/feed/"
 
 [[sources]]
 type = "rss"
 name = "Slashdot"
+section = "Tecnologia"
 url = "https://rss.slashdot.org/Slashdot/slashdotMain"
 
 [[sources]]
 type = "rss"
 name = "The Register"
+section = "Tecnologia"
 url = "https://www.theregister.com/headlines.atom"
 
 [[sources]]
 type = "rss"
 name = "Krebs on Security"
+section = "Tecnologia"
 url = "https://krebsonsecurity.com/feed/"
 
 # --- Blogs técnicos ---
@@ -112,36 +131,43 @@ url = "https://krebsonsecurity.com/feed/"
 [[sources]]
 type = "rss"
 name = "Hacker News Best"
+section = "Blogs técnicos"
 url = "https://hnrss.org/best"
 
 [[sources]]
 type = "rss"
 name = "Martin Fowler"
+section = "Blogs técnicos"
 url = "https://martinfowler.com/feed.atom"
 
 [[sources]]
 type = "rss"
 name = "Simon Willison"
+section = "Blogs técnicos"
 url = "https://simonwillison.net/atom/everything/"
 
 [[sources]]
 type = "rss"
 name = "Julia Evans"
+section = "Blogs técnicos"
 url = "https://jvns.ca/atom.xml"
 
 [[sources]]
 type = "rss"
 name = "InfoQ"
+section = "Blogs técnicos"
 url = "https://feed.infoq.com/"
 
 [[sources]]
 type = "rss"
 name = "Cloudflare Blog"
+section = "Blogs técnicos"
 url = "https://blog.cloudflare.com/rss/"
 
 [[sources]]
 type = "rss"
 name = "Netflix TechBlog"
+section = "Blogs técnicos"
 url = "https://netflixtechblog.com/feed"
 
 # --- Rio Grande do Sul ---
@@ -149,23 +175,27 @@ url = "https://netflixtechblog.com/feed"
 [[sources]]
 type = "rss"
 name = "Sul21"
+section = "Rio Grande do Sul"
 url = "https://sul21.com.br/feed/"
 
 [[sources]]
 type = "rss"
 name = "Jornal do Comércio"
+section = "Rio Grande do Sul"
 url = "https://www.jornaldocomercio.com/rss"
 
 [[sources]]
 type = "rss"
 name = "Litoral na Rede"
+section = "Rio Grande do Sul"
 url = "https://litoralnarede.com.br/feed/"
 
-# Filtro opcional (veja o README). Exemplo, desativado:
-# [filter]
+# Filtro (veja o README). include/exclude seguem desativados:
+[filter]
 # include = ["selic", "juros", "ibovespa"]
 # exclude = ["futebol"]
-# max_articles = 5
+max_age_days = 2      # só notícias dos últimos 2 dias
+max_per_section = 10  # no máximo 10 por seção, as mais recentes
 
 [publisher]
 type = "static-site"

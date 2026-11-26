@@ -35,6 +35,7 @@ class BuildJournal:
         article_filter: KeywordFilter | None = None,
         max_articles: int | None = None,
         max_age_days: int | None = None,
+        max_per_section: int | None = None,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         timezone: tzinfo = UTC,
         history: HistoryPort | None = None,
@@ -44,6 +45,7 @@ class BuildJournal:
         self.article_filter = article_filter
         self.max_articles = max_articles
         self.max_age_days = max_age_days
+        self.max_per_section = max_per_section
         self.now = now
         self.timezone = timezone  # decides which day an edition belongs to
         self.history = history  # what earlier editions already published
@@ -82,8 +84,14 @@ class BuildJournal:
             and (not self.article_filter or self.article_filter.matches(a))
         ]
         articles = sorted(kept, key=lambda a: (-a.published_at.timestamp(), a.url))
+        if self.max_per_section is not None:
+            articles = _cap_per_section(articles, self.max_per_section)
         articles = articles[: self.max_articles]
-        edition = Edition(day, tuple(articles))
+        # sections in the order their first source was configured; others last
+        order = list(dict.fromkeys(getattr(s, "section", None) for s in self.sources))
+        rank = {name: i for i, name in enumerate(n for n in order if n is not None)}
+        articles.sort(key=lambda a: rank.get(a.section, len(rank)))  # stable
+        edition = Edition(day, tuple(articles), self.timezone)
         self.publisher.publish(edition)
         return BuildReport(
             edition,
@@ -100,3 +108,14 @@ class BuildJournal:
         if self.max_age_days is None:
             return True
         return article.published_at >= now - timedelta(days=self.max_age_days)
+
+
+def _cap_per_section(articles: list[Article], limit: int) -> list[Article]:
+    """Keeps the first `limit` articles of each section, preserving order."""
+    counts: dict[str | None, int] = {}
+    kept = []
+    for a in articles:
+        counts[a.section] = counts.get(a.section, 0) + 1
+        if counts[a.section] <= limit:
+            kept.append(a)
+    return kept

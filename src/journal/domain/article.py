@@ -16,6 +16,7 @@ class Article:
     image: str | None = None
     image_caption: str | None = None
     image_credit: str | None = None
+    section: str | None = None  # e.g. "Ciência"; set from the source's configuration
     id: str = field(init=False)
 
     def __post_init__(self) -> None:

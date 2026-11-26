@@ -8,6 +8,7 @@ from fakes import article, edition
 from journal.adapters import static_site
 from journal.adapters.static_site import StaticSitePublisher
 from journal.adapters.storage import LocalStorage, StoragePort
+from journal.domain import Edition
 from journal.ports import HistoryPort, PublisherPort, PublishError
 
 DAY = date(2026, 11, 26)
@@ -72,6 +73,7 @@ def test_writes_articles_json_in_order(out):
         "image": None,
         "image_caption": None,
         "image_credit": None,
+        "section": None,
     }
 
 
@@ -109,12 +111,14 @@ def test_article_page_content(out):
     assert 'href="../index.html"' in page
 
 
-def test_dates_shown_in_utc_portuguese(out):
-    when = datetime(2026, 11, 2, 10, tzinfo=UTC)
-    a = article(published_at=when)
-    publish(out, a)
+def test_dates_shown_in_edition_timezone(out):
+    from zoneinfo import ZoneInfo
+
+    a = article(published_at=datetime(2026, 11, 2, 10, tzinfo=UTC))
+    tz = ZoneInfo("America/Sao_Paulo")
+    publisher(out).publish(Edition(DAY, (a,), tz))
     for page in pages(out):
-        assert "2 nov 2026, 10:00 UTC" in page
+        assert "2 nov 2026, 07:00" in page
         assert 'datetime="2026-11-02T10:00:00+00:00"' in page
 
 
@@ -346,3 +350,23 @@ def test_corrupt_history_raises_publish_error(out):
     (out / "seen.json").write_text("[]")
     with pytest.raises(PublishError, match="seen.json"):
         publisher(out).published_before(DAY)
+
+
+# sections
+
+
+def test_edition_grouped_by_section_with_headings(out):
+    a = article("https://a.com/1", title="Ciencia 1", section="Ciência")
+    b = article("https://a.com/2", title="Tech 1", section="Tecnologia")
+    c = article("https://a.com/3", title="Solta")
+    folder = publish(out, a, b, c)
+    index = (folder / "index.html").read_text(encoding="utf-8")
+    assert index.index("<h1>Ciência</h1>") < index.index("Ciencia 1")
+    assert index.index("Ciencia 1") < index.index("<h1>Tecnologia</h1>")
+    assert index.index("<h1>Tecnologia</h1>") < index.index("<h1>Outras</h1>")
+    assert read_index(folder)[0]["section"] == "Ciência"
+
+
+def test_no_section_headings_without_sections(out):
+    folder = publish(out, article())
+    assert "<h1>" not in (folder / "index.html").read_text(encoding="utf-8")

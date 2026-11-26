@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
             config.article_filter,
             config.max_articles,
             config.max_age_days,
+            config.max_per_section,
             timezone=config.timezone,
             history=config.publisher
             if isinstance(config.publisher, HistoryPort)

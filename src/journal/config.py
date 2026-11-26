@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from journal.adapters.rss import RssSource
 from journal.adapters.static_site import StaticSitePublisher
 from journal.adapters.storage import LocalStorage
-from journal.app import KeywordFilter
+from journal.app import KeywordFilter, Sectioned
 from journal.ports import PublisherPort, SourcePort
 
 OptionTypes = dict[str, type | tuple[type, ...]]
@@ -34,11 +34,19 @@ class AdapterType:
 
 SOURCE_TYPES: dict[str, AdapterType] = {
     "rss": AdapterType(
-        build=lambda o, _dir: RssSource(o["url"], o["name"], o.get("timeout", 10)),
+        build=lambda o, _dir: RssSource(o["url"], o["name"], _timeout(o)),
         required={"name": str, "url": str},
         optional={"timeout": (int, float)},
     ),
 }
+
+
+def _timeout(options: dict[str, Any]) -> float:
+    timeout = options.get("timeout", 10)
+    if timeout <= 0:
+        raise ConfigError(f"source {options['name']!r} (rss): 'timeout' must be > 0")
+    return timeout
+
 
 STORAGE_TYPES: dict[str, AdapterType] = {
     "local": AdapterType(
@@ -78,6 +86,7 @@ class Config:
     article_filter: KeywordFilter | None = None
     max_articles: int | None = None
     max_age_days: int | None = None
+    max_per_section: int | None = None
     timezone: tzinfo = field(default_factory=lambda: ZoneInfo(DEFAULT_TIMEZONE))
 
 
@@ -97,20 +106,19 @@ def load_config(path: str | Path) -> Config:
     if not isinstance(publisher, dict):
         raise ConfigError(f"{path}: a [publisher] table is required")
 
-    article_filter, max_articles, max_age_days = _filter(data.get("filter"), path)
+    article_filter, limits = _filter(data.get("filter"), path)
     config_dir = path.resolve().parent
     timezone = _timezone(data.get("timezone", DEFAULT_TIMEZONE), path)
     return Config(
         sources=[
-            _build(entry, SOURCE_TYPES, "journal.sources", f"source #{i}", config_dir)
+            _source(entry, f"source #{i}", config_dir)
             for i, entry in enumerate(sources, start=1)
         ],
         publisher=_build(
             publisher, PUBLISHER_TYPES, "journal.publishers", "publisher", config_dir
         ),
         article_filter=article_filter,
-        max_articles=max_articles,
-        max_age_days=max_age_days,
+        **limits,
         timezone=timezone,
     )
 
@@ -125,16 +133,27 @@ def _timezone(name: Any, path: Path) -> tzinfo:
         raise ConfigError(f"{path}: unknown timezone {name!r}") from exc
 
 
-def _filter(
-    table: Any, path: Path
-) -> tuple[KeywordFilter | None, int | None, int | None]:
+def _source(entry: Any, where: str, config_dir: Path) -> SourcePort:
+    """`section` is accepted on every source type and handled here, not by adapters."""
+    if not isinstance(entry, dict) or "section" not in entry:
+        return _build(entry, SOURCE_TYPES, "journal.sources", where, config_dir)
+    options = dict(entry)
+    section = options.pop("section")
+    if not isinstance(section, str) or not section.strip():
+        raise ConfigError(f"{where}: 'section' must be a non-empty string")
+    source = _build(options, SOURCE_TYPES, "journal.sources", where, config_dir)
+    return Sectioned(source, section.strip())
+
+
+LIMITS = ("max_articles", "max_age_days", "max_per_section")
+
+
+def _filter(table: Any, path: Path) -> tuple[KeywordFilter | None, dict[str, int]]:
     if table is None:
-        return None, None, None
+        return None, {}
     if not isinstance(table, dict):
         raise ConfigError(f"{path}: [filter] must be a table")
-    if unknown := sorted(
-        table.keys() - {"include", "exclude", "max_articles", "max_age_days"}
-    ):
+    if unknown := sorted(table.keys() - {"include", "exclude", *LIMITS}):
         raise ConfigError(f"{path}: [filter] unknown option {unknown[0]!r}")
     terms = {}
     for key in ("include", "exclude"):
@@ -147,13 +166,14 @@ def _filter(
             )
         terms[key] = value
     limits = {}
-    for key in ("max_articles", "max_age_days"):
-        value = limits[key] = table.get(key)
-        if value is not None and (
-            not isinstance(value, int) or isinstance(value, bool) or value < 1
-        ):
+    for key in LIMITS:
+        value = table.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
             raise ConfigError(f"{path}: [filter] {key!r} must be a positive integer")
-    return KeywordFilter(**terms), limits["max_articles"], limits["max_age_days"]
+        limits[key] = value
+    return KeywordFilter(**terms), limits
 
 
 def _build(

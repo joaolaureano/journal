@@ -1,5 +1,6 @@
 import http.client
 import logging
+import re
 import urllib.request
 from datetime import UTC, datetime
 from html.parser import HTMLParser
@@ -10,6 +11,12 @@ from journal.domain import Article, is_http_url
 from journal.ports import SourceError
 
 log = logging.getLogger(__name__)
+
+SUMMARY_LIMIT = 400  # characters; feeds that ship the whole text are cut here
+# Footer WordPress appends to every summary: "O post X apareceu primeiro em Y."
+WORDPRESS_FOOTER = re.compile(
+    r"\s*(?:O post .+ apareceu primeiro em|The post .+ appeared first on) .+?\.?\s*$"
+)
 
 
 class RssSource:
@@ -56,7 +63,7 @@ class RssSource:
         return Article(
             title=entry["title"],
             url=entry["link"],
-            summary=plain_text(entry.get("summary", "")),
+            summary=summary_text(entry.get("summary", "")),
             source=self.name,
             published_at=datetime(*when[:6], tzinfo=UTC),
             image=image,
@@ -80,7 +87,26 @@ def _image(entry) -> str | None:
         for e in entry.get("enclosures", [])
         if (e.get("type") or "").startswith("image/")
     ]
+    # last resort: first image of the full text (content:encoded), never the summary
+    candidates += [_first_img(c.get("value", "")) for c in entry.get("content", [])]
     return next((u for u in candidates if u and is_http_url(u)), None)
+
+
+class _ImgFinder(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.src: str | None = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "img" and self.src is None:
+            self.src = dict(attrs).get("src")
+
+
+def _first_img(html: str) -> str | None:
+    finder = _ImgFinder()
+    finder.feed(html)
+    finder.close()
+    return finder.src
 
 
 class _TextCollector(HTMLParser):
@@ -107,3 +133,12 @@ def plain_text(html: str) -> str:
     collector.feed(html)
     collector.close()
     return " ".join(" ".join(collector.parts).split())
+
+
+def summary_text(html: str) -> str:
+    """Plain text without the WordPress footer, cut at a word near SUMMARY_LIMIT."""
+    text = WORDPRESS_FOOTER.sub("", plain_text(html))
+    if len(text) <= SUMMARY_LIMIT:
+        return text
+    cut = text[:SUMMARY_LIMIT].rsplit(" ", 1)[0].rstrip(" ,;:.-")
+    return cut + "…"

@@ -7,11 +7,11 @@ Define o que o publicador de site estático grava no diretório de saída, para 
 ## Requirements
 
 ### Requirement: Articles index in JSON
-Publishing SHALL write `articles.json` in the edition folder: a JSON array with one object per article, in the order received, each with `id`, `title`, `url`, `summary`, `source`, `published_at` as an ISO 8601 timestamp with UTC offset, `image` as the image URL, and `image_caption` and `image_credit`, each `null` when the article has none.
+Publishing SHALL write `articles.json` in the edition folder: a JSON array with one object per article, in the order received, each with `id`, `title`, `url`, `summary`, `source`, `published_at` as an ISO 8601 timestamp with UTC offset, `image` as the image URL, `image_caption`, `image_credit` and `section`, each `null` when the article has none.
 
 #### Scenario: Two articles published
 - **WHEN** an edition with two articles is published
-- **THEN** the edition's `articles.json` holds two objects, in the same order, with all nine fields
+- **THEN** the edition's `articles.json` holds two objects, in the same order, with all ten fields
 
 #### Scenario: Article without image
 - **WHEN** an article without image is published
@@ -40,14 +40,6 @@ Publishing SHALL write `articles/<id>.html` in the edition folder for every arti
 - **WHEN** an article is published
 - **THEN** its page shows its title, source, date and summary
 - **AND** links to the article's original URL and to `../index.html`
-
-### Requirement: Dates are shown in UTC in Portuguese
-Pages SHALL show publication dates as day, abbreviated Portuguese month, year and 24-hour time in UTC, such as `2 nov 2026, 10:00 UTC`, and SHALL also carry the full ISO 8601 timestamp in machine-readable form.
-
-#### Scenario: Date rendering
-- **WHEN** an article published at 2026-11-02 10:00 UTC is rendered
-- **THEN** the page shows `2 nov 2026, 10:00 UTC`
-- **AND** carries `2026-11-02T10:00:00+00:00` as the machine-readable date
 
 ### Requirement: Feed text is escaped
 All article text and URLs placed in pages SHALL be HTML-escaped, so markup coming from a feed is shown as text and never interpreted by the browser.
@@ -159,3 +151,18 @@ The static site SHALL act as the journal's history through `seen.json` at the ro
 #### Scenario: Retention
 - **WHEN** an article was published 117 days before the latest edition
 - **THEN** it is no longer in the history
+
+### Requirement: Dates are shown in the edition timezone in Portuguese
+Pages SHALL show publication dates as day, abbreviated Portuguese month, year and 24-hour time in the edition's timezone, such as `2 nov 2026, 07:00`, and SHALL also carry the full ISO 8601 timestamp in UTC in machine-readable form.
+
+#### Scenario: Date rendering in São Paulo
+- **WHEN** an article published at 2026-11-02 10:00 UTC is rendered in an edition with timezone `America/Sao_Paulo`
+- **THEN** the page shows `2 nov 2026, 07:00`
+- **AND** carries `2026-11-02T10:00:00+00:00` as the machine-readable date
+
+### Requirement: Edition is grouped by section
+When any article of an edition has a section, its list pages SHALL show one block per section, in the order the articles arrive, each headed by the section name; articles without section SHALL go under `Outras`. When no article has a section, the list SHALL have no section headings.
+
+#### Scenario: Two sections and a loose article
+- **WHEN** an edition holds an article of "Ciência", one of "Tecnologia" and one without section, in that order
+- **THEN** the list shows the headings "Ciência", "Tecnologia" and "Outras" in that order, each above its article

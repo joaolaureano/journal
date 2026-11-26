@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from journal.adapters.rss import RssSource, plain_text
+from journal.adapters.rss import SUMMARY_LIMIT, RssSource, plain_text, summary_text
 from journal.ports import SourceError, SourcePort
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -128,3 +128,27 @@ def test_truncated_response_raises_source_error():
                 RssSource(f"http://127.0.0.1:{port}/feed", "Cut", timeout=5).fetch()
         finally:
             thread.join()
+
+
+def test_atom_feed_is_read():
+    [entry] = source("atom.xml").fetch()
+    assert entry.title == "Atom entry"
+    assert entry.url == "https://atom.example.com/post"
+    assert entry.summary == "Atom summary"
+    assert entry.published_at == datetime(2026, 11, 2, 10, tzinfo=UTC)
+
+
+def test_wordpress_footer_removed_and_image_from_full_text():
+    by_title = {a.title: a for a in source("wordpress.xml").fetch()}
+    samu = by_title["Nova base do Samu"]
+    assert samu.summary == "Prédio com 229 metros quadrados"
+    assert samu.image == "https://wp.example.com/samu.webp"
+    assert by_title["English footer"].summary == "Short teaser"
+    assert by_title["English footer"].image is None
+
+
+def test_long_summary_is_cut_at_a_word():
+    text = summary_text("<p>" + "palavra " * 100 + "</p>")
+    assert len(text) <= SUMMARY_LIMIT + 1
+    assert text.endswith("palavra…")
+    assert summary_text("curto") == "curto"

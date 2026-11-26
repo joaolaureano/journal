@@ -40,7 +40,12 @@ dist/
 
 Abra `dist/index.html` direto no navegador ou sirva a pasta em qualquer hospedagem estática.
 
-- A data da edição segue o `timezone` da config (padrão `America/Sao_Paulo`).
+- A data da edição e os horários exibidos seguem o `timezone` da config (padrão
+  `America/Sao_Paulo`).
+- Com `section` nas fontes, a edição sai em blocos por seção, na ordem da config; fontes sem seção
+  vão para "Outras".
+- Resumos: sem o rodapé "O post … apareceu primeiro em …" do WordPress e com no máximo ~400
+  caracteres. Sem imagem nos campos de mídia, vale a primeira do texto completo do feed.
 - Edições nunca são sobrescritas: rodar de novo no mesmo dia cria uma revisão nova.
 - Uma notícia que saiu numa edição de um dia anterior não volta nas seguintes (`seen.json`, mesma
   normalização de URL da deduplicação, guardado por 90 dias). Uma revisão do mesmo dia refaz o dia
@@ -62,7 +67,8 @@ Para ter o seu próprio jornal, faça um fork e troque as fontes do `journal.tom
 type = "rss"
 name = "Nature"                             # aparece nos artigos
 url = "https://www.nature.com/nature.rss"
-timeout = 10                                # opcional, segundos
+timeout = 10                                # opcional, segundos (> 0)
+section = "Ciência"                         # opcional, vale para qualquer tipo de fonte
 
 [publisher]
 type = "static-site"
@@ -87,6 +93,7 @@ include = ["selic", "juros", "ibovespa", "banco central"]  # pelo menos um termo
 exclude = ["futebol"]                                       # nenhum destes
 max_articles = 5                                            # só os N mais recentes
 max_age_days = 2                                            # só dos últimos N dias
+max_per_section = 10                                        # no máximo N por seção
 ```
 
 Os termos são procurados no título e no resumo, sem diferenciar maiúsculas nem acentos, como

@@ -14,7 +14,7 @@ The configuration SHALL be a TOML file with a non-empty `[[sources]]` array and 
 - **THEN** loading it yields two sources, in declared order, and one publisher
 
 ### Requirement: Built-in RSS source type
-The `rss` source type SHALL take a required `name` (string), a required `url` (string) and an optional `timeout` in seconds (number, default 10).
+The `rss` source type SHALL take a required `name` (string), a required `url` (string) and an optional `timeout` in seconds (number greater than 0, default 10).
 
 #### Scenario: RSS source from configuration
 - **WHEN** a source entry is `type = "rss"`, `name = "Nature"`, `url = "https://www.nature.com/nature.rss"`
@@ -112,7 +112,7 @@ When a configuration uses a type name provided by more than one provider, built-
 - **THEN** loading fails with a configuration error naming the built-in and the plugin
 
 ### Requirement: Optional filter section
-The configuration MAY have a `[filter]` table with `include` and `exclude` (lists of non-empty strings), `max_articles` (positive integer) and `max_age_days` (positive integer), all optional. Without the table, no keyword filter, cap or maximum age SHALL be applied. An invalid `[filter]` SHALL be rejected with a configuration error naming the offending key.
+The configuration MAY have a `[filter]` table with `include` and `exclude` (lists of non-empty strings), `max_articles`, `max_age_days` and `max_per_section` (positive integers), all optional. Without the table, no keyword filter, cap or maximum age SHALL be applied. An invalid `[filter]` SHALL be rejected with a configuration error naming the offending key.
 
 #### Scenario: Filter from configuration
 - **WHEN** a configuration declares `[filter]` with `include = ["selic"]` and `max_articles = 5`
@@ -136,3 +136,10 @@ The configuration MAY have a top-level `timezone` with an IANA timezone name, de
 #### Scenario: Unknown timezone
 - **WHEN** `timezone = "Mars/Olympus"`
 - **THEN** loading fails with a configuration error mentioning `timezone`
+
+### Requirement: Any source can belong to a section
+Every source entry, whatever its type, MAY have a `section` (non-empty string) naming the section its articles belong to. Any other value SHALL be rejected with a configuration error mentioning `section`.
+
+#### Scenario: RSS source with section
+- **WHEN** an `rss` source declares `section = "Ciência"`
+- **THEN** its articles belong to the section "Ciência"

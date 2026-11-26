@@ -7,7 +7,7 @@ Define o que é um artigo no journal: os campos que todo artigo carrega, como el
 ## Requirements
 
 ### Requirement: Article fields
-An article SHALL carry an id, a title, a URL, a summary, a source name and a publication timestamp.
+An article SHALL carry an id, a title, a URL, a summary, a source name, a publication timestamp and an optional section name (absent by default).
 
 #### Scenario: Article created with all fields
 - **WHEN** an article is created with title, URL, summary, source and publication timestamp

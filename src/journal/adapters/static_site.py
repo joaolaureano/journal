@@ -1,8 +1,9 @@
 import json
 from collections.abc import Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, tzinfo
 from html import escape
 from importlib.resources import files
+from itertools import groupby
 from string import Template
 
 from journal.adapters.storage import StoragePort
@@ -62,7 +63,8 @@ class StaticSitePublisher:
             manifest.append(entry)
             base = entry["path"]
             for a in edition.articles:
-                self._put(f"{base}articles/{a.id}.html", _article_page(a, "../../../"))
+                page = _article_page(a, edition.timezone, "../../../")
+                self._put(f"{base}articles/{a.id}.html", page)
             self._put(f"{base}articles.json", _index_json(edition.articles))
             self._put(f"{base}index.html", _edition_page(edition, entry, "../../", ""))
             self._put("style.css", _read("style.css"))
@@ -133,9 +135,11 @@ def _day(d: date) -> str:
     return f"{d.day} {MONTHS[d.month - 1]} {d.year}"
 
 
-def _when(article: Article) -> dict[str, str]:
-    d = article.published_at.astimezone(UTC)
-    return {"iso": d.isoformat(), "date": f"{_day(d)}, {d:%H:%M} UTC"}
+def _when(article: Article, tz: tzinfo) -> dict[str, str]:
+    """Shown in the edition's timezone; machine-readable timestamp in UTC."""
+    d = article.published_at.astimezone(tz)
+    iso = article.published_at.astimezone(UTC).isoformat()
+    return {"iso": iso, "date": f"{_day(d)}, {d:%H:%M}"}
 
 
 def _edition_label(entry: dict) -> str:
@@ -171,21 +175,15 @@ def _figure(article: Article) -> str:
 
 def _edition_page(edition: Edition, entry: dict, root: str, base: str) -> str:
     """Article list of an edition; `base` is the edition folder seen from the page."""
-    items = []
-    for a in edition.articles:
-        w = _when(a)
-        summary = f'<p class="summary">{escape(a.summary)}</p>' if a.summary else ""
-        items.append(
-            f"<li>{_img(a, 'thumb')}"
-            f'<h2><a href="{base}articles/{a.id}.html">{escape(a.title)}</a></h2>'
-            f'<p class="meta">{escape(a.source)} · '
-            f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}</li>'
+    sectioned = any(a.section for a in edition.articles)
+    blocks = []
+    for section, group in groupby(edition.articles, key=lambda a: a.section):
+        items = [_list_item(a, base, edition.timezone) for a in group]
+        heading = f"<h1>{escape(section or 'Outras')}</h1>\n" if sectioned else ""
+        blocks.append(
+            heading + '<ol class="articles">\n' + "\n".join(items) + "\n</ol>"
         )
-    listing = (
-        '<ol class="articles">\n' + "\n".join(items) + "\n</ol>"
-        if items
-        else "<p>Nenhum artigo publicado.</p>"
-    )
+    listing = "\n".join(blocks) or "<p>Nenhum artigo publicado.</p>"
     label = _edition_label(entry)
     content = Template(_read("index.html")).substitute(
         heading=escape(label), items=listing, archive=f"{root}{EDITIONS}/index.html"
@@ -195,6 +193,17 @@ def _edition_page(edition: Edition, entry: dict, root: str, base: str) -> str:
 
 def _count(n: int) -> str:
     return f"{n} artigo" if n == 1 else f"{n} artigos"
+
+
+def _list_item(a: Article, base: str, tz: tzinfo) -> str:
+    w = _when(a, tz)
+    summary = f'<p class="summary">{escape(a.summary)}</p>' if a.summary else ""
+    return (
+        f"<li>{_img(a, 'thumb')}"
+        f'<h2><a href="{base}articles/{a.id}.html">{escape(a.title)}</a></h2>'
+        f'<p class="meta">{escape(a.source)} · '
+        f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}</li>'
+    )
 
 
 def _archive_page(manifest: list[dict]) -> str:
@@ -210,14 +219,14 @@ def _archive_page(manifest: list[dict]) -> str:
     return _page("Edições · Journal", content, root="../")
 
 
-def _article_page(a: Article, root: str) -> str:
+def _article_page(a: Article, tz: tzinfo, root: str) -> str:
     content = Template(_read("article.html")).substitute(
         title=escape(a.title),
         source=escape(a.source),
         summary=escape(a.summary),
         url=escape(a.url),
         image=_figure(a),
-        **_when(a),
+        **_when(a, tz),
     )
     return _page(f"{a.title} · Journal", content, root=root)
 
@@ -234,6 +243,7 @@ def _index_json(articles: Sequence[Article]) -> str:
             "image": a.image,
             "image_caption": a.image_caption,
             "image_credit": a.image_credit,
+            "section": a.section,
         }
         for a in articles
     ]
