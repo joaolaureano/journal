@@ -241,6 +241,8 @@ class _BodyBuilder(HTMLParser):
         self.open: list[str] = []
         self._dropped = 0
         self._paragraph: tuple[int, int] | None = None  # (out index, open depth)
+        self._caption: int | None = None  # out index of the open figcaption
+        self._last_caption: tuple[int, int, str] | None = None  # (start, end, text)
 
     def handle_starttag(self, tag, attrs):
         if tag in BODY_DROPPED:
@@ -264,6 +266,8 @@ class _BodyBuilder(HTMLParser):
         else:
             if tag == "p" and self._paragraph is None:
                 self._paragraph = (len(self.out), len(self.open))
+            if tag == "figcaption":
+                self._caption = len(self.out)
             self.out.append(f"<{tag}>")
         self.open.append(tag)
 
@@ -290,6 +294,8 @@ class _BodyBuilder(HTMLParser):
                 and len(self.open) == self._paragraph[1]
             ):
                 self._end_paragraph()
+            if closed == "figcaption" and self._caption is not None:
+                self._end_caption()
             if closed == tag:
                 break
 
@@ -307,6 +313,21 @@ class _BodyBuilder(HTMLParser):
         self._paragraph = None
         if WORDPRESS_FOOTER.match(plain_text("".join(self.out[start:]))):
             del self.out[start:]
+            if self._last_caption and self._last_caption[0] >= start:
+                self._last_caption = None  # it was deleted with the paragraph
+
+    def _end_caption(self):
+        """Slideshows repeat one caption on every slide: keep only the last one."""
+        start, self._caption = self._caption, None
+        text = plain_text("".join(self.out[start:]))
+        last = self._last_caption
+        if (
+            last
+            and last[2] == text
+            and not plain_text("".join(self.out[last[1] : start]))
+        ):
+            self.out[last[0] : last[1]] = [""] * (last[1] - last[0])
+        self._last_caption = (start, len(self.out), text)
 
     def _img(self, attrs):
         src = attrs.get("src", "")

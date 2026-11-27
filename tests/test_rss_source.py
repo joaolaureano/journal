@@ -252,6 +252,17 @@ def test_body_from_content_encoded_keeps_paragraphs_and_photos():
     ) in a.body
 
 
+def test_body_keeps_one_caption_for_a_slideshow():
+    slide = (
+        '<li><figure><img src="/{}.jpg"><figcaption>A roça</figcaption></figure></li>'
+    )
+    html = f"<ul>{slide.format(1)}{slide.format(2)}</ul><p>Texto</p>{slide.format(3)}"
+    body = body_html(html, BASE)
+    # repeated on consecutive slides: only under the last; after other text it stays
+    assert body.count("A roça") == 2
+    assert body.index("1.jpg") < body.index("2.jpg") < body.index("A roça")
+
+
 def test_body_drops_cover_and_wordpress_footer():
     a = full(full_text=True)["In content"]
     assert a.image == "https://cdn.example.com/a.jpg"
