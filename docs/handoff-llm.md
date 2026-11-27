@@ -149,14 +149,19 @@ Divida em mudanças pequenas, na ordem abaixo; cada uma entrega algo visível.
 
 ## 6. Perguntas em aberto para o dono do projeto
 
-- **Ranking das 10 histórias:** o que conta mais? Quantidade de fontes cobrindo, seção (garantir
-  diversidade: Brasil, mundo, ciência, tecnologia, RS), interesse pessoal ou recência?
-- **Contradições:** um bloco "Fontes divergem" no fim, ou marcas inline no parágrafo ("segundo A…;
-  B afirma…")? O LLM nunca decide quem está certo.
-- **História de uma fonte só:** entra entre as 10 como resumo daquele item, ou só histórias com 2
-  ou mais fontes?
-- **Os itens originais:** continuam acessíveis numa lista "todas as notícias da edição", ou somem
-  da navegação e ficam só como fontes das histórias?
+Decididas em 2026-11-27:
+
+- **Ranking das 10 histórias:** mais fontes cobrindo primeiro, mas com pelo menos uma por seção
+  (Brasil e mundo, Ciência, Tecnologia, RS) quando houver.
+- **Contradições:** inline no parágrafo ("segundo A…; B afirma…") e um selo "divergência" na
+  lista. O LLM nunca decide quem está certo.
+- **História de uma fonte só:** entra entre as 10, reescrita na mesma voz; as de mais fontes vêm
+  antes.
+- **Os itens originais:** a capa mostra as 10 histórias e um link abre a lista "todas as notícias
+  da edição", como é hoje.
+- **Voz única:** todo texto escrito pelo LLM (histórias e aquecimentos) soa como o mesmo autor.
+  Exemplo de teste: Dino suspende emendas de Flávio Bolsonaro, coberto por O Sul e Rádio Guaíba
+  em 2026-11-27 (revisão 3).
 - ~~Orçamento mensal~~ e ~~modelos~~: decididos (§3.8).
 
 ## 7. Pendências sem LLM
