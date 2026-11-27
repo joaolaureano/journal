@@ -147,14 +147,6 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "Simon Willison"
-section = "Blogs técnicos"
-kind = "artigo"
-url = "https://simonwillison.net/atom/everything/"
-full_text = true
-
-[[sources]]
-type = "rss"
 name = "Julia Evans"
 section = "Blogs técnicos"
 kind = "artigo"
