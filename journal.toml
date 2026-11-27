@@ -82,48 +82,6 @@ url = "https://rss.uol.com.br/feed/noticias.xml"
 
 # --- Tecnologia ---
 
-# Feeds de categoria: o feed principal da Wired é quase todo de ofertas de compras.
-[[sources]]
-type = "rss"
-name = "Wired (negócios)"
-section = "Tecnologia"
-url = "https://www.wired.com/feed/category/business/latest/rss"
-
-[[sources]]
-type = "rss"
-name = "Wired (segurança)"
-section = "Tecnologia"
-url = "https://www.wired.com/feed/category/security/latest/rss"
-
-# Só tecnologia: o feed principal da Vice é música e games.
-[[sources]]
-type = "rss"
-name = "Vice"
-section = "Tecnologia"
-url = "https://www.vice.com/en/category/tech/feed/"
-full_text = true
-
-[[sources]]
-type = "rss"
-name = "Ars Technica"
-section = "Tecnologia"
-url = "https://feeds.arstechnica.com/arstechnica/index"
-full_text = true
-
-[[sources]]
-type = "rss"
-name = "Hackaday"
-section = "Tecnologia"
-url = "https://hackaday.com/blog/feed/"
-full_text = true
-
-[[sources]]
-type = "rss"
-name = "Slashdot"
-section = "Tecnologia"
-url = "https://rss.slashdot.org/Slashdot/slashdotMain"
-full_text = true
-
 [[sources]]
 type = "rss"
 name = "Krebs on Security"
