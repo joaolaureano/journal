@@ -50,7 +50,6 @@ full_text = true
 type = "rss"
 name = "Agência Pública"
 section = "Brasil e mundo"
-kind = "artigo"
 url = "https://apublica.org/feed/"
 full_text = true
 
@@ -58,7 +57,6 @@ full_text = true
 type = "rss"
 name = "The Conversation Brasil"
 section = "Brasil e mundo"
-kind = "artigo"
 url = "https://theconversation.com/br/articles.atom"
 full_text = true
 
