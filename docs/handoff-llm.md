@@ -137,6 +137,35 @@ Divida em mudanças pequenas, na ordem abaixo; cada uma entrega algo visível.
   das histórias que saíram.
 - A página de Artigos não muda, além do aquecimento do §4.1.
 
+### 4.5 Visão do dono, 2026-11-27: "um jornal de verdade"
+
+O dono não se sente lendo um jornal. A ideia dele:
+
+- **Menos fontes, tudo do dia:** poucas fontes que cobrem os mesmos assuntos, lidas por inteiro.
+  As repetições entre elas são o sinal do que importa. O corte (`max_per_section`) passa a valer
+  **depois** de agrupar, nunca antes.
+- **Número fixo de assuntos:** agrupar as repetições, escolher N histórias e publicar cada uma
+  como **um artigo só**, escrito pelo LLM numa voz única e com conferência de fatos.
+- **Diagramação de jornal:** uma capa com manchete e imagem grande, chamadas médias e notas sem
+  imagem. As seções vêm em faixas, rolando a página para baixo. As imagens são as que os feeds
+  mandam.
+
+Limites a levar em conta:
+
+- **O RSS não traz "tudo do dia".** Cada feed tem só os últimos 10 a 50 itens. Para cobrir o dia,
+  a escolha das fontes precisa olhar quanto elas se repetem entre si.
+- **A conferência confere contra as fontes, não contra o mundo.** O que ela verifica: cada
+  afirmação está em pelo menos um item do grupo e as divergências aparecem (§4.3). Ela não
+  verifica se o fato é verdade.
+- **Imagem só a do feed**, com crédito (sem scraping). Algumas vêm pequenas, então a diagramação
+  precisa funcionar sem foto.
+
+Perguntas para a próxima sessão:
+
+- "Assuntos fixos" são N histórias por dia, ou temas fixos (política, economia, tecnologia…)?
+- Quais fontes ficam?
+- Qual jornal serve de referência para a diagramação?
+
 ## 5. Ordem sugerida das mudanças
 
 1. ~~Aquecimento dos artigos (§4.1)~~: feito em 2026-11-26
