@@ -12,3 +12,4 @@ build/
 deploy/build.zip
 deploy/backend.tf
 deploy/terraform.tfvars
+.serena/
