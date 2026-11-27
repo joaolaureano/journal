@@ -110,8 +110,9 @@ def test_article_page_content(out):
     a = article("https://a.com/1", title="Título", summary="Resumo", source="Nature")
     folder = publish(out, a)
     page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
-    for text in ("Título", "Resumo", "Nature", 'href="https://a.com/1"'):
+    for text in ("Título", "Resumo", "Nature"):
         assert text in page
+    assert 'href="https://a.com/1" target="_blank"' in page  # source opens in a new tab
     assert 'href="../index.html"' in page
 
 
