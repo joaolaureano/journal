@@ -295,7 +295,7 @@ def _list_item(a: Article, base: str, tz: tzinfo) -> str:
     if a.summary or a.image or a.warmup:
         link = f'href="{base}articles/{a.id}.html"'
     else:
-        link = f'href="{escape(a.url)}" rel="noopener noreferrer"'
+        link = f'href="{escape(a.url)}" target="_blank" rel="noopener noreferrer"'
     reading = f" · {_reading_time(a.body)}" if a.kind == "artigo" and a.body else ""
     return (
         f"<li>{_img(a, 'thumb')}"

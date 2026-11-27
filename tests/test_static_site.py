@@ -482,7 +482,8 @@ def test_article_without_summary_or_image_links_to_its_source(out):
     bare = article("https://news.example/x", title="Só link")
     folder = publish(out, bare)
     index = (folder / "index.html").read_text(encoding="utf-8")
-    assert '<a href="https://news.example/x" rel="noopener noreferrer">Só link' in index
+    link = 'href="https://news.example/x" target="_blank" rel="noopener noreferrer"'
+    assert f"<a {link}>Só link" in index
     assert f"articles/{bare.id}.html" not in index
     assert (folder / "articles" / f"{bare.id}.html").is_file()
 

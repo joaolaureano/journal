@@ -23,6 +23,12 @@ kind = "artigo"
 url = "https://spectrum.ieee.org/feeds/feed.rss"
 full_text = true
 
+[[sources]]
+type = "rss"
+name = "Wired (ciência)"
+section = "Ciência"
+url = "https://www.wired.com/feed/category/science/latest/rss"
+
 # --- Brasil e mundo ---
 
 [[sources]]
@@ -83,18 +89,25 @@ url = "https://rss.uol.com.br/feed/noticias.xml"
 
 # --- Tecnologia ---
 
+# Feeds de categoria: o feed principal da Wired é quase todo de ofertas de compras.
 [[sources]]
 type = "rss"
-name = "404 Media"
+name = "Wired (negócios)"
 section = "Tecnologia"
-url = "https://www.404media.co/rss/"
-full_text = true
+url = "https://www.wired.com/feed/category/business/latest/rss"
 
 [[sources]]
 type = "rss"
-name = "LWN"
+name = "Wired (segurança)"
 section = "Tecnologia"
-url = "https://lwn.net/headlines/rss"
+url = "https://www.wired.com/feed/category/security/latest/rss"
+
+# Só tecnologia: o feed principal da Vice é música e games.
+[[sources]]
+type = "rss"
+name = "Vice"
+section = "Tecnologia"
+url = "https://www.vice.com/en/category/tech/feed/"
 full_text = true
 
 [[sources]]
