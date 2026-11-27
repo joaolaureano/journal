@@ -22,3 +22,18 @@ from journal.app import KeywordFilter
 def test_keyword_filter(include, exclude, title, summary, expected):
     f = KeywordFilter(include, exclude)
     assert f.matches(article(title=title, summary=summary)) is expected
+
+
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        ("https://www1.folha.uol.com.br/mercado/x.shtml", False),
+        ("https://FOLHA.uol.com.br/x", False),
+        ("https://redir.folha.com.br/redir/x", False),
+        ("https://noticias.uol.com.br/x", True),
+        ("https://minhafolha.com.br/x", True),  # same letters, not a subdomain
+    ],
+)
+def test_excluded_domains(url, expected):
+    f = KeywordFilter(exclude_domains=["folha.uol.com.br", "folha.com.br"])
+    assert f.matches(article(url=url)) is expected

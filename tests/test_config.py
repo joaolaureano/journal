@@ -211,6 +211,7 @@ def test_filter_from_configuration(tmp_path):
         ('include = "selic"', "include"),
         ('include = [""]', "include"),
         ("exclude = [1]", "exclude"),
+        ('exclude_domains = [""]', "exclude_domains"),
         ('inclde = ["selic"]', "inclde"),
     ],
 )

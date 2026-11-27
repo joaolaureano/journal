@@ -111,14 +111,17 @@ Sem a seção `[filter]`, tudo o que as fontes trazem é publicado. Com ela:
 [filter]
 include = ["selic", "juros", "ibovespa", "banco central"]  # pelo menos um termo
 exclude = ["futebol"]                                       # nenhum destes
+exclude_domains = ["folha.uol.com.br"]                      # nem links destes sites
 max_articles = 5                                            # só os N mais recentes
 max_age_days = 2                                            # só dos últimos N dias
 max_per_section = 10                                        # no máximo N por seção
 ```
 
 Os termos são procurados no título e no resumo, sem diferenciar maiúsculas nem acentos, como
-palavras ou frases inteiras ("juros" não casa com "conjuros"). `exclude` vence `include`. Todas as
-chaves são opcionais. Com ou sem filtro, artigos datados mais de um dia no futuro são
+palavras ou frases inteiras ("juros" não casa com "conjuros"). `exclude` vence `include`.
+`exclude_domains` corta itens pelo endereço do link, contando os subdomínios
+(`folha.uol.com.br` corta `www1.folha.uol.com.br`, mas `folha.com.br` não corta `minhafolha.com.br`):
+serve para sites com paywall que aparecem dentro de outro feed. Todas as chaves são opcionais. Com ou sem filtro, artigos datados mais de um dia no futuro são
 descartados (data errada no feed). O comando mostra quantos artigos passaram: `published 5 of 996 articles`.
 
 ### Aquecimento por IA (opcional)

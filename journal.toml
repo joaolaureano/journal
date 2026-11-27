@@ -61,13 +61,6 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "Nexo"
-section = "Brasil e mundo"
-url = "https://www.nexojornal.com.br/rss.xml"
-full_text = true
-
-[[sources]]
-type = "rss"
 name = "Poder360"
 section = "Brasil e mundo"
 url = "https://www.poder360.com.br/feed/"
@@ -236,6 +229,9 @@ full_text = true
 [filter]
 # include = ["selic", "juros", "ibovespa"]
 # exclude = ["futebol"]
+# Paywall: o feed do UOL traz matérias da Folha. (O Nexo saiu das fontes pelo mesmo
+# motivo: parte dos itens é paga e o feed não diz quais.)
+exclude_domains = ["folha.uol.com.br", "folha.com.br"]
 max_age_days = 2      # só notícias dos últimos 2 dias
 max_per_section = 10  # no máximo 10 por seção, as mais recentes
 

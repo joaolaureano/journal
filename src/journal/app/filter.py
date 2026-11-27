@@ -1,6 +1,7 @@
 import re
 import unicodedata
 from collections.abc import Sequence
+from urllib.parse import urlsplit
 
 from journal.domain import Article
 
@@ -20,13 +21,23 @@ def _pattern(terms: Sequence[str]) -> re.Pattern[str] | None:
 
 
 class KeywordFilter:
-    """Keeps articles mentioning an include term (if any) and no exclude term."""
+    """Keeps articles mentioning an include term (if any) and no exclude term,
+    whose link is not on an excluded domain (e.g. a paywalled outlet)."""
 
-    def __init__(self, include: Sequence[str] = (), exclude: Sequence[str] = ()):
+    def __init__(
+        self,
+        include: Sequence[str] = (),
+        exclude: Sequence[str] = (),
+        exclude_domains: Sequence[str] = (),
+    ):
         self._include = _pattern(include)
         self._exclude = _pattern(exclude)
+        self._domains = tuple(d.strip().lower().strip(".") for d in exclude_domains)
 
     def matches(self, article: Article) -> bool:
+        host = (urlsplit(article.url).hostname or "").lower()
+        if any(host == d or host.endswith(f".{d}") for d in self._domains):
+            return False
         text = normalize(f"{article.title} {article.summary}")
         if self._exclude and self._exclude.search(text):
             return False

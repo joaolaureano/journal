@@ -190,6 +190,7 @@ def _source(entry: Any, where: str, config_dir: Path) -> SourcePort:
 
 
 LIMITS = ("max_articles", "max_age_days", "max_per_section")
+TERM_LISTS = ("include", "exclude", "exclude_domains")
 
 
 def _filter(table: Any, path: Path) -> tuple[KeywordFilter | None, dict[str, int]]:
@@ -197,10 +198,10 @@ def _filter(table: Any, path: Path) -> tuple[KeywordFilter | None, dict[str, int
         return None, {}
     if not isinstance(table, dict):
         raise ConfigError(f"{path}: [filter] must be a table")
-    if unknown := sorted(table.keys() - {"include", "exclude", *LIMITS}):
+    if unknown := sorted(table.keys() - {*TERM_LISTS, *LIMITS}):
         raise ConfigError(f"{path}: [filter] unknown option {unknown[0]!r}")
     terms = {}
-    for key in ("include", "exclude"):
+    for key in TERM_LISTS:
         value = table.get(key, [])
         if not isinstance(value, list) or not all(
             isinstance(t, str) and t.strip() for t in value
