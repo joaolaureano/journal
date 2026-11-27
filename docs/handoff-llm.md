@@ -160,11 +160,12 @@ Limites a levar em conta:
 - **Imagem só a do feed**, com crédito (sem scraping). Algumas vêm pequenas, então a diagramação
   precisa funcionar sem foto.
 
-Perguntas para a próxima sessão:
+Decidido em 2026-11-27:
 
-- "Assuntos fixos" são N histórias por dia, ou temas fixos (política, economia, tecnologia…)?
-- Quais fontes ficam?
-- Qual jornal serve de referência para a diagramação?
+- **Temas fixos:** política, economia e tecnologia.
+- **Fontes:** revisar e provavelmente reduzir, escolhendo as que se repetem.
+- **Primeiro o "backend"**, local, com testes e fakes, sem chamar a DeepSeek à toa. A
+  diagramação e o jornal de referência vêm depois.
 
 ## 5. Ordem sugerida das mudanças
 
