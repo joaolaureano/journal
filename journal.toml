@@ -175,15 +175,32 @@ kind = "artigo"
 url = "https://netflixtechblog.com/feed"
 full_text = true
 
-# --- Papers ---
+# --- Papers (arXiv), uma seção por área de estudo ---
 # Resumo completo de cada paper; o feed repete versões novas de papers antigos (puladas).
+# Nos dias sem anúncio do arXiv (em geral sábado e feriados dos EUA) o feed vem vazio e as seções somem.
 
-[[sources]]
+[[sources]]  # estruturas de dados, algoritmos e teoria da informação
 type = "rss"
-name = "arXiv"
-section = "Papers"
+name = "arXiv (cs.DS, cs.IT)"
+section = "Papers · Estruturas e algoritmos"
 kind = "artigo"
-url = "https://rss.arxiv.org/rss/cs.SE+cs.DC+cs.DB+cs.PL"
+url = "https://rss.arxiv.org/rss/cs.DS+cs.IT"
+full_text = true
+
+[[sources]]  # sistemas distribuídos e bancos de dados
+type = "rss"
+name = "arXiv (cs.DC, cs.DB)"
+section = "Papers · Distribuídos e bancos"
+kind = "artigo"
+url = "https://rss.arxiv.org/rss/cs.DC+cs.DB"
+full_text = true
+
+[[sources]]  # criptografia, segurança e redes
+type = "rss"
+name = "arXiv (cs.CR, cs.NI)"
+section = "Papers · Segurança e redes"
+kind = "artigo"
+url = "https://rss.arxiv.org/rss/cs.CR+cs.NI"
 full_text = true
 
 # --- Rio Grande do Sul ---
@@ -219,9 +236,9 @@ max_per_section = 10  # no máximo 10 por seção, as mais recentes
 [summarizer]
 # Parágrafo de aquecimento dos artigos, escrito por IA (DeepSeek). Precisa de
 # DEEPSEEK_API_KEY no ambiente (na Lambda, vem do SSM); sem ela, nada muda.
-# Orçamento por edição: ~US$ 0,03 típico, ~US$ 0,11 no pior caso.
+# Orçamento por edição: ~US$ 0,02 típico, ~US$ 0,08 no pior caso (fora do pico).
 model = "deepseek-flash"
-max_calls = 50           # chamadas pagas por edição; o que está em cache não conta
+max_calls = 80           # chamadas pagas por edição; o que está em cache não conta
 max_input_chars = 16000  # texto do artigo enviado, no máximo
 timeout = 180            # segundos para a etapa inteira; o que faltar sai sem
 
