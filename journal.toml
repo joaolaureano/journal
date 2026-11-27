@@ -17,13 +17,6 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "NASA"
-section = "Ciência"
-url = "https://www.nasa.gov/feed/"
-full_text = true
-
-[[sources]]
-type = "rss"
 name = "IEEE Spectrum"
 section = "Ciência"
 kind = "artigo"
