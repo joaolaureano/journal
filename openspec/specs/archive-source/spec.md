@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD - created by archiving change add-classic-paper. Update Purpose after archive.
+Lê o arquivo de um feed paginado, como o de um blog que parou mas guarda posts valiosos, e entrega um post por dia, escolhido pela data, como artigo atemporal.
 
 ## Requirements
 
