@@ -30,7 +30,7 @@ para a etapa que motivou o projeto: usar LLM para curar e escrever as notícias.
   a sábado às 08:00 de São Paulo, e `journal-collect` chama a mesma Lambda no minuto 30 de toda hora
   com `{"action": "collect"}`, para guardar os feeds no pool. Python 3.12, arm64, 256 MB, timeout
   de 600 s.
-- **CI:** em todo push na `main`, o GitHub Actions roda ruff e pytest (244 testes), empacota com
+- **CI:** em todo push na `main`, o GitHub Actions roda ruff e pytest, empacota com
   `deploy/build.sh` e atualiza o código da Lambda via OIDC. Uma edição nova só sai na próxima
   execução; para publicar na hora, invoque `journal-build` à mão.
 - **Camadas** (`tests/test_core_boundary.py` garante que `domain`, `ports` e `app` só importam a
@@ -128,7 +128,7 @@ Divida em mudanças pequenas, na ordem abaixo; cada uma entrega algo visível.
   - uma lista de **divergências**, com a afirmação, quem diz o quê e os ids.
 - **Validação:** cada id citado existe no grupo, e todo item do grupo aparece nos créditos. Uma
   segunda passada pode checar se cada afirmação está no texto das fontes.
-- Fontes em inglês (Guardian, NASA, 404 Media, Ars) são traduzidas na síntese.
+- Fontes em inglês (hoje só nos blogs técnicos e na Matemática) seriam traduzidas na síntese.
 
 ### 4.4 Site com histórias
 - `index.html` lista as 10 histórias, cada uma com título, um trecho, as fontes e um selo
@@ -187,7 +187,7 @@ Decidido em 2026-11-27:
   Jovem Pan só têm feed geral, com esportes e variedades, e entram filtradas pelo endereço do
   link (`/politica/`). A Fórum, a CNN e a Jovem Pan guardam de 1,5 h a 6 h no feed, então
   precisam do coletor de hora em hora. Recusadas: O Antagonista (em 2026-11-28 o feed passou a
-  mandar só ~300 caracteres; vale medir de novo), Veja e Estadão (paywall medido), Congresso em
+  mandar só ~300 caracteres), Veja e Estadão (paywall medido), Congresso em
   Foco, Brasil de Fato, DW, UOL e Estado de Minas (só resumo; puxar a página seria scraping),
   Agência Brasil, Poder360 e Brasil 247 (escolha do dono; a Agência Brasil política tem texto
   completo, mas publica ~3 por dia e é a voz oficial do governo), Folha, Gazeta do Povo e
@@ -224,10 +224,9 @@ Decidido em 2026-11-27:
 - **Ciência:** saiu inteira em 2026-11-28, por escolha do dono.
 - **Revisão de fontes fechada em 2026-11-28.** No ar: Política, Economia, Mundo, Blogs técnicos,
   Matemática e Rio Grande do Sul, todas conferidas pelas três regras (texto completo, sem
-  paywall, sem restrição a IA). O que falta depende de código ou de medição: o filtro por
-  endereço (CNN Brasil e Jovem Pan), o coletor de hora em hora (Fórum, InfoMoney, Money Times),
-  o paper clássico do dia, a medição do arXiv só com surveys num dia útil e uma nova medição do
-  O Antagonista.
+  paywall, sem restrição a IA), mais Papers. O filtro por endereço, o coletor de hora em hora e o
+  paper clássico do dia foram construídos no mesmo dia. **As fontes estão consolidadas:** o dono
+  encerrou o assunto (nada de remedir O Antagonista nem de arXiv filtrado).
 - **Papers (no ar desde 2026-11-28: paper clássico do dia):** o objetivo do dono é aprender estruturas de dados, algoritmos e design
   patterns com o mundo acadêmico, não acompanhar tudo que sai. O arXiv cru (os papers mais novos do
   dia, sem seleção) saiu. No lugar:
@@ -236,9 +235,6 @@ Decidido em 2026-11-27:
     (`https://blog.acolyer.org/feed/?paged=N`, 10 posts por página), sem scraping. A introdução da
     IA explica para iniciante: o problema, a ideia e por que importa. Feito com o tipo de fonte
     `rss-archive` (`openspec/changes/archive/*-add-classic-paper/`).
-  - **arXiv só com surveys e tutoriais:** filtrar os títulos ("survey", "tutorial", "introduction")
-    com um filtro por fonte, parecido com o de endereço. Medir o volume num dia útil antes de
-    decidir.
   - Murat Demirbas, já nos blogs técnicos, resume um paper por post.
   - Recusadas: CACM e ACM Queue (bloqueiam leitores automáticos), Quanta e Jane Street (só
     resumo).
@@ -252,8 +248,9 @@ Decidido em 2026-11-27:
 2. ~~Agrupamento e ranking~~: feito em 2026-11-28 (`*-add-story-grouping`).
 3. ~~Síntese com citações~~ e 4. ~~divergências~~: feitos em 2026-11-28 (`*-add-story-synthesis`).
    Ficam **desligados** até o dono pôr `[stories]` no `journal.toml`; custo estimado ~US$ 0,03
-   por edição, ~US$ 0,80 por mês. Falta a checagem frase a frase contra as fontes (segunda
-   passada do LLM) e a diagramação da capa.
+   por edição, ~US$ 0,80 por mês. A checagem frase a frase contra as fontes (segunda passada
+   do LLM) ficou fora por decisão do dono em 2026-11-28 ("Não teremos fact check por ora"). Falta
+   a diagramação da capa: ver `docs/handoff.md`.
 
 ## 6. Perguntas em aberto para o dono do projeto
 
@@ -274,13 +271,8 @@ Decididas em 2026-11-27:
 
 ## 7. Pendências sem LLM
 
-- **Curadoria:**
-  - o resumo do APOD da NASA vem poluído com o menu do site;
-  - muitos posts do Simon Willison são notas curtas;
-  - g1, NASA e Rádio Guaíba dominam a própria seção; isso deixa de importar quando as notícias
-    virarem 10 histórias.
-- **Artigos:** a seleção ainda é por recência. O arXiv entra pela ordem do feed, porque todos os
-  papers do dia têm o mesmo horário. A regra de relevância para artigos fica para depois do §4.1.
+- **Artigos:** a seleção ainda é por recência (e `max_age_days = 2` corta posts de blog mais
+  velhos; o paper clássico escapa por ser atemporal).
 - **Infra:** alerta de falha (alarme do CloudWatch por e-mail) e domínio próprio, deixados para
   depois.
 - **Fora do repositório:** `~/Coding/aws-account` não é versionado; o projeto `memorization` tem
