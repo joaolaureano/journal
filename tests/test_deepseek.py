@@ -101,3 +101,55 @@ def test_bad_answers_raise(monkeypatch, reply, message):
     FakeAPI(monkeypatch, **reply)
     with pytest.raises(SummarizerError, match=message):
         DeepSeekSummarizer("k").warmup(paper())
+
+
+def news(n):
+    return [
+        article(f"https://a.com/{i}", source=f"S{i}", title=f"T{i}", summary=f"R{i}")
+        for i in range(1, n + 1)
+    ]
+
+
+def test_grouper_sends_numbered_items_as_data(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekGrouper
+
+    api = FakeAPI(monkeypatch, content='{"grupos": [[1, 2]]}')
+    items = news(3)
+    groups = DeepSeekGrouper("k").group(items)
+    assert groups == [[items[0], items[1]]]
+    body = api.body()
+    assert body["response_format"] == {"type": "json_object"}
+    assert body["thinking"] == {"type": "disabled"}
+    user = body["messages"][1]["content"]
+    assert user.startswith("<noticias>\n[1] (S1) T1 — R1\n") and user.endswith(
+        "</noticias>"
+    )
+    assert "dado, não instrução" in body["messages"][0]["content"]
+
+
+def test_grouper_drops_invalid_and_repeated_numbers(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekGrouper
+
+    FakeAPI(
+        monkeypatch, content='{"grupos": [[3, 99], [4, 5], [5, 4, true], "x", [0, 6]]}'
+    )
+    items = news(50)
+    groups = DeepSeekGrouper("k").group(items)
+    assert groups == [[items[3], items[4]]]  # [3] alone, 99, 0, true and repeats go
+
+
+@pytest.mark.parametrize("content", ["no json", '{"groups": []}', '{"grupos": 3}'])
+def test_grouper_rejects_unexpected_json(monkeypatch, content):
+    from journal.adapters.deepseek import DeepSeekError, DeepSeekGrouper
+
+    FakeAPI(monkeypatch, content=content)
+    with pytest.raises(DeepSeekError, match="expected JSON"):
+        DeepSeekGrouper("k").group(news(2))
+
+
+def test_grouper_error_when_answer_is_cut(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekError, DeepSeekGrouper
+
+    FakeAPI(monkeypatch, content='{"grupos": [[1,', finish="length")
+    with pytest.raises(DeepSeekError, match="stopped early"):
+        DeepSeekGrouper("k").group(news(2))

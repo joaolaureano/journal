@@ -115,6 +115,7 @@ class Config:
     timezone: tzinfo = field(default_factory=lambda: ZoneInfo(DEFAULT_TIMEZONE))
     summarizer: dict[str, Any] | None = None  # [summarizer] options; None: no AI text
     pool: int | None = None  # [pool] hours; None: sources read only from their feeds
+    stories: dict[str, Any] | None = None  # [stories] options; None: no grouping
 
 
 def load_config(path: str | Path) -> Config:
@@ -149,6 +150,7 @@ def load_config(path: str | Path) -> Config:
         timezone=timezone,
         summarizer=_summarizer(data.get("summarizer"), path),
         pool=_pool(data.get("pool"), path),
+        stories=_stories(data.get("stories"), path),
     )
 
 
@@ -179,6 +181,35 @@ def _summarizer(table: Any, path: Path) -> dict[str, Any] | None:
         if not valid:
             what = "a non-empty string" if key == "model" else "a positive number"
             raise ConfigError(f"{path}: [summarizer] {key!r} must be {what}")
+    return dict(table)
+
+
+STORIES_OPTIONS: OptionTypes = {
+    "max_stories": int,
+    "model": str,
+    "timeout": (int, float),
+}
+
+
+def _stories(table: Any, path: Path) -> dict[str, Any] | None:
+    """Validated [stories] options; the grouper is built where the key is known."""
+    if table is None:
+        return None
+    if not isinstance(table, dict):
+        raise ConfigError(f"{path}: [stories] must be a table")
+    for key, value in table.items():
+        wanted = STORIES_OPTIONS.get(key)
+        if wanted is None:
+            raise ConfigError(f"{path}: [stories] unknown option {key!r}")
+        if key == "model":
+            valid = isinstance(value, str) and bool(value.strip())
+        else:
+            valid = (
+                isinstance(value, wanted) and not isinstance(value, bool) and value > 0
+            )
+        if not valid:
+            what = "a non-empty string" if key == "model" else "a positive number"
+            raise ConfigError(f"{path}: [stories] {key!r} must be {what}")
     return dict(table)
 
 

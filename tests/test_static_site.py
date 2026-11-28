@@ -582,3 +582,67 @@ def test_article_without_warmup_has_no_ai_label(out):
     folder = publish(out, a)
     for name in ("artigos.html", f"articles/{a.id}.html"):
         assert "por IA" not in (folder / name).read_text(encoding="utf-8")
+
+
+# stories
+
+
+def story_edition():
+    from journal.domain import Story
+
+    g1 = article("https://g1.com/stf", source="g1 política", title="STF <decide>")
+    cnn = article("https://cnn.com/stf", source="CNN Brasil política", summary="Resumo")
+    jota = article("https://jota.info/stf", source="JOTA")
+    alone = article("https://g1.com/other", source="g1 política")
+    stories = (Story((g1, cnn, jota), "Política"), Story((alone,), "Política"))
+    # only g1 and alone made the news list; cnn and jota were cut by the limit
+    return Edition(DAY, (g1, alone), stories=stories), stories
+
+
+def test_front_page_opens_with_the_stories(out):
+    ed, stories = story_edition()
+    publisher(out).publish(ed)
+    folder = out / manifest(out)[-1]["path"]
+    for page in (folder / "index.html", out / "index.html"):
+        html = page.read_text(encoding="utf-8")
+        block = html.split("Histórias do dia", 1)[1].split("Todas as notícias", 1)[0]
+        assert (
+            "STF &lt;decide&gt;" in block
+            and "3 fontes" in block
+            and "1 fonte ·" in block
+        )
+        for a in stories[0].items:
+            assert f'articles/{a.id}.html">{a.source}</a>' in block
+    assert "Histórias do dia" not in (folder / "artigos.html").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_stories_json_and_pages_for_items_cut_from_the_list(out):
+    ed, stories = story_edition()
+    publisher(out).publish(ed)
+    folder = out / manifest(out)[-1]["path"]
+    data = json.loads((folder / "stories.json").read_text(encoding="utf-8"))
+    assert data[0] == {
+        "id": stories[0].id,
+        "section": "Política",
+        "ids": [a.id for a in stories[0].items],
+        "sources": ["g1 política", "CNN Brasil política", "JOTA"],
+    }
+    for a in stories[0].items:
+        assert (folder / "articles" / f"{a.id}.html").exists()
+    assert len(read_index(folder)) == 2  # the news list is unchanged
+
+
+def test_story_items_count_as_published(out):
+    ed, stories = story_edition()
+    publisher(out).publish(ed)
+    history = publisher(out)
+    later = history.published_before(DAY + timedelta(days=1))
+    assert {a.key for a in stories[0].items} <= later
+
+
+def test_no_stories_no_block(out):
+    folder = publish(out, article())
+    assert "Histórias do dia" not in (folder / "index.html").read_text(encoding="utf-8")
+    assert json.loads((folder / "stories.json").read_text(encoding="utf-8")) == []

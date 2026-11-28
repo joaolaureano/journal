@@ -6,12 +6,13 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-from journal.adapters.deepseek import DeepSeekSummarizer
+from journal.adapters.deepseek import DeepSeekGrouper, DeepSeekSummarizer
 from journal.adapters.pool import Pooled
 from journal.app import BuildError, BuildJournal, BuildReport, Sectioned
-from journal.app.build import WARMUP_TIMEOUT
+from journal.app.build import MAX_STORIES, WARMUP_TIMEOUT
 from journal.config import Config, ConfigError, load_config
 from journal.ports import (
+    GrouperPort,
     HistoryPort,
     PublishError,
     SourceError,
@@ -46,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"source failed: {error}", file=sys.stderr)
     for error in report.warmup_errors:
         print(f"warm-up failed: {error}", file=sys.stderr)
+    for error in report.story_errors:
+        print(f"stories failed: {error}", file=sys.stderr)
     print(summary(report))
     return 0
 
@@ -81,6 +84,8 @@ def run(config: Config) -> BuildReport:
         history=publisher if isinstance(publisher, HistoryPort) else None,
         summarizer=summarizer(config, getattr(publisher, "storage", None)),
         warmup_timeout=timeout,
+        grouper=grouper(config),
+        max_stories=(config.stories or {}).get("max_stories", MAX_STORIES),
     ).run()
 
 
@@ -151,12 +156,24 @@ def summarizer(config: Config, cache=None) -> SummarizerPort | None:
     return DeepSeekSummarizer(key, cache, **options)
 
 
+def grouper(config: Config) -> GrouperPort | None:
+    """DeepSeek grouper when [stories] is configured and DEEPSEEK_API_KEY is set."""
+    if config.stories is None:
+        return None
+    key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+    if not key:
+        print("stories skipped: DEEPSEEK_API_KEY is not set", file=sys.stderr)
+        return None
+    options = {k: v for k, v in config.stories.items() if k in ("model", "timeout")}
+    return DeepSeekGrouper(key, **options)
+
+
 def summary(report: BuildReport) -> str:
     return (
         f"published {len(report.articles)} of {report.fetched} articles"
         f" in the edition of {report.edition.date.isoformat()}"
         f" ({report.already_published} already in earlier editions,"
-        f" {report.warmups} AI warm-ups)"
+        f" {report.warmups} AI warm-ups, {len(report.edition.stories)} stories)"
     )
 
 

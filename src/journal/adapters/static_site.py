@@ -10,7 +10,7 @@ from itertools import groupby
 from string import Template
 
 from journal.adapters.storage import StoragePort
-from journal.domain import Article, Edition
+from journal.domain import Article, Edition, Story
 from journal.ports import PublishError
 
 TEMPLATES = files("journal.adapters") / "templates"
@@ -73,10 +73,11 @@ class StaticSitePublisher:
             }
             manifest.append(entry)
             base = entry["path"]
-            for a in edition.articles:
+            for a in _with_story_items(edition):
                 page = _article_page(a, edition.timezone, "../../../", manifest, entry)
                 self._put(f"{base}articles/{a.id}.html", page)
             self._put(f"{base}articles.json", _index_json(edition.articles))
+            self._put(f"{base}stories.json", _stories_json(edition.stories))
             for kind, name in LIST_PAGES.items():
                 page = _edition_page(edition, entry, manifest, "../../", "", kind)
                 self._put(f"{base}{name}", page)
@@ -128,9 +129,19 @@ class StaticSitePublisher:
         self.storage.write(key, text.encode("utf-8"))
 
 
+def _with_story_items(edition: Edition) -> list[Article]:
+    """The edition's articles plus story items the news list left out."""
+    articles = {a.key: a for a in edition.articles}
+    for story in edition.stories:
+        for a in story.items:
+            articles.setdefault(a.key, a)
+    return list(articles.values())
+
+
 def _seen_json(seen: dict[str, str], edition: Edition) -> str:
-    """Adds the edition's stories (keeping the first date) and drops expired ones."""
-    for a in edition.articles:
+    """Adds the edition's items, story items included (keeping the first date), and
+    drops expired ones."""
+    for a in _with_story_items(edition):
         seen.setdefault(a.key, edition.date.isoformat())
     oldest = (edition.date - SEEN_RETENTION).isoformat()
     kept = {k: d for k, d in sorted(seen.items()) if d >= oldest}
@@ -245,9 +256,18 @@ def _edition_page(
         if links
         else ""
     )
+    stories = ""
+    if kind == "noticia" and edition.stories:
+        stories = _stories_block(edition, base) + (
+            '<h1 id="todas-as-noticias">Todas as notícias</h1>\n'
+        )
     label = _edition_label(entry)
     content = Template(_read("index.html")).substitute(
-        tabs=_tabs(kind), heading=escape(label), sections=index, items=listing
+        tabs=_tabs(kind),
+        heading=escape(label),
+        stories=stories,
+        sections=index,
+        items=listing,
     )
     menu = _menu(manifest, root, entry)
     return _page(f"{label} · Journal", content, root, menu)
@@ -303,6 +323,49 @@ def _list_item(a: Article, base: str, tz: tzinfo) -> str:
         f'<p class="meta">{escape(a.source)} · '
         f'<time datetime="{w["iso"]}">{w["date"]}</time>{reading}</p>{summary}</li>'
     )
+
+
+def _sources_count(n: int) -> str:
+    return "1 fonte" if n == 1 else f"{n} fontes"
+
+
+def _stories_block(edition: Edition, base: str) -> str:
+    """The day's stories: lead title and summary, coverage and a link per item."""
+    entries = []
+    for story in edition.stories:
+        lead, w = story.lead, _when(story.lead, edition.timezone)
+        summary = (
+            f'<p class="summary">{escape(lead.summary)}</p>' if lead.summary else ""
+        )
+        links = ", ".join(
+            f'<a href="{base}articles/{a.id}.html">{escape(a.source)}</a>'
+            for a in story.items
+        )
+        entries.append(
+            f"<li>{_img(lead, 'thumb')}"
+            f'<h2><a href="{base}articles/{lead.id}.html">{escape(lead.title)}</a></h2>'
+            f'<p class="meta">{_sources_count(len(story.sources))} · '
+            f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}'
+            f'<p class="story-sources">Fontes: {links}</p></li>'
+        )
+    return (
+        '<section class="stories" aria-labelledby="historias-do-dia">\n'
+        '<h1 id="historias-do-dia">Histórias do dia</h1>\n'
+        '<ol class="articles">\n' + "\n".join(entries) + "\n</ol>\n</section>\n"
+    )
+
+
+def _stories_json(stories: Sequence[Story]) -> str:
+    index = [
+        {
+            "id": s.id,
+            "section": s.section,
+            "ids": [a.id for a in s.items],
+            "sources": list(s.sources),
+        }
+        for s in stories
+    ]
+    return json.dumps(index, ensure_ascii=False, indent=2)
 
 
 def _archive_page(manifest: list[dict]) -> str:

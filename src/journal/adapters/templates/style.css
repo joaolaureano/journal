@@ -94,6 +94,10 @@ ol.articles .thumb {
   border: 1px solid var(--border);
 }
 
+/* Histórias do dia (a diagramação da capa vem depois). */
+.stories { margin-bottom: 2rem; }
+.stories .story-sources { margin: 0.4rem 0 0; font-size: 0.85rem; color: var(--muted); }
+
 /* Página da notícia. */
 article { padding-top: 2rem; }
 article h1 { margin: 0.5rem 0 0.75rem; font: 600 2rem/1.2 var(--serif); }

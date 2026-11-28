@@ -179,6 +179,27 @@ O texto vai para a API só com a biblioteca padrão (`urllib`). As respostas fic
 novo. Sem chave, com o orçamento estourado, com erro ou timeout, o artigo sai como antes e o
 motivo vai para o log (`warm-up failed: ...`).
 
+### Histórias do dia (opcional)
+
+Com a seção `[stories]` e a variável `DEEPSEEK_API_KEY`, a edição junta as notícias que contam o
+mesmo fato em **histórias**. Uma chamada ao DeepSeek recebe os títulos e o começo de todas as
+notícias candidatas (antes do limite por seção) e devolve grupos de números. Uma notícia sem grupo
+vira uma história de uma fonte só. As histórias são ordenadas pelo número de fontes diferentes,
+com pelo menos uma por seção. A capa abre com elas (`Histórias do dia`: título, resumo,
+`N fontes` e um link por fonte) e segue com a lista completa (`Todas as notícias`).
+
+```toml
+[stories]
+max_stories = 10         # histórias por edição
+model = "deepseek-flash"
+timeout = 120            # segundos para a chamada
+```
+
+Custo: uma chamada por edição, com ~35 mil tokens de entrada para ~500 notícias, menos de
+US$ 0,01 fora do pico. Sem chave, com erro ou timeout, a edição sai sem histórias e o motivo vai
+para o log (`stories failed: ...`). `stories.json` guarda as histórias de cada edição, e os itens
+delas contam como publicados no `seen.json`.
+
 ## Escrevendo um plugin
 
 Um plugin é um pacote Python instalado no mesmo ambiente que oferece tipos novos de fonte ou

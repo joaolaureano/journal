@@ -1,11 +1,13 @@
+from collections import Counter
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta, tzinfo
 
 from journal.app.filter import KeywordFilter
-from journal.domain import Article, Edition, dedup_key
+from journal.domain import Article, Edition, Story, dedup_key
 from journal.ports import (
+    GrouperPort,
     HistoryPort,
     PublisherPort,
     SourceError,
@@ -18,6 +20,7 @@ __all__ = ["BuildError", "BuildJournal", "BuildReport", "dedup_key"]
 FUTURE_TOLERANCE = timedelta(days=1)
 WARMUP_WORKERS = 8
 WARMUP_TIMEOUT = 180.0  # seconds for the whole step; the Lambda has 600
+MAX_STORIES = 10
 
 
 class BuildError(Exception):
@@ -31,6 +34,7 @@ class BuildReport:
     fetched: int = 0  # unique articles read, before filtering
     already_published: int = 0  # dropped: published in an earlier day's edition
     warmup_errors: list[str] = field(default_factory=list)  # distinct messages
+    story_errors: list[str] = field(default_factory=list)  # grouping failed: none
 
     @property
     def warmups(self) -> int:
@@ -55,6 +59,8 @@ class BuildJournal:
         history: HistoryPort | None = None,
         summarizer: SummarizerPort | None = None,
         warmup_timeout: float = WARMUP_TIMEOUT,
+        grouper: GrouperPort | None = None,
+        max_stories: int = MAX_STORIES,
     ):
         self.sources = sources
         self.publisher = publisher
@@ -67,6 +73,8 @@ class BuildJournal:
         self.history = history  # what earlier editions already published
         self.summarizer = summarizer  # writes the articles' warm-up paragraph
         self.warmup_timeout = warmup_timeout
+        self.grouper = grouper  # finds items about the same fact
+        self.max_stories = max_stories
 
     def run(self) -> BuildReport:
         by_url: dict[str, Article] = {}
@@ -102,15 +110,19 @@ class BuildJournal:
             and (not self.article_filter or self.article_filter.matches(a))
         ]
         articles = sorted(kept, key=lambda a: (-a.published_at.timestamp(), a.url))
-        if self.max_per_section is not None:
-            articles = _cap_per_section(articles, self.max_per_section)
-        articles = articles[: self.max_articles]
         # sections in the order their first source was configured; others last
         order = list(dict.fromkeys(getattr(s, "section", None) for s in self.sources))
         rank = {name: i for i, name in enumerate(n for n in order if n is not None)}
+        # stories see every candidate: the per-section cap is for the news list only
+        stories, story_errors = self._stories(
+            [a for a in articles if a.kind == "noticia"], rank
+        )
+        if self.max_per_section is not None:
+            articles = _cap_per_section(articles, self.max_per_section)
+        articles = articles[: self.max_articles]
         articles.sort(key=lambda a: rank.get(a.section, len(rank)))  # stable
         articles, warmup_errors = self._warm_up(articles)
-        edition = Edition(day, tuple(articles), self.timezone)
+        edition = Edition(day, tuple(articles), self.timezone, tuple(stories))
         self.publisher.publish(edition)
         return BuildReport(
             edition,
@@ -118,7 +130,42 @@ class BuildJournal:
             fetched=len(by_url),
             already_published=len(by_url) - len(fresh),
             warmup_errors=warmup_errors,
+            story_errors=story_errors,
         )
+
+    def _stories(
+        self, news: list[Article], rank: dict[str, int]
+    ) -> tuple[list[Story], list[str]]:
+        """The day's stories, best covered first; a grouper failure gives none."""
+        if self.grouper is None or not news:
+            return [], []
+        try:
+            groups = self.grouper.group(news)
+        except Exception as exc:  # any adapter failure only costs the stories
+            return [], [str(exc) or repr(exc)]
+        candidates = {a.key for a in news}
+        taken: set[str] = set()
+        sets: list[list[Article]] = []
+        for group in [*groups, *([a] for a in news)]:  # leftovers stand alone
+            items = []
+            for a in group:
+                if a.key in candidates and a.key not in taken:
+                    taken.add(a.key)
+                    items.append(a)
+            if items:
+                sets.append(items)
+        sources = {getattr(s, "name", None): i for i, s in enumerate(self.sources)}
+        ranked = sorted((_story(items, rank, sources) for items in sets), key=_coverage)
+        best: dict[str | None, Story] = {}
+        for story in ranked:
+            best.setdefault(story.section, story)
+        firsts = sorted(best.values(), key=lambda s: rank.get(s.section, len(rank)))
+        chosen = {s.id for s in firsts[: self.max_stories]}
+        for story in ranked:
+            if len(chosen) >= self.max_stories:
+                break
+            chosen.add(story.id)
+        return [s for s in ranked if s.id in chosen], []
 
     def _warm_up(self, articles: list[Article]) -> tuple[list[Article], list[str]]:
         """Adds the summarizer's warm-up to each `artigo`; failures only skip it."""
@@ -153,6 +200,22 @@ class BuildJournal:
         if self.max_age_days is None or article.evergreen:
             return True
         return article.published_at >= now - timedelta(days=self.max_age_days)
+
+
+def _story(items: list[Article], rank: dict[str, int], sources: dict) -> Story:
+    """Lead: newest item of the source configured first. Section: most items have
+    it, ties going to the section configured first."""
+    items.sort(
+        key=lambda a: (sources.get(a.source, len(sources)), -a.published_at.timestamp())
+    )
+    counts = Counter(a.section for a in items)
+    section = min(counts, key=lambda s: (-counts[s], rank.get(s, len(rank))))
+    return Story(tuple(items), section)
+
+
+def _coverage(story: Story) -> tuple[int, float]:
+    """More distinct sources first, then the story with the newest item."""
+    return (-len(story.sources), -max(a.published_at.timestamp() for a in story.items))
 
 
 def _cap_per_section(articles: list[Article], limit: int) -> list[Article]:

@@ -396,3 +396,26 @@ def test_archive_needs_positive_pages(tmp_path, value):
 def test_archive_without_pages_rejected(tmp_path):
     with pytest.raises(ConfigError, match="pages"):
         load_config(write(tmp_path, archive() + PUBLISHER))
+
+
+def test_stories_table(tmp_path):
+    assert load_config(write(tmp_path, rss() + PUBLISHER)).stories is None
+    cfg = load_config(
+        write(tmp_path, rss() + PUBLISHER + "[stories]\nmax_stories = 8\n")
+    )
+    assert cfg.stories == {"max_stories": 8}
+
+
+@pytest.mark.parametrize(
+    ("table", "key"),
+    [
+        ("max_stories = 0", "max_stories"),
+        ("max_stories = 2.5", "max_stories"),
+        ('model = ""', "model"),
+        ("timeout = -1", "timeout"),
+        ("max_story = 8", "max_story"),
+    ],
+)
+def test_invalid_stories_rejected(tmp_path, table, key):
+    with pytest.raises(ConfigError, match=key):
+        load_config(write(tmp_path, rss() + PUBLISHER + f"[stories]\n{table}\n"))

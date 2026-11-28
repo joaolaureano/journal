@@ -59,6 +59,8 @@ def handler(event, context, storage=None, ssm=None):
         log.warning("source failed: %s", error)
     for error in report.warmup_errors:
         log.warning("warm-up failed: %s", error)
+    for error in report.story_errors:
+        log.warning("stories failed: %s", error)
     log.info(summary(report))
     return {
         "edition": report.edition.date.isoformat(),
@@ -66,6 +68,7 @@ def handler(event, context, storage=None, ssm=None):
         "fetched": report.fetched,
         "already_published": report.already_published,
         "warmups": report.warmups,
+        "stories": len(report.edition.stories),
         "source_errors": [str(e) for e in report.errors],
     }
 

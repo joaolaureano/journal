@@ -35,3 +35,17 @@ class FakePublisher:
 
     def publish(self, edition: Edition) -> None:
         self.edition = edition
+
+
+class FakeGrouper:
+    """Groups items by URL: `groups` holds lists of URLs reporting the same fact."""
+
+    def __init__(self, *groups: list[str], error: Exception | None = None):
+        self.groups, self.error, self.asked = groups, error, None
+
+    def group(self, articles):
+        self.asked = list(articles)
+        if self.error:
+            raise self.error
+        by_url = {a.url: a for a in articles}
+        return [[by_url[u] for u in g if u in by_url] for g in self.groups]

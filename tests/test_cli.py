@@ -86,7 +86,10 @@ def test_second_build_same_day_adds_a_revision(tmp_path, capsys):
     manifest = json.loads((tmp_path / "dist" / "editions.json").read_text("utf-8"))
     assert [e["revision"] for e in manifest] == [1, 2]
     assert [e["articles"] for e in manifest][0] == manifest[1]["articles"] > 0
-    assert "(0 already in earlier editions, 0 AI warm-ups)" in capsys.readouterr().out
+    assert (
+        "(0 already in earlier editions, 0 AI warm-ups, 0 stories)"
+        in capsys.readouterr().out
+    )
 
 
 def test_summarizer_needs_the_api_key(tmp_path, monkeypatch, capsys):
@@ -167,3 +170,34 @@ def test_collect_fails_when_no_source_answers(tmp_path, capsys):
     path = pooled_config(tmp_path, (tmp_path / "missing.xml").as_uri(), "S")
     assert main(["collect", "--config", path]) != 0
     assert "no source fetched successfully" in capsys.readouterr().err
+
+
+def test_stories_need_the_key(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    path = config(
+        tmp_path, ("One", (FIXTURES / "feed.xml").as_uri()), extra="[stories]\n"
+    )
+    assert main(["build", "--config", path]) == 0
+    captured = capsys.readouterr()
+    assert "stories skipped: DEEPSEEK_API_KEY is not set" in captured.err
+    assert "0 stories" in captured.out
+
+
+def test_stories_from_the_configured_grouper(tmp_path, monkeypatch, capsys):
+    from fakes import FakeGrouper
+
+    from journal import cli
+
+    made = {}
+
+    def fake(key, **options):
+        made.update(options, key=key)
+        return FakeGrouper(["https://example.com/first", "https://example.com/second"])
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+    monkeypatch.setattr(cli, "DeepSeekGrouper", fake)
+    extra = '[stories]\nmax_stories = 2\nmodel = "m"\n'
+    path = config(tmp_path, ("One", (FIXTURES / "feed.xml").as_uri()), extra=extra)
+    assert main(["build", "--config", path]) == 0
+    assert made == {"key": "k", "model": "m"}
+    assert "2 stories" in capsys.readouterr().out
