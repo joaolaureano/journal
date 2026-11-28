@@ -201,6 +201,26 @@ kind = "artigo"
 url = "https://www.akitaonrails.com/index.xml"
 full_text = true
 
+# Segurança da informação, verificadas em 28/11/2026: texto completo no feed, sem paywall,
+# robots.txt sem restrição a IA. BleepingComputer, Ars Technica e Tecnoblog bloqueiam IA;
+# The Record, The Hacker News e SecurityWeek só mandam resumo; CISO Advisor e The Register
+# não entregam o feed a leitores automáticos.
+[[sources]]
+type = "rss"
+name = "Minuto da Segurança"
+section = "Blogs técnicos"
+kind = "artigo"
+url = "https://minutodaseguranca.blog.br/feed/"
+full_text = true
+
+[[sources]]
+type = "rss"
+name = "Schneier on Security"
+section = "Blogs técnicos"
+kind = "artigo"
+url = "https://www.schneier.com/feed/atom/"
+full_text = true
+
 # --- Matemática (divulgação, para iniciantes) ---
 
 [[sources]]

@@ -19,7 +19,7 @@ Site: <https://d2e7f4g64n2qyp.cloudfront.net>. Edição de segunda a sábado às
 | Política | g1 política, JOTA, Revista Fórum, CNN Brasil política (`/politica/`), Jovem Pan política (`/politica/`) |
 | Economia | g1 economia, InfoMoney, Money Times, Seu Dinheiro, CNN Brasil economia, Jovem Pan economia |
 | Mundo | g1 mundo, Opera Mundi, CNN Brasil internacional (`/internacional/`) |
-| Blogs técnicos | Martin Fowler, Pragmatic Engineer, Cloudflare, Daniel Lemire, Marc Brooker, Murat Demirbas, Trail of Bits, Krebs on Security, Import AI, Fabio Akita (desde 28/11, a pedido do dono) |
+| Blogs técnicos | Martin Fowler, Pragmatic Engineer, Cloudflare, Daniel Lemire, Marc Brooker, Murat Demirbas, Trail of Bits, Krebs on Security, Import AI, Fabio Akita, Minuto da Segurança, Schneier on Security (os três desde 28/11, a pedido do dono) |
 | Matemática | Terence Tao, The Aperiodical |
 | Papers | The Morning Paper: um paper clássico por dia, do arquivo (`rss-archive`) |
 | Rio Grande do Sul | O Sul, Litoral na Rede, Rádio Guaíba |
