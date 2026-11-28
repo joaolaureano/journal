@@ -172,22 +172,6 @@ kind = "artigo"
 url = "https://aperiodical.com/feed/"
 full_text = true
 
-[[sources]]
-type = "rss"
-name = "Chalkdust Magazine"
-section = "Matemática"
-kind = "artigo"
-url = "https://chalkdustmagazine.com/feed/"
-full_text = true
-
-[[sources]]
-type = "rss"
-name = "AMS Feature Column"
-section = "Matemática"
-kind = "artigo"
-url = "https://blogs.ams.org/featurecolumn/feed/"
-full_text = true
-
 # --- Papers (arXiv), uma seção por área de estudo ---
 # Resumo completo de cada paper; o feed repete versões novas de papers antigos (puladas).
 # Nos dias sem anúncio do arXiv (em geral sábado e feriados dos EUA) o feed vem vazio e as seções somem.
