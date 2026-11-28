@@ -1,0 +1,7 @@
+# Design
+
+- **Prompts:** as regras novas vão no texto do `GROUP_PROMPT` e do `WRITE_PROMPT`, com contraexemplos tirados da rodada real de 28/11. Com só o prompt, as rodadas 3 e 4 ainda juntaram 1 a 3 itens de outro fato por rodada (Lotomania com Mega-Sena, Trump/Putin com a entrevista do Zelensky); o escritor quase sempre os ignora no texto, mas eles aparecem entre as fontes. A 5ª rodada ligou o modo de raciocínio no agrupador: a chamada levou ~3 min e caiu no meio da resposta (`IncompleteRead`), e a edição saiu sem histórias. O agrupador fica sem raciocínio; os itens soltos ocasionais são o limite conhecido.
+- **Divergência com duas fontes:** filtro determinístico no parser do escritor, além do prompt: versões de um mesmo veículo (dois itens do g1 em horários diferentes) não são discordância entre fontes.
+- **Seção:** a do item principal, que já é o mais novo do veículo configurado primeiro. Como as seções regionais vêm por último no `journal.toml`, uma história só fica em "Rio Grande do Sul" se nenhuma seção anterior a cobriu. A 2ª rodada real mostrou que contar fontes distintas não basta (O Sul, Litoral na Rede e Rádio Guaíba cobrem notícia nacional).
+- **Capa:** os links das fontes passam por `dict.fromkeys` por nome de fonte, mantendo a ordem e o primeiro item de cada uma.
+- **Conferência:** rodadas reais locais (~US$ 0,03 cada, autorizadas pelo dono, no máximo três) até os cinco problemas sumirem; então `[stories]` entra no `journal.toml`.

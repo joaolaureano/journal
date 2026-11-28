@@ -750,3 +750,15 @@ def test_lead_story_without_image_has_no_figure(out):
     ed, _ = story_edition()
     publisher(out).publish(ed)
     assert "<figure>" not in stories_block(out)
+
+
+def test_front_page_links_each_source_once(out):
+    from journal.domain import Story
+
+    a, b = (article(f"https://g1.com/{n}", source="g1 política") for n in "ab")
+    jota = article("https://jota.info/c", source="JOTA")
+    ed = Edition(DAY, (a, b, jota), stories=(Story((a, b, jota), "Política"),))
+    publisher(out).publish(ed)
+    sources = stories_block(out).split('class="story-sources">', 1)[1].split("</p>")[0]
+    assert sources.count("g1 política") == 1 and sources.count("JOTA") == 1
+    assert f"articles/{a.id}.html" in sources and f"articles/{b.id}.html" not in sources

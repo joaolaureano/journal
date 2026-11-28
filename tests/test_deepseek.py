@@ -273,3 +273,43 @@ def test_writer_cuts_each_item_to_its_share(monkeypatch):
     DeepSeekWriter("k", max_input_chars=20).write(Story(items))
     user = api.body()["messages"][1]["content"]
     assert "a" * 10 + "\n</fonte>" in user and "a" * 11 not in user
+
+
+def test_writer_drops_divergences_within_one_outlet(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekWriter
+    from journal.domain import Story
+
+    g1a, g1b, cnn = (
+        article(f"https://x.com/{n}", source=s, title=n, body="<p>c</p>")
+        for n, s in [("a", "g1"), ("b", "g1"), ("c", "CNN")]
+    )
+    divergencias = [
+        {
+            "ponto": "Mesmo veículo",
+            "versoes": [{"fonte": 1, "diz": "58%"}, {"fonte": 2, "diz": "60%"}],
+        },
+        {
+            "ponto": "Dois veículos",
+            "versoes": [
+                {"fonte": 1, "diz": "Alvorada"},
+                {"fonte": 3, "diz": "Planalto"},
+            ],
+        },
+    ]
+    FakeAPI(monkeypatch, content=answer(divergencias=divergencias))
+    text = DeepSeekWriter("k").write(Story((g1a, g1b, cnn), "Política"))
+    assert [d.point for d in text.divergences] == ["Dois veículos"]
+
+
+def test_prompts_carry_the_grouping_and_divergence_rules(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekGrouper, DeepSeekWriter
+
+    api = FakeAPI(monkeypatch, content='{"grupos": []}')
+    DeepSeekGrouper("k").group(news(2))
+    grouping = api.body()["messages"][0]["content"]
+    assert "Na dúvida, não junte" in grouping and "loterias diferentes" in grouping
+    api = FakeAPI(monkeypatch, content=answer())
+    DeepSeekWriter("k").write(story_of(2))
+    writing = api.body()["messages"][0]["content"]
+    assert "Não é divergência" in writing and "só atribua a ela" in writing
+    assert "podem ser verdade ao mesmo tempo" in writing

@@ -263,6 +263,16 @@ max_calls = 80           # chamadas pagas por edição; o que está em cache nã
 max_input_chars = 16000  # texto do artigo enviado, no máximo
 timeout = 180            # segundos para a etapa inteira; o que faltar sai sem
 
+[stories]
+# Junta as notícias do mesmo fato em histórias escritas por IA (DeepSeek) numa voz única,
+# com as fontes de cada parágrafo. Precisa de DEEPSEEK_API_KEY, como o [summarizer].
+# Custo: ~US$ 0,03 por edição fora do pico, ~US$ 0,80 por mês.
+max_stories = 10         # histórias por edição
+model = "deepseek-flash"
+timeout = 120            # segundos por chamada
+max_calls = 10           # textos pagos por edição; o que está em cache não conta
+max_input_chars = 24000  # texto das fontes enviado por história
+
 [pool]
 # Guarda o que cada feed mostrou nas últimas `hours` horas (padrão 48), em pool/, para a
 # edição ver o dia inteiro mesmo de feeds curtos. `journal collect` só atualiza o pool.

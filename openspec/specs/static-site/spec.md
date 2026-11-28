@@ -281,7 +281,7 @@ When an edition has stories, its `index.html` and the root `index.html` SHALL sh
 - **THEN** its front page has no `Histórias do dia` block
 
 ### Requirement: Story entry on the front page
-Each story on the front page SHALL show its section, the number of distinct sources (`1 fonte`, `3 fontes`) and one link per item to its page, labelled with the item's source. A story with text SHALL show its written title linking to its story page, the label `Texto por IA`, its first paragraph and, when it has divergences, a `divergência` badge. A story without text SHALL show its first item's title linking to that item's page and its first item's summary.
+Each story on the front page SHALL show its section, the number of distinct sources (`1 fonte`, `3 fontes`) and one link per distinct source, to that source's first item. A story with text SHALL show its written title linking to its story page, the label `Texto por IA`, its first paragraph and, when it has divergences, a `divergência` badge. A story without text SHALL show its first item's title, linking to its page, and summary.
 
 #### Scenario: Story with three sources
 - **WHEN** an edition's first story has items from g1 política, CNN Brasil política and JOTA
@@ -290,6 +290,10 @@ Each story on the front page SHALL show its section, the number of distinct sour
 #### Scenario: Written story with a divergence
 - **WHEN** a story has a written text with one divergence
 - **THEN** its front-page entry shows the written title, `Texto por IA`, the first paragraph and the `divergência` badge, and links to the story page
+
+#### Scenario: Several items from one source
+- **WHEN** a story has two items from g1 política and one from JOTA
+- **THEN** its entry links g1 política once and JOTA once
 
 ### Requirement: Stories file
 Publishing SHALL write `stories.json` in the edition folder: a JSON array, in display order, with one object per story holding its `id`, `section`, the `ids` of its items, their distinct `sources` and its `text`: null, or the title, the paragraphs with the ids that support them and the divergences.

@@ -350,9 +350,12 @@ def _stories_block(edition: Edition, base: str) -> str:
         badge = ""
         if text is not None and text.divergences:
             badge = ' · <span class="badge">divergência</span>'
+        firsts = {}  # one link per source, to its first item
+        for a in story.items:
+            firsts.setdefault(a.source, a)
         links = ", ".join(
             f'<a href="{base}articles/{a.id}.html">{escape(a.source)}</a>'
-            for a in story.items
+            for a in firsts.values()
         )
         image = _figure(lead) if i == 0 else _img(lead, "thumb")  # credit on the lead
         kicker = (

@@ -57,7 +57,7 @@ def test_item_keeps_its_first_group_only():
     assert [urls(s) for s in edition.stories] == [sorted([x.url, y.url]), [z.url]]
 
 
-def test_section_by_majority_then_configured_order():
+def test_section_is_the_lead_section():
     p1, p2, e1 = item("p1", "a"), item("p2", "b"), item("e1", "c")
     sources = [
         Sectioned(FakeSource([p1, p2]), "Política"),
@@ -66,7 +66,7 @@ def test_section_by_majority_then_configured_order():
     edition, _ = build(sources, FakeGrouper([p1.url, p2.url, e1.url]))
     assert edition.stories[0].section == "Política"
     edition, _ = build(sources, FakeGrouper([p1.url, e1.url]))
-    assert edition.stories[0].section == "Política"  # 1 to 1: configured first wins
+    assert edition.stories[0].section == "Política"  # lead: section configured first
 
 
 def test_lead_is_the_newest_item_of_the_first_source():
@@ -182,3 +182,15 @@ def test_text_citing_other_items_is_refused():
     )
     assert edition.stories[0].text is None
     assert report.story_errors[0].startswith("invalid story text")
+
+
+def test_section_of_the_lead_not_of_most_items():
+    osul = [item(f"s{i}", "osul") for i in range(3)]
+    g1, jota = item("g", "g1"), item("j", "jota")
+    sources = [
+        Sectioned(Named("g1", [g1]), "Política"),
+        Sectioned(Named("jota", [jota]), "Política"),
+        Sectioned(Named("osul", osul), "Rio Grande do Sul"),
+    ]
+    edition, _ = build(sources, FakeGrouper([a.url for a in [*osul, g1, jota]]))
+    assert edition.stories[0].section == "Política"  # lead: Política, not RS

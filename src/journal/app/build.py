@@ -1,4 +1,3 @@
-from collections import Counter
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass, field, replace
@@ -243,14 +242,12 @@ class BuildJournal:
 
 
 def _story(items: list[Article], rank: dict[str, int], sources: dict) -> Story:
-    """Lead: newest item of the source configured first. Section: most items have
-    it, ties going to the section configured first."""
+    """Lead: newest item of the source configured first. Section: the lead's, so a
+    regional section configured last keeps only stories no other section covered."""
     items.sort(
         key=lambda a: (sources.get(a.source, len(sources)), -a.published_at.timestamp())
     )
-    counts = Counter(a.section for a in items)
-    section = min(counts, key=lambda s: (-counts[s], rank.get(s, len(rank))))
-    return Story(tuple(items), section)
+    return Story(tuple(items), items[0].section)
 
 
 def _coverage(story: Story) -> tuple[int, float]:

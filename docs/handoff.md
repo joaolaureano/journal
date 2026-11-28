@@ -35,10 +35,18 @@ Peças em funcionamento:
 - **Filtro por endereço** (`paths`): um feed geral entra em mais de uma seção.
 - **Aquecimento por IA** (`[summarizer]`, DeepSeek) nos itens `kind = "artigo"`.
 - **Histórias** (`[stories]`): agrupamento, ranking, texto em voz única com fontes por parágrafo,
-  divergências e página própria. O código está publicado, mas **desligado**: o `journal.toml`
-  não tem a tabela `[stories]`.
+  divergências e página própria. **Ligadas desde 28/11**, depois de cinco rodadas reais locais
+  (mudança `tighten-stories`). Limite conhecido: o agrupador ainda junta, às vezes, 1 a 3 itens
+  de outro fato numa história; o texto quase sempre os ignora, mas eles aparecem entre as fontes.
+  O modo de raciocínio no agrupador foi testado e descartado (~3 min e resposta cortada).
+- **Capa diagramada** (`redesign-front-page`): manchete com foto, quatro chamadas, notas, faixas
+  por seção em cards, aba Artigos em cards horizontais; tema claro, fonte do sistema.
 
 ## 3. O que falta, em ordem
+
+**Estado em 28/11:** 3.1, 3.2 e 3.3 estão feitos. Falta só conferir no log a primeira edição
+com histórias (sábado, 28/11, 08:00): `stories failed: ...` ou o resumo `N stories, N written`.
+O que segue é o registro de como cada passo foi feito.
 
 ### 3.1 Arquivar o coletor (pequeno)
 
