@@ -715,3 +715,38 @@ def test_story_without_text_has_no_page(out):
     publisher(out).publish(ed)
     folder = out / manifest(out)[-1]["path"]
     assert not (folder / "historias").exists()
+
+
+def stories_block(out):
+    html = (out / "index.html").read_text(encoding="utf-8")
+    return html.split("Histórias do dia", 1)[1].split("Todas as notícias", 1)[0]
+
+
+def test_front_page_entries_have_section_and_ai_label_in_meta(out):
+    ed, _ = written_edition()
+    publisher(out).publish(ed)
+    block = stories_block(out)
+    assert '<p class="kicker">Política</p>' in block
+    meta = block.split('<p class="meta">', 1)[1].split("</p>", 1)[0]
+    assert "Texto por IA" in meta and "divergência" in meta
+
+
+def test_lead_story_shows_its_image_with_credit(out):
+    from journal.domain import Story
+
+    lead = article(
+        "https://g1.com/a", image="https://g1.com/a.jpg", image_credit="Fulano"
+    )
+    other = article("https://g1.com/b", image="https://g1.com/b.jpg")
+    ed = Edition(DAY, (lead, other), stories=(Story((lead,)), Story((other,))))
+    publisher(out).publish(ed)
+    block = stories_block(out)
+    first, second = block.split("<li>")[1:3]
+    assert "<figure>" in first and "Imagem: Fulano, via fake" in first
+    assert "<figure>" not in second and 'class="thumb"' in second
+
+
+def test_lead_story_without_image_has_no_figure(out):
+    ed, _ = story_edition()
+    publisher(out).publish(ed)
+    assert "<figure>" not in stories_block(out)

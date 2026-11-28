@@ -196,10 +196,14 @@ Every page SHALL include a navigation menu listing the 30 most recent editions k
 - **THEN** the menu lists the 30 most recent and links to the archive
 
 ### Requirement: Menu stays put while the content scrolls
-The menu SHALL stay fixed at the left of the viewport with its own scrolling, open by default on wide screens and closed by default on narrow ones, and a menu button SHALL toggle it without scripts.
+The menu SHALL stay fixed at the left of the viewport with its own scrolling, closed by default on every screen, and a menu button SHALL toggle it without scripts.
 
 #### Scenario: Narrow screen
 - **WHEN** a page is opened on a narrow screen
+- **THEN** the menu is hidden until the menu button is activated
+
+#### Scenario: Wide screen
+- **WHEN** a page is opened on a wide screen
 - **THEN** the menu is hidden until the menu button is activated
 
 ### Requirement: Section index
@@ -277,7 +281,7 @@ When an edition has stories, its `index.html` and the root `index.html` SHALL sh
 - **THEN** its front page has no `Histórias do dia` block
 
 ### Requirement: Story entry on the front page
-Each story on the front page SHALL show the number of distinct sources (`1 fonte`, `3 fontes`) and one link per item to its page, labelled with the item's source. A story with text SHALL show its written title linking to its story page, its first paragraph and, when it has divergences, a `divergência` badge. A story without text SHALL show its first item's title linking to that item's page and its first item's summary.
+Each story on the front page SHALL show its section, the number of distinct sources (`1 fonte`, `3 fontes`) and one link per item to its page, labelled with the item's source. A story with text SHALL show its written title linking to its story page, the label `Texto por IA`, its first paragraph and, when it has divergences, a `divergência` badge. A story without text SHALL show its first item's title linking to that item's page and its first item's summary.
 
 #### Scenario: Story with three sources
 - **WHEN** an edition's first story has items from g1 política, CNN Brasil política and JOTA
@@ -285,7 +289,7 @@ Each story on the front page SHALL show the number of distinct sources (`1 fonte
 
 #### Scenario: Written story with a divergence
 - **WHEN** a story has a written text with one divergence
-- **THEN** its front-page entry shows the written title, the first paragraph and the `divergência` badge, and links to the story page
+- **THEN** its front-page entry shows the written title, `Texto por IA`, the first paragraph and the `divergência` badge, and links to the story page
 
 ### Requirement: Stories file
 Publishing SHALL write `stories.json` in the edition folder: a JSON array, in display order, with one object per story holding its `id`, `section`, the `ids` of its items, their distinct `sources` and its `text`: null, or the title, the paragraphs with the ids that support them and the divergences.
@@ -311,3 +315,14 @@ Publishing SHALL write `historias/<id>.html` in the edition folder for every sto
 #### Scenario: Markup in the model's text
 - **WHEN** a paragraph from the model contains `<script>`
 - **THEN** the story page shows it as text
+
+### Requirement: Front page layout
+The stories on the front page SHALL be laid out as a newspaper: the first as the lead, wide, with its first item's image large and credited when the feed has one; the next four as a row of teasers; the rest as compact notes. The news list SHALL follow as one band per section, items in a grid. Without an image, an entry SHALL show text in its place. On narrow screens everything SHALL stack in one column.
+
+#### Scenario: Lead story with image
+- **WHEN** the first story's first item has an image with a credit
+- **THEN** the front page shows that image in the lead entry with the credit
+
+#### Scenario: Lead story without image
+- **WHEN** the first story's first item has no image
+- **THEN** the lead entry has no image and no empty figure

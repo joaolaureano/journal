@@ -252,7 +252,7 @@ def _edition_page(
             heading = f'<h1 id="{anchor}">{name}</h1>\n'
             links.append(f'<a href="#{anchor}">{name}</a>')
         blocks.append(
-            heading + '<ol class="articles">\n' + "\n".join(items) + "\n</ol>"
+            heading + f'<ol class="articles {kind}">\n' + "\n".join(items) + "\n</ol>"
         )
     listing = "\n".join(blocks) or f"<p>{EMPTY[kind]}</p>"
     index = (
@@ -336,19 +336,17 @@ def _sources_count(n: int) -> str:
 def _stories_block(edition: Edition, base: str) -> str:
     """The day's stories: title and opening, coverage and a link per item."""
     entries = []
-    for story in edition.stories:
+    for i, story in enumerate(edition.stories):
         lead, w, text = story.lead, _when(story.lead, edition.timezone), story.text
-        if text is not None:  # the written story, labelled as AI
+        ai = ""
+        if text is not None:  # the written story: title and text are the model's
             href, title = f"{base}historias/{story.id}.html", text.title
-            summary = (
-                '<p class="summary"><span class="ai">Texto por IA</span> '
-                f"{escape(text.paragraphs[0].text)}</p>"
-            )
+            ai = ' · <span class="ai">Texto por IA</span>'
+            opening = text.paragraphs[0].text
         else:
             href, title = f"{base}articles/{lead.id}.html", lead.title
-            summary = (
-                f'<p class="summary">{escape(lead.summary)}</p>' if lead.summary else ""
-            )
+            opening = lead.summary
+        summary = f'<p class="summary">{escape(opening)}</p>' if opening else ""
         badge = ""
         if text is not None and text.divergences:
             badge = ' · <span class="badge">divergência</span>'
@@ -356,17 +354,21 @@ def _stories_block(edition: Edition, base: str) -> str:
             f'<a href="{base}articles/{a.id}.html">{escape(a.source)}</a>'
             for a in story.items
         )
+        image = _figure(lead) if i == 0 else _img(lead, "thumb")  # credit on the lead
+        kicker = (
+            f'<p class="kicker">{escape(story.section)}</p>' if story.section else ""
+        )
         entries.append(
-            f"<li>{_img(lead, 'thumb')}"
+            f"<li>{image}{kicker}"
             f'<h2><a href="{href}">{escape(title)}</a></h2>'
             f'<p class="meta">{_sources_count(len(story.sources))} · '
-            f'<time datetime="{w["iso"]}">{w["date"]}</time>{badge}</p>{summary}'
+            f'<time datetime="{w["iso"]}">{w["date"]}</time>{ai}{badge}</p>{summary}'
             f'<p class="story-sources">Fontes: {links}</p></li>'
         )
     return (
         '<section class="stories" aria-labelledby="historias-do-dia">\n'
         '<h1 id="historias-do-dia">Histórias do dia</h1>\n'
-        '<ol class="articles">\n' + "\n".join(entries) + "\n</ol>\n</section>\n"
+        '<ol class="story-list">\n' + "\n".join(entries) + "\n</ol>\n</section>\n"
     )
 
 
