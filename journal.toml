@@ -80,16 +80,6 @@ name = "UOL"
 section = "Brasil e mundo"
 url = "https://rss.uol.com.br/feed/noticias.xml"
 
-# --- Tecnologia ---
-
-[[sources]]
-type = "rss"
-name = "Krebs on Security"
-section = "Tecnologia"
-kind = "artigo"
-url = "https://krebsonsecurity.com/feed/"
-full_text = true
-
 # --- Blogs técnicos ---
 
 [[sources]]
@@ -98,14 +88,6 @@ name = "Martin Fowler"
 section = "Blogs técnicos"
 kind = "artigo"
 url = "https://martinfowler.com/feed.atom"
-full_text = true
-
-[[sources]]
-type = "rss"
-name = "Julia Evans"
-section = "Blogs técnicos"
-kind = "artigo"
-url = "https://jvns.ca/atom.xml"
 full_text = true
 
 [[sources]]
@@ -126,10 +108,42 @@ full_text = true
 
 [[sources]]
 type = "rss"
-name = "Netflix TechBlog"
+name = "Daniel Lemire"
 section = "Blogs técnicos"
 kind = "artigo"
-url = "https://netflixtechblog.com/feed"
+url = "https://lemire.me/blog/feed/"
+full_text = true
+
+[[sources]]
+type = "rss"
+name = "Marc Brooker"
+section = "Blogs técnicos"
+kind = "artigo"
+url = "https://brooker.co.za/blog/rss.xml"
+full_text = true
+
+[[sources]]
+type = "rss"
+name = "Murat Demirbas"
+section = "Blogs técnicos"
+kind = "artigo"
+url = "https://muratbuffalo.blogspot.com/feeds/posts/default"
+full_text = true
+
+[[sources]]
+type = "rss"
+name = "Trail of Bits"
+section = "Blogs técnicos"
+kind = "artigo"
+url = "https://blog.trailofbits.com/feed/"
+full_text = true
+
+[[sources]]
+type = "rss"
+name = "Krebs on Security"
+section = "Blogs técnicos"
+kind = "artigo"
+url = "https://krebsonsecurity.com/feed/"
 full_text = true
 
 # --- Papers (arXiv), uma seção por área de estudo ---
