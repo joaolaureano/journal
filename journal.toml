@@ -5,30 +5,6 @@
 # Chave de topo: precisa vir antes de qualquer [[sources]].
 timezone = "America/Sao_Paulo"
 
-# --- Ciência ---
-
-[[sources]]
-type = "rss"
-name = "Pesquisa FAPESP"
-section = "Ciência"
-kind = "artigo"
-url = "https://revistapesquisa.fapesp.br/feed/"
-full_text = true
-
-[[sources]]
-type = "rss"
-name = "IEEE Spectrum"
-section = "Ciência"
-kind = "artigo"
-url = "https://spectrum.ieee.org/feeds/feed.rss"
-full_text = true
-
-[[sources]]
-type = "rss"
-name = "Wired (ciência)"
-section = "Ciência"
-url = "https://www.wired.com/feed/category/science/latest/rss"
-
 # --- Brasil e mundo ---
 
 [[sources]]
