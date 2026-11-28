@@ -220,6 +220,12 @@ Decidido em 2026-11-27:
   (r/math, r/singularity) ficou de fora: bloqueia acesso automatizado e restringe uso por IA. A
   Quanta manda só resumo.
 - **Ciência:** saiu inteira em 2026-11-28, por escolha do dono.
+- **Revisão de fontes fechada em 2026-11-28.** No ar: Política, Economia, Mundo, Blogs técnicos,
+  Matemática e Rio Grande do Sul, todas conferidas pelas três regras (texto completo, sem
+  paywall, sem restrição a IA). O que falta depende de código ou de medição: o filtro por
+  endereço (CNN Brasil e Jovem Pan), o coletor de hora em hora (Fórum, InfoMoney, Money Times),
+  o paper clássico do dia, a medição do arXiv só com surveys num dia útil e uma nova medição do
+  O Antagonista.
 - **Papers (a fazer):** o objetivo do dono é aprender estruturas de dados, algoritmos e design
   patterns com o mundo acadêmico, não acompanhar tudo que sai. O arXiv cru (os papers mais novos do
   dia, sem seleção) saiu. No lugar:
