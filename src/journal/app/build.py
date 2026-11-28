@@ -1,3 +1,6 @@
+import re
+import unicodedata
+from collections import Counter
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass, field, replace
@@ -148,7 +151,7 @@ class BuildJournal:
         if self.grouper is None or not news:
             return [], []
         try:
-            groups = self.grouper.group(news)
+            groups = [_coherent(g) for g in self.grouper.group(news)]
         except Exception as exc:  # any adapter failure only costs the stories
             return [], [str(exc) or repr(exc)]
         candidates = {a.key for a in news}
@@ -239,6 +242,34 @@ class BuildJournal:
         if self.max_age_days is None or article.evergreen:
             return True
         return article.published_at >= now - timedelta(days=self.max_age_days)
+
+
+STOP_WORDS = set(
+    "para pelo pela pelos pelas sobre apos entre como mais veja nesta neste nessa "
+    "nesse essa esse isso quando onde depois ainda tambem seus suas pode sera esta "
+    "estao foram quem qual contra diz dizem afirma".split()
+)
+
+
+def _words(title: str) -> set[str]:
+    """Lowercase words of four letters or more, without accents or stop words."""
+    plain = unicodedata.normalize("NFKD", title)
+    plain = "".join(c for c in plain if not unicodedata.combining(c)).casefold()
+    return {w for w in re.findall(r"\w+", plain) if len(w) > 3} - STOP_WORDS
+
+
+def _coherent(group: list[Article]) -> list[Article]:
+    """The group without items whose title shares no word with the others' (with
+    two of them, in groups of four or more): the grouper sometimes adds a different
+    fact. Dropped items stand alone."""
+    words = [_words(a.title) for a in group]
+    need = 2 if len(group) >= 4 else 1
+    kept = []
+    for i, a in enumerate(group):
+        others = Counter(w for j, ws in enumerate(words) if j != i for w in ws)
+        if any(others[w] >= need for w in words[i]):
+            kept.append(a)
+    return kept
 
 
 def _story(items: list[Article], rank: dict[str, int], sources: dict) -> Story:

@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 from fakes import FakeGrouper, FakePublisher, FakeSource, article
@@ -17,7 +18,7 @@ def item(slug, source, hours_ago=1.0):
     return article(
         f"https://{source}.com/{slug}",
         source=source,
-        title=slug,
+        title=f"Fato do dia {slug}",  # one shared word: the groups stay whole
         published_at=NOW - timedelta(hours=hours_ago),
     )
 
@@ -194,3 +195,31 @@ def test_section_of_the_lead_not_of_most_items():
     ]
     edition, _ = build(sources, FakeGrouper([a.url for a in [*osul, g1, jota]]))
     assert edition.stories[0].section == "Política"  # lead: Política, not RS
+
+
+def titled(slug, source, title):
+    return replace(item(slug, source), title=title)
+
+
+def test_item_sharing_no_word_with_its_group_stands_alone():
+    camilo = [
+        titled("a", "g1", "Lula convida Camilo Santana para a Casa Civil"),
+        titled("b", "jota", "Lula escolhe Camilo Santana para comandar a Casa Civil"),
+        titled("c", "cnn", "Reginaldo diz que Camilo na Casa Civil terá papel"),
+    ]
+    stray = titled(
+        "d", "osul", "Anúncios falsos somaram 91,8% das ameaças na Black Friday"
+    )
+    sources = [Named(a.source, [a]) for a in [*camilo, stray]]
+    edition, _ = build(sources, FakeGrouper([a.url for a in [*camilo, stray]]))
+    assert sorted(urls(edition.stories[0])) == sorted(a.url for a in camilo)
+    assert [stray.url] in [urls(s) for s in edition.stories]
+
+
+def test_pair_without_a_shared_word_splits():
+    a = titled("a", "g1", "Dino suspende emendas de Flávio Bolsonaro")
+    b = titled("b", "cnn", "Mega-Sena acumula e prêmio vai a R$ 82 milhões")
+    edition, _ = build(
+        [Named("g1", [a]), Named("cnn", [b])], FakeGrouper([a.url, b.url])
+    )
+    assert sorted(len(s.items) for s in edition.stories) == [1, 1]
