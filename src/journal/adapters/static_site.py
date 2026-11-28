@@ -74,25 +74,26 @@ class StaticSitePublisher:
             manifest.append(entry)
             base = entry["path"]
             for a in _with_story_items(edition):
-                page = _article_page(a, edition.timezone, "../../../", manifest, entry)
+                page = _article_page(a, edition.timezone, "../../../", entry)
                 self._put(f"{base}articles/{a.id}.html", page)
             self._put(f"{base}articles.json", _index_json(edition.articles))
             self._put(f"{base}stories.json", _stories_json(edition.stories))
             for s in edition.stories:
                 if s.text is not None:
-                    page = _story_page(s, "../../../", manifest, entry)
+                    page = _story_page(s, "../../../", entry)
                     self._put(f"{base}historias/{s.id}.html", page)
             for kind, name in LIST_PAGES.items():
-                page = _edition_page(edition, entry, manifest, "../../", "", kind)
+                page = _edition_page(edition, entry, "../../", "", kind)
                 self._put(f"{base}{name}", page)
             self._put(_stylesheet(), _read("style.css"))
             self._put("style.css", _read("style.css"))  # for pages from before
             self._put(f"{EDITIONS}/index.html", _archive_page(manifest))
+            self._put("menu.html", _menu_page(manifest))
             self._put(SEEN, _seen_json(seen, edition))
             self._put(MANIFEST, json.dumps(manifest, ensure_ascii=False, indent=2))
             # the root index.html goes last: until then the site shows the previous one
             for kind, name in reversed(LIST_PAGES.items()):
-                self._put(name, _edition_page(edition, entry, manifest, "", base, kind))
+                self._put(name, _edition_page(edition, entry, "", base, kind))
         except (OSError, KeyError, TypeError, ValueError) as exc:
             raise PublishError(f"cannot publish edition {edition.date}: {exc}") from exc
 
@@ -173,20 +174,28 @@ def _stylesheet() -> str:
     return f"style.{digest}.css"
 
 
-def _menu(manifest: list[dict], root: str, current: dict | None) -> str:
-    """Latest editions, newest first; `current` is the page's own edition."""
+def _menu(root: str, current: dict | None) -> str:
+    """The shared menu in a frame, scrolled to and marking `current` (the page's own
+    edition), so pages of earlier editions also list the later ones."""
+    mark = f"#e-{_folder(current)}" if current else ""
+    return Template(_read("menu.html")).substitute(root=root, mark=mark)
+
+
+def _menu_page(manifest: list[dict]) -> str:
+    """`menu.html` at the root: the latest editions, newest first."""
     items = []
     for e in reversed(manifest[-MENU_EDITIONS:]):
         label = f"{date.fromisoformat(e['date']):%d/%m/%Y}"
         label += f" · {e['revision']}" if e["revision"] > 1 else ""
-        mark = (
-            ' aria-current="page"' if current and e["path"] == current["path"] else ""
-        )
-        href = escape(f"{root}{e['path']}index.html")
-        items.append(f'<li><a href="{href}"{mark}>{label}</a></li>')
-    return Template(_read("menu.html")).substitute(
-        root=root, archive=f"{root}{EDITIONS}/index.html", items="\n".join(items)
+        href, slug = escape(f"{e['path']}index.html"), escape(_folder(e))
+        items.append(f'<li id="e-{slug}"><a href="{href}">{label}</a></li>')
+    return Template(_read("menu-frame.html")).substitute(
+        stylesheet=_stylesheet(), items="\n".join(items)
     )
+
+
+def _folder(entry: dict) -> str:
+    return entry["path"].removeprefix(f"{EDITIONS}/").rstrip("/")
 
 
 def _day(d: date) -> str:
@@ -234,7 +243,6 @@ def _figure(article: Article) -> str:
 def _edition_page(
     edition: Edition,
     entry: dict,
-    manifest: list[dict],
     root: str,
     base: str,
     kind: str = "noticia",
@@ -273,7 +281,7 @@ def _edition_page(
         sections=index,
         items=listing,
     )
-    menu = _menu(manifest, root, entry)
+    menu = _menu(root, entry)
     return _page(f"{label} · Journal", content, root, menu)
 
 
@@ -375,7 +383,7 @@ def _stories_block(edition: Edition, base: str) -> str:
     )
 
 
-def _story_page(story: Story, root: str, manifest: list[dict], entry: dict) -> str:
+def _story_page(story: Story, root: str, entry: dict) -> str:
     """A written story: every model text escaped, every claim with its sources."""
     text = story.text
 
@@ -415,7 +423,7 @@ def _story_page(story: Story, root: str, manifest: list[dict], entry: dict) -> s
         divergences=divergences,
         items=items,
     )
-    return _page(f"{text.title} · Journal", content, root, _menu(manifest, root, entry))
+    return _page(f"{text.title} · Journal", content, root, _menu(root, entry))
 
 
 def _stories_json(stories: Sequence[Story]) -> str:
@@ -456,12 +464,10 @@ def _archive_page(manifest: list[dict]) -> str:
     content = (
         "<h1>Edições</h1>\n" + '<ul class="editions">\n' + "\n".join(items) + "\n</ul>"
     )
-    return _page("Edições · Journal", content, "../", _menu(manifest, "../", None))
+    return _page("Edições · Journal", content, "../", _menu("../", None))
 
 
-def _article_page(
-    a: Article, tz: tzinfo, root: str, manifest: list[dict], entry: dict
-) -> str:
+def _article_page(a: Article, tz: tzinfo, root: str, entry: dict) -> str:
     content = Template(_read("article.html")).substitute(
         title=escape(a.title),
         source=escape(a.source),
@@ -475,7 +481,7 @@ def _article_page(
         warmup=_warmup(a),
         **_when(a, tz),
     )
-    menu = _menu(manifest, root, entry)
+    menu = _menu(root, entry)
     return _page(f"{a.title} · Journal", content, root, menu)
 
 

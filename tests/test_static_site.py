@@ -37,7 +37,11 @@ def pages(out, archive=False):
     return [
         p.read_text(encoding="utf-8")
         for p in out.rglob("*.html")
-        if archive or (p != out / "edicoes" / "index.html" and p.name != "artigos.html")
+        if archive
+        or (
+            p != out / "edicoes" / "index.html"
+            and p.name not in ("artigos.html", "menu.html")
+        )
     ]
 
 
@@ -235,7 +239,7 @@ def test_front_page_shows_latest_edition_with_links_into_it(out):
     front = (out / "index.html").read_text(encoding="utf-8")
     assert "Nova" in front and "Edição de 26 nov 2026" in front
     assert f'href="edicoes/2026-11-26/articles/{new.id}.html"' in front
-    assert 'href="edicoes/index.html"' in front
+    assert 'href="edicoes/index.html"' in menu(out)  # the archive, through the menu
 
 
 def test_same_day_publish_adds_revision_without_overwriting(out):
@@ -419,45 +423,64 @@ def test_no_section_headings_without_sections(out):
 # editions menu
 
 
-def menu(page):
-    return re.search(r'<nav class="editions-menu".*?</nav>', page, re.S).group(0)
+def menu(out):
+    return (out / "menu.html").read_text(encoding="utf-8")
+
+
+def frame(page):
+    return re.search(r'<nav class="editions-menu".*?<iframe src="([^"]+)"', page, re.S)[
+        1
+    ]
 
 
 def test_menu_lists_editions_newest_first_and_marks_current(out):
     publish(out, article("https://a.com/old"), day=date(2026, 11, 25))
     publish(out, article("https://a.com/new"))
-    front = menu((out / "index.html").read_text(encoding="utf-8"))
-    assert front.index("26/11/2026") < front.index("25/11/2026")
-    assert front.count('aria-current="page"') == 1
-    assert '<a href="edicoes/2026-11-26/index.html" aria-current="page">' in front
-    assert 'href="index.html">Última edição' in front
-    assert 'href="edicoes/index.html">Todas as edições' in front
-    page = (out / "edicoes" / "2026-11-26" / "index.html").read_text(encoding="utf-8")
-    assert 'href="../../edicoes/2026-11-25/index.html">25/11/2026' in menu(page)
+    shared = menu(out)
+    assert shared.index("26/11/2026") < shared.index("25/11/2026")
+    assert '<li id="e-2026-11-26"><a href="edicoes/2026-11-26/index.html">' in shared
+    assert 'href="index.html">Última edição' in shared
+    assert 'href="edicoes/index.html">Todas as edições' in shared
+    assert '<base target="_top">' in shared
+    front = (out / "index.html").read_text(encoding="utf-8")
+    assert frame(front) == "menu.html#e-2026-11-26"
+
+
+def test_earlier_edition_shows_the_later_ones(out):
+    publish(out, article("https://a.com/old"), day=date(2026, 11, 25))
+    publish(out, article("https://a.com/new"))
+    page = (out / "edicoes" / "2026-11-25" / "index.html").read_text(encoding="utf-8")
+    assert frame(page) == "../../menu.html#e-2026-11-25"
+    assert "26/11/2026" in menu(out)  # the shared menu, rewritten by the later one
 
 
 def test_menu_shows_revision_number(out):
     publish(out, article("https://a.com/1"))
     publish(out, article("https://a.com/2"))
-    front = menu((out / "index.html").read_text(encoding="utf-8"))
-    assert 'aria-current="page">26/11/2026 · 2</a>' in front
-    assert ">26/11/2026</a>" in front
+    second = '<a href="edicoes/2026-11-26-2/index.html">26/11/2026 · 2</a>'
+    assert f'<li id="e-2026-11-26-2">{second}' in menu(out)
+    assert ">26/11/2026</a>" in menu(out)
+    front = (out / "index.html").read_text(encoding="utf-8")
+    assert frame(front) == "menu.html#e-2026-11-26-2"
 
 
 def test_menu_keeps_the_30_most_recent(out):
     for back in range(30, -1, -1):
         publish(out, article(), day=DAY - timedelta(days=back))
-    front = menu((out / "index.html").read_text(encoding="utf-8"))
-    assert len(re.findall(r"<li>", front)) == 30
-    assert "28/10/2026" in front and "27/10/2026" not in front
+    shared = menu(out)
+    assert len(re.findall(r"<li ", shared)) == 30
+    assert "28/10/2026" in shared and "27/10/2026" not in shared
 
 
 def test_every_page_has_the_menu(out):
     a = article()
     folder = publish(out, a)
-    assert all('class="editions-menu"' in page for page in pages(out, archive=True))
+    others = [p for p in out.rglob("*.html") if p.name != "menu.html"]
+    assert all('class="editions-menu"' in p.read_text(encoding="utf-8") for p in others)
     page = (folder / "articles" / f"{a.id}.html").read_text(encoding="utf-8")
-    assert 'href="../../../edicoes/2026-11-26/index.html" aria-current' in menu(page)
+    assert frame(page) == "../../../menu.html#e-2026-11-26"
+    archive = (out / "edicoes" / "index.html").read_text(encoding="utf-8")
+    assert frame(archive) == "../menu.html"
 
 
 # section index
