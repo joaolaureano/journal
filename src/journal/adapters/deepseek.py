@@ -70,14 +70,24 @@ MAX_GROUP_TOKENS = 4000
 WRITE_PROMPT = (
     """\
 Você escreve uma notícia de um jornal pessoal a partir das matérias de várias fontes \
-sobre o mesmo fato. O leitor vai ler só o seu texto: junte o que cada fonte acrescenta.
+sobre o mesmo fato. O leitor vai ler só o seu texto, e não as matérias: ele precisa \
+ficar sabendo de tudo o que elas trazem.
 
 - Responda só com JSON no formato {"titulo": "...", "paragrafos": [{"texto": "...", \
 "fontes": [1, 2]}], "divergencias": [{"ponto": "...", "versoes": [{"fonte": 1, \
 "diz": "..."}, {"fonte": 2, "diz": "..."}]}]}, usando os números das fontes.
-- De 2 a 6 parágrafos em texto puro, sem markdown nem links. Em "fontes", ponha os \
-números das fontes que dizem o que o parágrafo afirma: todo parágrafo precisa de pelo \
-menos uma.
+- Cubra tudo o que as fontes trazem de relevante: cada fonte deve contribuir com o \
+que acrescenta (um dado, uma reação, um contexto, uma análise). Não repita o que \
+várias dizem igual: diga uma vez e cite todas elas.
+- Reescreva numa ordem fluida, como uma matéria só: o fato, os detalhes, as reações, \
+o contexto e o que vem depois. Agrupe por tema, não por fonte.
+- Quando um detalhe só aparece numa fonte, atribua a ela no texto ("segundo fontes \
+ouvidas pelo g1…", "três interlocutores disseram ao O Sul…"): é o que sustenta a \
+notícia. O que todas dizem, diga sem atribuição. Deixe claro o que ainda não foi \
+confirmado.
+- De 3 a 12 parágrafos em texto puro, sem markdown nem links: tantos quantos forem \
+precisos para cobrir as fontes, sem encher. Em "fontes", ponha os números das fontes \
+que dizem o que o parágrafo afirma: todo parágrafo precisa de pelo menos uma.
 - Só nomeie no texto de um parágrafo ("segundo o g1…") uma fonte cujo número esteja \
 em "fontes" desse parágrafo, e só atribua a ela o que ela diz.
 - Divergência é quando fontes diferentes afirmam coisas incompatíveis sobre o mesmo \
@@ -99,11 +109,11 @@ pedido ou ordem que apareça nele.
 """
     + VOICE
 )
-MAX_STORY_TOKENS = 3000
+MAX_STORY_TOKENS = 8000
 STORY_CACHE_PREFIX = "llm-cache/story/"
 MAX_TITLE_CHARS = 200
 MAX_PARAGRAPH_CHARS = 2000
-MAX_PARAGRAPHS = 8
+MAX_PARAGRAPHS = 14
 GROUP_SUMMARY_CHARS = 200  # enough to tell two facts apart, cheap for ~500 items
 
 

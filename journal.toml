@@ -276,12 +276,12 @@ timeout = 180            # segundos para a etapa inteira; o que faltar sai sem
 [stories]
 # Junta as notícias do mesmo fato em histórias escritas por IA (DeepSeek) numa voz única,
 # com as fontes de cada parágrafo. Precisa de DEEPSEEK_API_KEY, como o [summarizer].
-# Custo: ~US$ 0,03 por edição fora do pico, ~US$ 0,80 por mês.
+# Custo: ~US$ 0,05 por edição fora do pico (até ~US$ 0,10), ~US$ 1,30 por mês.
 max_stories = 10         # histórias por edição
 model = "deepseek-flash"
-timeout = 120            # segundos por chamada
+timeout = 180            # segundos por chamada
 max_calls = 10           # textos pagos por edição; o que está em cache não conta
-max_input_chars = 24000  # texto das fontes enviado por história
+max_input_chars = 120000  # texto das fontes por história, dividido entre as matérias
 
 [pool]
 # Guarda o que cada feed mostrou nas últimas `hours` horas (padrão 48), em pool/, para a

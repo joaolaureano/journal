@@ -313,3 +313,5 @@ def test_prompts_carry_the_grouping_and_divergence_rules(monkeypatch):
     writing = api.body()["messages"][0]["content"]
     assert "Não é divergência" in writing and "só atribua a ela" in writing
     assert "podem ser verdade ao mesmo tempo" in writing
+    assert "Cubra tudo o que as fontes trazem" in writing and "ordem fluida" in writing
+    assert "só aparece numa fonte, atribua a ela" in writing

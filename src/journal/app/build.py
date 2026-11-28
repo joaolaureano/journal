@@ -24,8 +24,8 @@ FUTURE_TOLERANCE = timedelta(days=1)
 WARMUP_WORKERS = 8
 WARMUP_TIMEOUT = 180.0  # seconds for the whole step; the Lambda has 600
 MAX_STORIES = 10
-STORY_WORKERS = 4
-STORY_TIMEOUT = 150.0  # seconds for writing every story
+STORY_WORKERS = 10  # every story at once: long texts take a minute each
+STORY_TIMEOUT = 240.0  # seconds for writing every story; the Lambda has 600
 
 
 class BuildError(Exception):

@@ -202,13 +202,13 @@ IA, com o link de cada fonte original.
 [stories]
 max_stories = 10         # histórias por edição
 model = "deepseek-flash"
-timeout = 120            # segundos por chamada
+timeout = 180            # segundos por chamada
 max_calls = 10           # textos pagos por edição; o que está em cache não conta
-max_input_chars = 24000  # texto das fontes enviado por história
+max_input_chars = 120000  # texto das fontes por história, dividido entre as matérias
 ```
 
-Custo: ~US$ 0,03 por edição fora do pico (uma chamada de agrupamento com ~35 mil tokens e dez de
-escrita com ~6 mil cada), ~US$ 0,80 por mês. Os textos ficam em cache em `llm-cache/story/`, então
+Custo: ~US$ 0,05 por edição fora do pico (uma chamada de agrupamento com ~35 mil tokens e dez de
+escrita com ~15 mil de entrada e ~2,5 mil de saída cada; no pior caso ~US$ 0,10), ~US$ 1,30 por mês. Os textos ficam em cache em `llm-cache/story/`, então
 uma revisão no mesmo dia não paga de novo pela mesma história. Sem chave, com erro ou timeout, a
 edição sai sem histórias ou sem o texto delas, e o motivo vai para o log (`stories failed: ...`).
 `stories.json` guarda as histórias de cada edição, e os itens delas contam como publicados no
