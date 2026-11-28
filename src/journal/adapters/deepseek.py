@@ -12,6 +12,7 @@ import threading
 import urllib.error
 import urllib.request
 from collections.abc import Sequence
+from datetime import UTC, tzinfo
 
 from journal.adapters.rss import plain_text
 from journal.adapters.storage import StoragePort
@@ -94,6 +95,13 @@ em "fontes" desse parágrafo, e só atribua a ela o que ela diz.
 fato, no mesmo momento. Nesse caso, diga no parágrafo quem diz o quê, pelo nome da \
 fonte, registre o ponto em "divergencias" com uma versão por afirmação diferente, e \
 não decida quem está certo.
+- Cada fonte traz a hora em que foi publicada. Dados que mudam ao longo do dia \
+(cotações, bolsa, juros, placares, número de mortos, feridos ou desaparecidos, \
+contagens) são o retrato de um momento: diferença entre fontes publicadas em horas \
+diferentes é atualização, não divergência. Use o dado mais recente e diga de quando é \
+e de quem ("às 17h, segundo o g1, o dólar…"); se ajudar, conte a evolução. Só é \
+divergência se fontes publicadas perto uma da outra discordarem sobre o mesmo momento \
+(o fechamento do dia, por exemplo).
 - Não é divergência: o mesmo número com arredondamento ou precisão diferente \
 (R$ 79 milhões e R$ 79,38 milhões); números medidos em horários ou dias diferentes; \
 uma estimativa antes e o resultado depois; uma fonte que só omite um detalhe; fontes \
@@ -240,12 +248,14 @@ class DeepSeekWriter:
         max_calls: int = 10,
         max_input_chars: int = 24000,
         timeout: float = 120,
+        timezone: tzinfo = UTC,
     ):
         self.api_key = api_key
         self.cache = cache
         self.model = model
         self.max_input_chars = max_input_chars
         self.timeout = timeout
+        self.timezone = timezone  # publication times are shown in the edition's zone
         self._calls_left = max_calls  # paid calls for this edition; cache hits are free
         self._lock = threading.Lock()  # BuildJournal calls from several threads
 
@@ -261,6 +271,7 @@ class DeepSeekWriter:
         share = self.max_input_chars // len(story.items)
         sources = "\n".join(
             f'<fonte n="{i}" nome="{a.source}">\nTítulo: {a.title}\n'
+            f"Publicado: {a.published_at.astimezone(self.timezone):%d/%m/%Y %H:%M}\n"
             f"{(plain_text(a.body) if a.body else a.summary)[:share]}\n</fonte>"
             for i, a in enumerate(story.items, start=1)
         )

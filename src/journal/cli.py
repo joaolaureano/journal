@@ -181,7 +181,7 @@ def writer(config: Config, cache=None) -> WriterPort | None:
         return None
     wanted = ("model", "timeout", "max_calls", "max_input_chars")
     options = {k: v for k, v in config.stories.items() if k in wanted}
-    return DeepSeekWriter(key, cache, **options)
+    return DeepSeekWriter(key, cache, timezone=config.timezone, **options)
 
 
 def summary(report: BuildReport) -> str:

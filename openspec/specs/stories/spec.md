@@ -61,7 +61,7 @@ A story text SHALL only cite items of its own story. Every paragraph SHALL cite 
 - **THEN** creating the story with that text fails
 
 ### Requirement: DeepSeek writer
-The DeepSeek writer SHALL send each item's source, title and text, numbered and marked as data, and ask for JSON with a title, paragraphs covering what each item adds in a flowing order, with the numbers of their sources, and divergences: only incompatible statements about the same fact, naming in a paragraph only sources it cites. It SHALL drop invalid citations, uncited paragraphs and divergences without two distinct sources, and SHALL fail when no paragraph remains.
+The DeepSeek writer SHALL send each item's source, title, publication time in the edition's zone and text, numbered and marked as data, and ask for JSON with a title, flowing paragraphs covering what each item adds, with their sources, and divergences, which exclude values that change over the day when items were published apart. It SHALL drop invalid citations, uncited paragraphs and divergences without two distinct sources, and SHALL fail when no paragraph remains.
 
 #### Scenario: Invalid citations
 - **WHEN** the answer has a paragraph citing sources 1 and 9 for a story of two items, and a paragraph citing only 9
@@ -70,6 +70,10 @@ The DeepSeek writer SHALL send each item's source, title and text, numbered and 
 #### Scenario: Divergence within one outlet
 - **WHEN** a divergence has versions from two g1 economia items only
 - **THEN** it is dropped
+
+#### Scenario: Publication time in the edition's zone
+- **WHEN** an item published at 2026-01-01 00:00 UTC is sent for an edition in America/Sao_Paulo
+- **THEN** its source block reads `Publicado: 31/12/2025 21:00`
 
 ### Requirement: Writer cache and budget
 The DeepSeek writer SHALL cache each answer by story in the storage, so the same group of items is written once, and SHALL stop making paid requests after `max_calls` in an edition.
