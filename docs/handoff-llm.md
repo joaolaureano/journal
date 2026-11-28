@@ -171,22 +171,37 @@ Decidido em 2026-11-27:
   abrir sempre. Na conferência, a página aberta, sem login, precisa ter o texto do feed e nenhuma
   marcação de bloqueio (`content_tier` metered/locked, `paywall: ativo`, `meteringExpires`,
   `tipo-paywall`, `isAccessibleForFree: false`).
-- **Fontes de Política:** g1 política (grande imprensa), JOTA (STF, Congresso e governo; as
-  notícias são abertas, e o JOTA PRO é um produto à parte), O Antagonista (direita) e Revista Fórum
-  (esquerda), para ter contraste. Foram medidas em 2026-11-27/28. O Antagonista e a Fórum só
-  guardam ~1,5 h no feed, então precisam do coletor de hora em hora. Recusadas: Veja e Estadão
-  (paywall medido), Congresso em Foco e Brasil de Fato (só resumo; puxar a página seria scraping),
-  Agência Brasil, Poder360 e Brasil 247 (escolha do dono), Folha, Gazeta do Povo e CartaCapital
-  (paywall e sem texto no feed), Agência Câmara (quase não repete as outras), El País (a edição
-  em português acabou em 2021).
-- **Fontes de Economia:** g1 economia (grande imprensa; o feed guarda ~62 h), InfoMoney, Money
-  Times (quase tudo dele também sai em outra fonte) e Seu Dinheiro. Todas grátis e com texto
-  completo, medidas em 2026-11-28. InfoMoney e Money Times guardam 6–7 h, então também dependem
-  do coletor. O contraste de espectro vem dos feeds gerais do O Antagonista e da Fórum, cujos
-  itens de economia caem no tema quando o LLM classificar. Recusadas: Estadão, Veja e Valor
-  (paywall medido; o Valor também tem ~22% de patrocinado), Exame, NeoFeed, O Antagonista economia
-  e Gazeta do Povo (só resumo), Le Monde Diplomatique e Fórum economia (feed bloqueado), Brazil
-  Journal, Bloomberg Línea e Outras Palavras (quase não repetem as outras).
+- **Fontes de Política:** g1 política e CNN Brasil (grande imprensa), JOTA (STF, Congresso e
+  governo; as notícias são abertas, e o JOTA PRO é um produto à parte), Jovem Pan (direita) e
+  Revista Fórum (esquerda), para ter contraste. Foram medidas em 2026-11-27/28. A CNN Brasil e a
+  Jovem Pan só têm feed geral, com esportes e variedades, e entram filtradas pelo endereço do
+  link (`/politica/`). A Fórum, a CNN e a Jovem Pan guardam de 1,5 h a 6 h no feed, então
+  precisam do coletor de hora em hora. Recusadas: O Antagonista (em 2026-11-28 o feed passou a
+  mandar só ~300 caracteres; vale medir de novo), Veja e Estadão (paywall medido), Congresso em
+  Foco, Brasil de Fato, DW, UOL e Estado de Minas (só resumo; puxar a página seria scraping),
+  Agência Brasil, Poder360 e Brasil 247 (escolha do dono; a Agência Brasil política tem texto
+  completo, mas publica ~3 por dia e é a voz oficial do governo), Folha, Gazeta do Povo e
+  CartaCapital (paywall e sem texto no feed), Agência Câmara (quase não repete as outras),
+  Metrópoles (sem seção de política no feed), JB (bloqueia leitores automáticos), R7, SBT News,
+  O Tempo, Diário do Nordeste, Band e Correio Braziliense (sem feed que funcione), El País (a
+  edição em português acabou em 2021).
+- **Fontes de Economia:** g1 economia e CNN Brasil (grande imprensa; a CNN filtrada por
+  `/economia/`, porque as categorias dela variam), InfoMoney, Money Times (quase tudo dele também
+  sai em outra fonte), Seu Dinheiro e Jovem Pan (`/economia/`, para o contraste de espectro).
+  Todas grátis e com texto completo, medidas em 2026-11-28. InfoMoney e Money Times guardam
+  6–7 h, então também dependem do coletor. Recusadas: Estadão, Veja e Valor (paywall medido; o
+  Valor também tem ~22% de patrocinado), Exame, NeoFeed, O Antagonista economia e Gazeta do Povo
+  (só resumo), Le Monde Diplomatique e Fórum economia (feed bloqueado), Brazil Journal, Bloomberg
+  Línea e Outras Palavras (quase não repetem as outras).
+- **Filtro por endereço (a fazer):** uma opção por fonte, por exemplo `paths = ["/politica/"]`,
+  que só aceita itens cujo link começa por um desses caminhos. Ela deixa usar o mesmo feed geral
+  em mais de uma seção. Entra junto com o coletor. O endereço é melhor que a categoria do feed: a
+  CNN marca `Política` em todas as matérias de política, mas as de economia vêm com categorias
+  diferentes.
+- **Tecnologia (aberto):** HN, Lobsters, Techmeme e Tildes mandam só título e link. A proposta é
+  usar as APIs oficiais do HN e do Lobsters como curadoria, com o LLM resumindo a discussão, mais
+  Techdirt e Pluralistic para ter texto completo. Isso depende de o dono aceitar "RSS ou API
+  oficial" no lugar de "só RSS".
 - **Internacional (futuro):** Opera Mundi é candidata.
 
 ## 5. Ordem sugerida das mudanças
