@@ -44,8 +44,13 @@ Peças em funcionamento:
 
 ## 3. O que falta, em ordem
 
-**Estado em 28/11:** 3.1, 3.2 e 3.3 estão feitos. Falta só conferir no log a primeira edição
-com histórias (sábado, 28/11, 08:00): `stories failed: ...` ou o resumo `N stories, N written`.
+**Estado em 28/11 (fim do dia):** 3.1, 3.2 e 3.3 estão feitos, e a primeira edição com histórias
+saiu no sábado, 28/11, às 08:02. Depois dela entraram: histórias que cobrem todas as fontes numa
+ordem fluida (`fuller-stories`), o filtro de grupos por palavras em comum (`check-story-groups`),
+a hora de publicação de cada fonte e a regra dos números voláteis (`volatile-numbers`), o menu de
+edições compartilhado, o favicon e três fontes (Fabio Akita, Minuto da Segurança, Schneier).
+Na edição de segunda, 30/11, confira no log `N stories, N written` (o prazo da escrita agora é
+240 s) e, nas histórias, se números de horas diferentes deixaram de virar divergência.
 O que segue é o registro de como cada passo foi feito.
 
 ### 3.1 Arquivar o coletor (pequeno)
