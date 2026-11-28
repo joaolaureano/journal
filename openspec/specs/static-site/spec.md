@@ -334,3 +334,10 @@ The stories on the front page SHALL be laid out as a newspaper: the first as the
 #### Scenario: Lead story without image
 - **WHEN** the first story's first item has no image
 - **THEN** the lead entry has no image and no empty figure
+
+### Requirement: Pages have an icon
+Every page SHALL declare an icon for browser tabs, embedded in the page as an SVG data URL, so no extra file or request is needed.
+
+#### Scenario: Icon on every page
+- **WHEN** a site is published
+- **THEN** every page has a `<link rel="icon">` with an SVG data URL

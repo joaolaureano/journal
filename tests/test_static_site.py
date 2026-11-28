@@ -785,3 +785,11 @@ def test_front_page_links_each_source_once(out):
     sources = stories_block(out).split('class="story-sources">', 1)[1].split("</p>")[0]
     assert sources.count("g1 política") == 1 and sources.count("JOTA") == 1
     assert f"articles/{a.id}.html" in sources and f"articles/{b.id}.html" not in sources
+
+
+def test_every_page_has_the_icon(out):
+    publish(out, article())
+    shown = [p for p in out.rglob("*.html") if p.name != "menu.html"]  # menu: a frame
+    assert all(
+        '<link rel="icon" href="data:image/svg+xml,' in p.read_text() for p in shown
+    )
