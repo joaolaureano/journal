@@ -162,7 +162,8 @@ Limites a levar em conta:
 
 Decidido em 2026-11-27:
 
-- **Temas fixos:** política, economia e tecnologia.
+- **Temas fixos:** política, economia e tecnologia. Em 2026-11-28, Tecnologia saiu por ora (ver
+  abaixo).
 - **Fontes:** revisar e provavelmente reduzir, escolhendo as que se repetem.
 - **Primeiro o "backend"**, local, com testes e fakes, sem chamar a DeepSeek à toa. A
   diagramação e o jornal de referência vêm depois.
@@ -171,6 +172,13 @@ Decidido em 2026-11-27:
   abrir sempre. Na conferência, a página aberta, sem login, precisa ter o texto do feed e nenhuma
   marcação de bloqueio (`content_tier` metered/locked, `paywall: ativo`, `meteringExpires`,
   `tipo-paywall`, `isAccessibleForFree: false`).
+- **Regra do uso por IA (2026-11-28):** o site não pode restringir o uso do conteúdo por IA, porque
+  o LLM vai reescrever o texto. Ficam de fora os que pedem `ai-input=no` (Content-Signal no
+  `robots.txt`), bloqueiam os agentes de IA (GPTBot, ClaudeBot, Claude-User, CCBot,
+  Google-Extended) ou pedem isso por escrito. Por essa regra saíram Julia Evans ("NO LLM PLZ"),
+  Netflix TechBlog (o Medium bloqueia os agentes), IEEE Spectrum, Wired, The Conversation, The
+  Guardian, Lobsters, Techdirt e Tecnoblog. Licença CC BY (EFF, Pluralistic) ou um sinal
+  `ai-input=yes` (Cloudflare, Fly.io, PlanetScale) são a base mais firme.
 - **Fontes de Política:** g1 política e CNN Brasil (grande imprensa), JOTA (STF, Congresso e
   governo; as notícias são abertas, e o JOTA PRO é um produto à parte), Jovem Pan (direita) e
   Revista Fórum (esquerda), para ter contraste. Foram medidas em 2026-11-27/28. A CNN Brasil e a
@@ -198,11 +206,34 @@ Decidido em 2026-11-27:
   em mais de uma seção. Entra junto com o coletor. O endereço é melhor que a categoria do feed: a
   CNN marca `Política` em todas as matérias de política, mas as de economia vêm com categorias
   diferentes.
-- **Tecnologia (aberto):** HN, Lobsters, Techmeme e Tildes mandam só título e link. A proposta é
-  usar as APIs oficiais do HN e do Lobsters como curadoria, com o LLM resumindo a discussão, mais
-  Techdirt e Pluralistic para ter texto completo. Isso depende de o dono aceitar "RSS ou API
-  oficial" no lugar de "só RSS".
-- **Internacional (futuro):** Opera Mundi é candidata.
+- **Tecnologia (fora por ora):** HN, Lobsters, Techmeme e Tildes mandam só título e link. O
+  Lobsters pede `ai-input=no`; os termos do HN autorizam a API oficial, mas proíbem obras
+  derivadas, então o LLM não pode resumir a discussão. Sobravam só EFF e Pluralistic (CC BY, ~1,5
+  post por dia). O dono preferiu tirar o tema e focar nos blogs técnicos.
+- **Mundo (no ar desde 2026-11-28):** substitui "Brasil e mundo", porque o Brasil fica com Política
+  e Economia. Fontes: g1 mundo e Opera Mundi; a CNN Brasil (`/internacional/`) entra com o filtro
+  por endereço. Recusadas: Al Jazeera, France 24 e Euronews (só resumo e bloqueiam agentes de IA),
+  NPR, ONU News, DW e RFI (só resumo).
+- **Blogs técnicos (no ar desde 2026-11-28):** Martin Fowler, Cloudflare, Pragmatic Engineer,
+  Daniel Lemire, Marc Brooker, Murat Demirbas, Trail of Bits, Krebs on Security e Import AI.
+- **Matemática (no ar desde 2026-11-28):** Terence Tao e The Aperiodical, para iniciantes. O Reddit
+  (r/math, r/singularity) ficou de fora: bloqueia acesso automatizado e restringe uso por IA. A
+  Quanta manda só resumo.
+- **Ciência:** saiu inteira em 2026-11-28, por escolha do dono.
+- **Papers (a fazer):** o objetivo do dono é aprender estruturas de dados, algoritmos e design
+  patterns com o mundo acadêmico, não acompanhar tudo que sai. O arXiv cru (os papers mais novos do
+  dia, sem seleção) saiu. No lugar:
+  - **"Paper clássico do dia":** um post por edição do arquivo do The Morning Paper (Adrian Colyer,
+    2014–2021, ~1.000 papers explicados, texto completo), lido pela paginação do feed oficial
+    (`https://blog.acolyer.org/feed/?paged=N`, 10 posts por página), sem scraping. A introdução da
+    IA explica para iniciante: o problema, a ideia e por que importa. Precisa de um tipo de fonte
+    novo.
+  - **arXiv só com surveys e tutoriais:** filtrar os títulos ("survey", "tutorial", "introduction")
+    com um filtro por fonte, parecido com o de endereço. Medir o volume num dia útil antes de
+    decidir.
+  - Murat Demirbas, já nos blogs técnicos, resume um paper por post.
+  - Recusadas: CACM e ACM Queue (bloqueiam leitores automáticos), Quanta e Jane Street (só
+    resumo).
 
 ## 5. Ordem sugerida das mudanças
 
@@ -219,7 +250,7 @@ Decidido em 2026-11-27:
 Decididas em 2026-11-27:
 
 - **Ranking das 10 histórias:** mais fontes cobrindo primeiro, mas com pelo menos uma por seção
-  (Brasil e mundo, Ciência, Tecnologia, RS) quando houver.
+  (Política, Economia, Mundo, RS) quando houver.
 - **Contradições:** inline no parágrafo ("segundo A…; B afirma…") e um selo "divergência" na
   lista. O LLM nunca decide quem está certo.
 - **História de uma fonte só:** entra entre as 10, reescrita na mesma voz; as de mais fontes vêm
