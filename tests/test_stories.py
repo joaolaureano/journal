@@ -127,3 +127,58 @@ def test_grouper_failure_keeps_the_edition():
 def test_no_grouper_no_stories():
     edition, report = build([FakeSource([item("a", "x")])], None)
     assert edition.stories == () and report.story_errors == []
+
+
+def test_kept_stories_get_their_text():
+    from fakes import FakeWriter
+
+    a, b = item("a", "x"), item("b", "y")
+    writer = FakeWriter()
+    edition, report = build(
+        [FakeSource([a, b])], FakeGrouper([a.url, b.url]), writer=writer
+    )
+    [story] = edition.stories
+    assert story.text.title == f"Escrito: {story.lead.title}"
+    assert story.text.paragraphs[0].sources == tuple(x.id for x in story.items)
+    assert report.story_errors == []
+
+
+def test_writer_failure_keeps_the_stories_without_text():
+    from fakes import FakeWriter
+
+    a, b = item("a", "x"), item("b", "y")
+    edition, report = build(
+        [FakeSource([a, b])],
+        FakeGrouper(),
+        writer=FakeWriter(error=RuntimeError("api")),
+    )
+    assert len(edition.stories) == 2 and all(s.text is None for s in edition.stories)
+    assert report.story_errors == ["api"]
+
+
+def test_late_texts_are_dropped():
+    from fakes import FakeWriter
+
+    a = item("a", "x")
+    edition, report = build(
+        [FakeSource([a])],
+        FakeGrouper(),
+        writer=FakeWriter(delay=0.5),
+        story_timeout=0.05,
+    )
+    assert edition.stories[0].text is None
+    assert report.story_errors == ["story writing timed out: 1 stories without text"]
+
+
+def test_text_citing_other_items_is_refused():
+    from journal.domain import Paragraph, StoryText
+
+    class Liar:
+        def write(self, story):
+            return StoryText("T", (Paragraph("Fato.", ("someone-else",)),))
+
+    edition, report = build(
+        [FakeSource([item("a", "x")])], FakeGrouper(), writer=Liar()
+    )
+    assert edition.stories[0].text is None
+    assert report.story_errors[0].startswith("invalid story text")

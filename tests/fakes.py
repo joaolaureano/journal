@@ -49,3 +49,23 @@ class FakeGrouper:
             raise self.error
         by_url = {a.url: a for a in articles}
         return [[by_url[u] for u in g if u in by_url] for g in self.groups]
+
+
+class FakeWriter:
+    """Writes every story from its items: one paragraph citing all of them."""
+
+    def __init__(self, error: Exception | None = None, delay: float = 0):
+        self.error, self.delay, self.asked = error, delay, []
+
+    def write(self, story):
+        import time
+
+        from journal.domain import Paragraph, StoryText
+
+        self.asked.append(story)
+        if self.delay:
+            time.sleep(self.delay)
+        if self.error:
+            raise self.error
+        ids = tuple(a.id for a in story.items)
+        return StoryText(f"Escrito: {story.lead.title}", (Paragraph("Texto.", ids),))

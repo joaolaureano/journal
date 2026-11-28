@@ -249,9 +249,11 @@ Decidido em 2026-11-27:
    (`openspec/changes/archive/2026-11-26-add-article-warmup/`). Porta `SummarizerPort`,
    cache em `llm-cache/warmup/`, orçamento em `[summarizer]`, chave em
    `/journal/deepseek-api-key`.
-2. Agrupamento e ranking, mostrando só "3 fontes cobrem isto", sem texto novo.
-3. Síntese com citações.
-4. Divergências em destaque.
+2. ~~Agrupamento e ranking~~: feito em 2026-11-28 (`*-add-story-grouping`).
+3. ~~Síntese com citações~~ e 4. ~~divergências~~: feitos em 2026-11-28 (`*-add-story-synthesis`).
+   Ficam **desligados** até o dono pôr `[stories]` no `journal.toml`; custo estimado ~US$ 0,03
+   por edição, ~US$ 0,80 por mês. Falta a checagem frase a frase contra as fontes (segunda
+   passada do LLM) e a diagramação da capa.
 
 ## 6. Perguntas em aberto para o dono do projeto
 

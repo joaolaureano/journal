@@ -6,7 +6,11 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-from journal.adapters.deepseek import DeepSeekGrouper, DeepSeekSummarizer
+from journal.adapters.deepseek import (
+    DeepSeekGrouper,
+    DeepSeekSummarizer,
+    DeepSeekWriter,
+)
 from journal.adapters.pool import Pooled
 from journal.app import BuildError, BuildJournal, BuildReport, Sectioned
 from journal.app.build import MAX_STORIES, WARMUP_TIMEOUT
@@ -18,6 +22,7 @@ from journal.ports import (
     SourceError,
     SourcePort,
     SummarizerPort,
+    WriterPort,
 )
 
 
@@ -86,6 +91,7 @@ def run(config: Config) -> BuildReport:
         warmup_timeout=timeout,
         grouper=grouper(config),
         max_stories=(config.stories or {}).get("max_stories", MAX_STORIES),
+        writer=writer(config, getattr(publisher, "storage", None)),
     ).run()
 
 
@@ -168,12 +174,23 @@ def grouper(config: Config) -> GrouperPort | None:
     return DeepSeekGrouper(key, **options)
 
 
+def writer(config: Config, cache=None) -> WriterPort | None:
+    """DeepSeek writer under the same conditions as the grouper; quiet otherwise."""
+    key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+    if config.stories is None or not key:
+        return None
+    wanted = ("model", "timeout", "max_calls", "max_input_chars")
+    options = {k: v for k, v in config.stories.items() if k in wanted}
+    return DeepSeekWriter(key, cache, **options)
+
+
 def summary(report: BuildReport) -> str:
     return (
         f"published {len(report.articles)} of {report.fetched} articles"
         f" in the edition of {report.edition.date.isoformat()}"
         f" ({report.already_published} already in earlier editions,"
-        f" {report.warmups} AI warm-ups, {len(report.edition.stories)} stories)"
+        f" {report.warmups} AI warm-ups, {len(report.edition.stories)} stories,"
+        f" {sum(s.text is not None for s in report.edition.stories)} written)"
     )
 
 

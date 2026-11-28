@@ -188,6 +188,8 @@ STORIES_OPTIONS: OptionTypes = {
     "max_stories": int,
     "model": str,
     "timeout": (int, float),
+    "max_calls": int,
+    "max_input_chars": int,
 }
 
 

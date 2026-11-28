@@ -414,6 +414,8 @@ def test_stories_table(tmp_path):
         ('model = ""', "model"),
         ("timeout = -1", "timeout"),
         ("max_story = 8", "max_story"),
+        ("max_calls = 0", "max_calls"),
+        ("max_input_chars = 0", "max_input_chars"),
     ],
 )
 def test_invalid_stories_rejected(tmp_path, table, key):

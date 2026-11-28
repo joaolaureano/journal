@@ -3,6 +3,7 @@ from journal.ports.history import HistoryPort
 from journal.ports.publisher import PublisherPort, PublishError
 from journal.ports.source import SourceError, SourcePort
 from journal.ports.summarizer import SummarizerPort
+from journal.ports.writer import WriterPort
 
 __all__ = [
     "GrouperPort",
@@ -12,4 +13,5 @@ __all__ = [
     "SourceError",
     "SourcePort",
     "SummarizerPort",
+    "WriterPort",
 ]

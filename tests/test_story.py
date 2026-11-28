@@ -28,3 +28,41 @@ def test_story_needs_an_item():
 
 def test_edition_has_no_stories_by_default():
     assert edition().stories == ()
+
+
+def two_items():
+    return article("https://a.com/1", source="A"), article(
+        "https://b.com/2", source="B"
+    )
+
+
+def test_valid_text_with_divergence():
+    from journal.domain import Divergence, Paragraph, StoryText
+
+    a, b = two_items()
+    text = StoryText(
+        "Título",
+        (Paragraph("Fato.", (a.id, b.id)),),
+        (Divergence("Número", ((a.id, "10"), (b.id, "12"))),),
+    )
+    assert Story((a, b), text=text).text == text
+
+
+@pytest.mark.parametrize(
+    "case", ["outside", "uncited", "one_version", "same_item_twice", "no_paragraph"]
+)
+def test_text_must_rest_on_the_story_items(case):
+    from journal.domain import Divergence, Paragraph, StoryText
+
+    a, b = two_items()
+    paragraphs = {
+        "outside": (Paragraph("Fato.", ("other",)),),
+        "uncited": (Paragraph("Fato.", ()),),
+        "no_paragraph": (),
+    }.get(case, (Paragraph("Fato.", (a.id,)),))
+    divergences = {
+        "one_version": (Divergence("X", ((a.id, "1"),)),),
+        "same_item_twice": (Divergence("X", ((a.id, "1"), (a.id, "2"))),),
+    }.get(case, ())
+    with pytest.raises(ValueError):
+        Story((a, b), text=StoryText("Título", paragraphs, divergences))

@@ -628,6 +628,7 @@ def test_stories_json_and_pages_for_items_cut_from_the_list(out):
         "section": "Política",
         "ids": [a.id for a in stories[0].items],
         "sources": ["g1 política", "CNN Brasil política", "JOTA"],
+        "text": None,
     }
     for a in stories[0].items:
         assert (folder / "articles" / f"{a.id}.html").exists()
@@ -646,3 +647,71 @@ def test_no_stories_no_block(out):
     folder = publish(out, article())
     assert "Histórias do dia" not in (folder / "index.html").read_text(encoding="utf-8")
     assert json.loads((folder / "stories.json").read_text(encoding="utf-8")) == []
+
+
+def written_edition():
+    from journal.domain import Divergence, Paragraph, Story, StoryText
+
+    g1 = article("https://g1.com/stf", source="g1 política", title="STF decide")
+    jota = article("https://jota.info/stf", source="JOTA")
+    text = StoryText(
+        "O STF <decidiu>",
+        (
+            Paragraph("Primeiro <script>alert(1)</script>.", (g1.id, jota.id)),
+            Paragraph("Segundo, segundo o JOTA.", (jota.id,)),
+        ),
+        (Divergence("Placar", ((g1.id, "7 a 4"), (jota.id, "8 a 3"))),),
+    )
+    story = Story((g1, jota), "Política", text)
+    return Edition(DAY, (g1, jota), stories=(story,)), story
+
+
+def test_story_page_credits_and_escapes(out):
+    ed, story = written_edition()
+    publisher(out).publish(ed)
+    folder = out / manifest(out)[-1]["path"]
+    html = (folder / "historias" / f"{story.id}.html").read_text(encoding="utf-8")
+    g1, jota = story.items
+    assert "<h1>O STF &lt;decidiu&gt;</h1>" in html
+    assert "Texto gerado por IA a partir de:" in html
+    assert "&lt;script&gt;" in html and "<script>" not in html
+    first = html.split("Primeiro", 1)[1].split("</p>", 1)[0]
+    assert f'../articles/{g1.id}.html">g1 política' in first and "JOTA</a>" in first
+    block = html.split("Divergências", 1)[1]
+    assert "Placar" in block and "7 a 4" in block and "8 a 3" in block
+    for a in story.items:
+        assert f'href="{a.url}" target="_blank" rel="noopener noreferrer"' in html
+
+
+def test_front_page_shows_the_written_story(out):
+    ed, story = written_edition()
+    publisher(out).publish(ed)
+    html = (out / "index.html").read_text(encoding="utf-8")
+    block = html.split("Histórias do dia", 1)[1].split("Todas as notícias", 1)[0]
+    assert f'historias/{story.id}.html">O STF &lt;decidiu&gt;</a>' in block
+    assert "Texto por IA" in block and "Primeiro &lt;script&gt;" in block
+    assert "divergência" in block
+
+
+def test_stories_json_has_the_text(out):
+    ed, story = written_edition()
+    publisher(out).publish(ed)
+    folder = out / manifest(out)[-1]["path"]
+    [entry] = json.loads((folder / "stories.json").read_text(encoding="utf-8"))
+    g1, jota = story.items
+    assert entry["text"]["title"] == "O STF <decidiu>"
+    assert entry["text"]["paragraphs"][1] == {
+        "text": "Segundo, segundo o JOTA.",
+        "sources": [jota.id],
+    }
+    assert entry["text"]["divergences"][0]["views"] == [
+        {"id": g1.id, "says": "7 a 4"},
+        {"id": jota.id, "says": "8 a 3"},
+    ]
+
+
+def test_story_without_text_has_no_page(out):
+    ed, stories = story_edition()
+    publisher(out).publish(ed)
+    folder = out / manifest(out)[-1]["path"]
+    assert not (folder / "historias").exists()

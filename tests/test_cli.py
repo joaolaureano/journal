@@ -87,7 +87,7 @@ def test_second_build_same_day_adds_a_revision(tmp_path, capsys):
     assert [e["revision"] for e in manifest] == [1, 2]
     assert [e["articles"] for e in manifest][0] == manifest[1]["articles"] > 0
     assert (
-        "(0 already in earlier editions, 0 AI warm-ups, 0 stories)"
+        "(0 already in earlier editions, 0 AI warm-ups, 0 stories, 0 written)"
         in capsys.readouterr().out
     )
 
@@ -201,3 +201,24 @@ def test_stories_from_the_configured_grouper(tmp_path, monkeypatch, capsys):
     assert main(["build", "--config", path]) == 0
     assert made == {"key": "k", "model": "m"}
     assert "2 stories" in capsys.readouterr().out
+
+
+def test_stories_are_written_with_the_configured_writer(tmp_path, monkeypatch, capsys):
+    from fakes import FakeGrouper, FakeWriter
+
+    from journal import cli
+
+    made = {}
+
+    def fake_writer(key, cache, **options):
+        made.update(options, key=key, cache=cache)
+        return FakeWriter()
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+    monkeypatch.setattr(cli, "DeepSeekGrouper", lambda key, **o: FakeGrouper())
+    monkeypatch.setattr(cli, "DeepSeekWriter", fake_writer)
+    extra = "[stories]\nmax_stories = 2\nmax_calls = 3\n"
+    path = config(tmp_path, ("One", (FIXTURES / "feed.xml").as_uri()), extra=extra)
+    assert main(["build", "--config", path]) == 0
+    assert made["key"] == "k" and made["max_calls"] == 3 and made["cache"] is not None
+    assert "2 stories, 2 written" in capsys.readouterr().out

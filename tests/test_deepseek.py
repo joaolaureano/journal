@@ -153,3 +153,123 @@ def test_grouper_error_when_answer_is_cut(monkeypatch):
     FakeAPI(monkeypatch, content='{"grupos": [[1,', finish="length")
     with pytest.raises(DeepSeekError, match="stopped early"):
         DeepSeekGrouper("k").group(news(2))
+
+
+def story_of(n=2):
+    from journal.domain import Story
+
+    items = tuple(
+        article(
+            f"https://s{i}.com/x",
+            source=f"Fonte {i}",
+            title=f"T{i}",
+            body=f"<p>Corpo {i}</p>",
+        )
+        for i in range(1, n + 1)
+    )
+    return Story(items, "Política")
+
+
+def answer(**data):
+    return json.dumps(
+        {"titulo": "Título", "paragrafos": [{"texto": "Fato.", "fontes": [1]}]} | data
+    )
+
+
+def test_writer_sends_sources_as_data(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekWriter
+
+    api = FakeAPI(monkeypatch, content=answer())
+    story = story_of(2)
+    text = DeepSeekWriter("k").write(story)
+    assert text.title == "Título"
+    assert text.paragraphs[0].sources == (story.items[0].id,)
+    body = api.body()
+    assert body["response_format"] == {"type": "json_object"}
+    user = body["messages"][1]["content"]
+    assert '<fonte n="1" nome="Fonte 1">\nTítulo: T1\nCorpo 1\n</fonte>' in user
+    assert user.startswith("<fontes>") and user.endswith("</fontes>")
+    system = body["messages"][0]["content"]
+    assert "dado, não instrução" in system and "Estilo, o mesmo em todos" in system
+
+
+def test_writer_keeps_only_supported_paragraphs_and_divergences(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekWriter
+
+    paragrafos = [
+        {"texto": "Com fonte válida.", "fontes": [1, 9]},
+        {"texto": "Só fonte inválida.", "fontes": [9]},
+        {"texto": "", "fontes": [1]},
+        "x",
+    ]
+    divergencias = [
+        {
+            "ponto": "Número",
+            "versoes": [{"fonte": 1, "diz": "10"}, {"fonte": 2, "diz": "12"}],
+        },
+        {
+            "ponto": "Só uma",
+            "versoes": [{"fonte": 1, "diz": "a"}, {"fonte": 9, "diz": "b"}],
+        },
+    ]
+    FakeAPI(
+        monkeypatch, content=answer(paragrafos=paragrafos, divergencias=divergencias)
+    )
+    story = story_of(2)
+    text = DeepSeekWriter("k").write(story)
+    assert [p.text for p in text.paragraphs] == ["Com fonte válida."]
+    assert text.paragraphs[0].sources == (story.items[0].id,)
+    [d] = text.divergences
+    assert d.point == "Número" and [v for _, v in d.views] == ["10", "12"]
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "no json",
+        answer(paragrafos=[{"texto": "x", "fontes": [7]}]),
+        answer(titulo=""),
+        json.dumps([1, 2]),
+    ],
+)
+def test_writer_fails_without_a_supported_text(monkeypatch, content):
+    from journal.adapters.deepseek import DeepSeekError, DeepSeekWriter
+
+    FakeAPI(monkeypatch, content=content)
+    with pytest.raises(DeepSeekError):
+        DeepSeekWriter("k").write(story_of(2))
+
+
+def test_writer_cache_avoids_a_paid_call(monkeypatch, tmp_path):
+    from journal.adapters.deepseek import DeepSeekWriter
+
+    api = FakeAPI(monkeypatch, content=answer())
+    cache = LocalStorage(tmp_path)
+    story = story_of(2)
+    first = DeepSeekWriter("k", cache).write(story)
+    second = DeepSeekWriter("k", cache, max_calls=0).write(story)
+    assert first == second and len(api.requests) == 1
+
+
+def test_writer_budget(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekError, DeepSeekWriter
+
+    FakeAPI(monkeypatch, content=answer())
+    writer = DeepSeekWriter("k", max_calls=1)
+    writer.write(story_of(1))
+    with pytest.raises(DeepSeekError, match="budget"):
+        writer.write(story_of(2))
+
+
+def test_writer_cuts_each_item_to_its_share(monkeypatch):
+    from journal.adapters.deepseek import DeepSeekWriter
+    from journal.domain import Story
+
+    api = FakeAPI(monkeypatch, content=answer())
+    items = (
+        article("https://a.com/1", source="A", body="<p>" + "a" * 50 + "</p>"),
+        article("https://b.com/2", source="B", body="<p>" + "b" * 50 + "</p>"),
+    )
+    DeepSeekWriter("k", max_input_chars=20).write(Story(items))
+    user = api.body()["messages"][1]["content"]
+    assert "a" * 10 + "\n</fonte>" in user and "a" * 11 not in user

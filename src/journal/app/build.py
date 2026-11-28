@@ -13,6 +13,7 @@ from journal.ports import (
     SourceError,
     SourcePort,
     SummarizerPort,
+    WriterPort,
 )
 
 __all__ = ["BuildError", "BuildJournal", "BuildReport", "dedup_key"]
@@ -21,6 +22,8 @@ FUTURE_TOLERANCE = timedelta(days=1)
 WARMUP_WORKERS = 8
 WARMUP_TIMEOUT = 180.0  # seconds for the whole step; the Lambda has 600
 MAX_STORIES = 10
+STORY_WORKERS = 4
+STORY_TIMEOUT = 150.0  # seconds for writing every story
 
 
 class BuildError(Exception):
@@ -61,6 +64,8 @@ class BuildJournal:
         warmup_timeout: float = WARMUP_TIMEOUT,
         grouper: GrouperPort | None = None,
         max_stories: int = MAX_STORIES,
+        writer: WriterPort | None = None,
+        story_timeout: float = STORY_TIMEOUT,
     ):
         self.sources = sources
         self.publisher = publisher
@@ -75,6 +80,8 @@ class BuildJournal:
         self.warmup_timeout = warmup_timeout
         self.grouper = grouper  # finds items about the same fact
         self.max_stories = max_stories
+        self.writer = writer  # writes each kept story from its items
+        self.story_timeout = story_timeout
 
     def run(self) -> BuildReport:
         by_url: dict[str, Article] = {}
@@ -117,6 +124,8 @@ class BuildJournal:
         stories, story_errors = self._stories(
             [a for a in articles if a.kind == "noticia"], rank
         )
+        stories, write_errors = self._write(stories)
+        story_errors += write_errors
         if self.max_per_section is not None:
             articles = _cap_per_section(articles, self.max_per_section)
         articles = articles[: self.max_articles]
@@ -166,6 +175,37 @@ class BuildJournal:
                 break
             chosen.add(story.id)
         return [s for s in ranked if s.id in chosen], []
+
+    def _write(self, stories: list[Story]) -> tuple[list[Story], list[str]]:
+        """Adds the writer's text to each story; failures only leave it without."""
+        if self.writer is None or not stories:
+            return stories, []
+        pool = ThreadPoolExecutor(STORY_WORKERS)
+        futures = {pool.submit(self.writer.write, s): s for s in stories}
+        done, pending = wait(futures, timeout=self.story_timeout)
+        pool.shutdown(wait=False, cancel_futures=True)  # late answers are dropped
+        texts, errors = {}, []
+        for future in done:
+            try:
+                text = future.result()
+            except Exception as exc:  # any adapter failure only costs this text
+                errors.append(str(exc) or repr(exc))
+                continue
+            if text:
+                texts[futures[future].id] = text
+        if pending:
+            errors.append(
+                f"story writing timed out: {len(pending)} stories without text"
+            )
+        written = []
+        for story in stories:
+            if story.id in texts:
+                try:
+                    story = replace(story, text=texts[story.id])
+                except ValueError as exc:  # cites items outside the story
+                    errors.append(f"invalid story text: {exc}")
+            written.append(story)
+        return written, list(dict.fromkeys(errors))
 
     def _warm_up(self, articles: list[Article]) -> tuple[list[Article], list[str]]:
         """Adds the summarizer's warm-up to each `artigo`; failures only skip it."""

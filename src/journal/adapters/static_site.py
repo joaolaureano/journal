@@ -78,6 +78,10 @@ class StaticSitePublisher:
                 self._put(f"{base}articles/{a.id}.html", page)
             self._put(f"{base}articles.json", _index_json(edition.articles))
             self._put(f"{base}stories.json", _stories_json(edition.stories))
+            for s in edition.stories:
+                if s.text is not None:
+                    page = _story_page(s, "../../../", manifest, entry)
+                    self._put(f"{base}historias/{s.id}.html", page)
             for kind, name in LIST_PAGES.items():
                 page = _edition_page(edition, entry, manifest, "../../", "", kind)
                 self._put(f"{base}{name}", page)
@@ -330,22 +334,33 @@ def _sources_count(n: int) -> str:
 
 
 def _stories_block(edition: Edition, base: str) -> str:
-    """The day's stories: lead title and summary, coverage and a link per item."""
+    """The day's stories: title and opening, coverage and a link per item."""
     entries = []
     for story in edition.stories:
-        lead, w = story.lead, _when(story.lead, edition.timezone)
-        summary = (
-            f'<p class="summary">{escape(lead.summary)}</p>' if lead.summary else ""
-        )
+        lead, w, text = story.lead, _when(story.lead, edition.timezone), story.text
+        if text is not None:  # the written story, labelled as AI
+            href, title = f"{base}historias/{story.id}.html", text.title
+            summary = (
+                '<p class="summary"><span class="ai">Texto por IA</span> '
+                f"{escape(text.paragraphs[0].text)}</p>"
+            )
+        else:
+            href, title = f"{base}articles/{lead.id}.html", lead.title
+            summary = (
+                f'<p class="summary">{escape(lead.summary)}</p>' if lead.summary else ""
+            )
+        badge = ""
+        if text is not None and text.divergences:
+            badge = ' · <span class="badge">divergência</span>'
         links = ", ".join(
             f'<a href="{base}articles/{a.id}.html">{escape(a.source)}</a>'
             for a in story.items
         )
         entries.append(
             f"<li>{_img(lead, 'thumb')}"
-            f'<h2><a href="{base}articles/{lead.id}.html">{escape(lead.title)}</a></h2>'
+            f'<h2><a href="{href}">{escape(title)}</a></h2>'
             f'<p class="meta">{_sources_count(len(story.sources))} · '
-            f'<time datetime="{w["iso"]}">{w["date"]}</time></p>{summary}'
+            f'<time datetime="{w["iso"]}">{w["date"]}</time>{badge}</p>{summary}'
             f'<p class="story-sources">Fontes: {links}</p></li>'
         )
     return (
@@ -355,13 +370,71 @@ def _stories_block(edition: Edition, base: str) -> str:
     )
 
 
+def _story_page(story: Story, root: str, manifest: list[dict], entry: dict) -> str:
+    """A written story: every model text escaped, every claim with its sources."""
+    text = story.text
+
+    def cite(ids: Sequence[str]) -> str:
+        return ", ".join(
+            f'<a href="../articles/{i}.html">{escape(story.item(i).source)}</a>'
+            for i in ids
+        )
+
+    paragraphs = "\n".join(
+        f'<p>{escape(p.text)} <span class="cites">({cite(p.sources)})</span></p>'
+        for p in text.paragraphs
+    )
+    divergences = ""
+    if text.divergences:
+        points = "\n".join(
+            f"<li><strong>{escape(d.point)}</strong><ul>"
+            + "".join(f"<li>{cite([i])}: {escape(says)}</li>" for i, says in d.views)
+            + "</ul></li>"
+            for d in text.divergences
+        )
+        divergences = (
+            '<section class="divergences"><h2>Divergências</h2>\n'
+            f"<ul>\n{points}\n</ul></section>"
+        )
+    items = "\n".join(
+        f'<li><a href="../articles/{a.id}.html">'
+        f"{escape(a.source)}: {escape(a.title)}</a>"
+        f' · <a href="{escape(a.url)}" target="_blank" rel="noopener noreferrer">'
+        "Ler na fonte</a></li>"
+        for a in story.items
+    )
+    content = Template(_read("story.html")).substitute(
+        title=escape(text.title),
+        credits=cite([a.id for a in story.items]),
+        paragraphs=paragraphs,
+        divergences=divergences,
+        items=items,
+    )
+    return _page(f"{text.title} · Journal", content, root, _menu(manifest, root, entry))
+
+
 def _stories_json(stories: Sequence[Story]) -> str:
+    def text(s: Story) -> dict | None:
+        if s.text is None:
+            return None
+        return {
+            "title": s.text.title,
+            "paragraphs": [
+                {"text": p.text, "sources": list(p.sources)} for p in s.text.paragraphs
+            ],
+            "divergences": [
+                {"point": d.point, "views": [{"id": i, "says": v} for i, v in d.views]}
+                for d in s.text.divergences
+            ],
+        }
+
     index = [
         {
             "id": s.id,
             "section": s.section,
             "ids": [a.id for a in s.items],
             "sources": list(s.sources),
+            "text": text(s),
         }
         for s in stories
     ]
