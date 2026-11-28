@@ -150,7 +150,7 @@ class BuildJournal:
         now = self.now()
         if article.published_at > now + FUTURE_TOLERANCE:
             return False
-        if self.max_age_days is None:
+        if self.max_age_days is None or article.evergreen:
             return True
         return article.published_at >= now - timedelta(days=self.max_age_days)
 

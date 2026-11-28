@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from journal.adapters.archive import ArchiveSource
 from journal.adapters.rss import RssSource
 from journal.adapters.s3 import S3Storage
 from journal.adapters.static_site import StaticSitePublisher
@@ -42,7 +43,22 @@ SOURCE_TYPES: dict[str, AdapterType] = {
         required={"name": str, "url": str},
         optional={"timeout": (int, float), "full_text": bool},
     ),
+    "rss-archive": AdapterType(
+        build=lambda o, _dir: ArchiveSource(
+            o["url"], o["name"], _pages(o), _timeout(o)
+        ),
+        required={"name": str, "url": str, "pages": int},
+        optional={"timeout": (int, float)},
+    ),
 }
+
+
+def _pages(options: dict[str, Any]) -> int:
+    pages = options["pages"]
+    if isinstance(pages, bool) or pages < 1:
+        name = options["name"]
+        raise ConfigError(f"source {name!r} (rss-archive): 'pages' must be positive")
+    return pages
 
 
 def _timeout(options: dict[str, Any]) -> float:

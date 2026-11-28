@@ -21,6 +21,7 @@ class Article:
     body: str | None = None  # full text as safe HTML, already rebuilt by the source
     kind: str = "noticia"  # one of KINDS
     warmup: str | None = None  # AI-written plain-text teaser; see SummarizerPort
+    evergreen: bool = False  # timeless piece (a classic paper): no age limit
     id: str = field(init=False)
 
     def __post_init__(self) -> None:

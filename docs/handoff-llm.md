@@ -228,14 +228,14 @@ Decidido em 2026-11-27:
   endereço (CNN Brasil e Jovem Pan), o coletor de hora em hora (Fórum, InfoMoney, Money Times),
   o paper clássico do dia, a medição do arXiv só com surveys num dia útil e uma nova medição do
   O Antagonista.
-- **Papers (a fazer):** o objetivo do dono é aprender estruturas de dados, algoritmos e design
+- **Papers (no ar desde 2026-11-28: paper clássico do dia):** o objetivo do dono é aprender estruturas de dados, algoritmos e design
   patterns com o mundo acadêmico, não acompanhar tudo que sai. O arXiv cru (os papers mais novos do
   dia, sem seleção) saiu. No lugar:
   - **"Paper clássico do dia":** um post por edição do arquivo do The Morning Paper (Adrian Colyer,
     2014–2021, ~1.000 papers explicados, texto completo), lido pela paginação do feed oficial
     (`https://blog.acolyer.org/feed/?paged=N`, 10 posts por página), sem scraping. A introdução da
-    IA explica para iniciante: o problema, a ideia e por que importa. Precisa de um tipo de fonte
-    novo.
+    IA explica para iniciante: o problema, a ideia e por que importa. Feito com o tipo de fonte
+    `rss-archive` (`openspec/changes/archive/*-add-classic-paper/`).
   - **arXiv só com surveys e tutoriais:** filtrar os títulos ("survey", "tutorial", "introduction")
     com um filtro por fonte, parecido com o de endereço. Medir o volume num dia útil antes de
     decidir.

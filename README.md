@@ -105,7 +105,21 @@ Para adicionar outra fonte RSS, basta outro bloco `[[sources]]`. Nenhum código 
 `paths = ["/politica/"]`, só ficam os itens de `…/politica/…`, seja qual for o site. O mesmo feed
 pode entrar em mais de uma seção, cada uma com seu `name` e seus `paths`.
 
-Tipos embutidos: fonte `rss`, publisher `static-site`, armazenamento `local` e `s3`. Outros tipos vêm de
+`rss-archive` lê o arquivo de um blog parado que pagina o feed (WordPress: `?paged=N`) e traz
+**um post por dia**, escolhido pela data: dias seguidos trazem posts diferentes, e uma revisão no
+mesmo dia traz o mesmo. O post vale como atemporal, então `max_age_days` não o corta:
+
+```toml
+[[sources]]
+type = "rss-archive"
+name = "The Morning Paper"
+url = "https://blog.acolyer.org/feed/"
+pages = 108                                 # quantas páginas o arquivo tem
+section = "Papers"
+kind = "artigo"
+```
+
+Tipos embutidos: fontes `rss` e `rss-archive`, publisher `static-site`, armazenamento `local` e `s3`. Outros tipos vêm de
 plugins.
 
 ### Filtro (opcional)

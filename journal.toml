@@ -209,6 +209,18 @@ kind = "artigo"
 url = "https://aperiodical.com/feed/"
 full_text = true
 
+# --- Papers (um clássico por dia) ---
+# The Morning Paper (Adrian Colyer, 2014–2021): ~1.000 papers explicados, lidos do arquivo
+# pela paginação do feed oficial, sem scraping. As páginas 1–108 são da série; a 109 é do blog antigo.
+
+[[sources]]
+type = "rss-archive"
+name = "The Morning Paper"
+section = "Papers"
+kind = "artigo"
+url = "https://blog.acolyer.org/feed/"
+pages = 108
+
 # --- Rio Grande do Sul ---
 
 [[sources]]

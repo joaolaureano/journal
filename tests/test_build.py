@@ -380,3 +380,27 @@ def test_paths_keep_only_matching_links():
     assert [(a.url, a.section) for a in got] == [
         ("https://www.cnnbrasil.com.br/politica/a", "Política")
     ]
+
+
+def test_evergreen_articles_skip_the_age_limit():
+    from datetime import datetime as dt
+
+    classic = article(
+        "https://a.com/classic",
+        published_at=dt(2017, 5, 17, tzinfo=UTC),
+        evergreen=True,
+    )
+    stale = article("https://a.com/stale", published_at=NOW - timedelta(days=3))
+    future = article(
+        "https://a.com/future", published_at=NOW + timedelta(days=2), evergreen=True
+    )
+    publisher, _ = run_at([FakeSource([classic, stale, future])], max_age_days=2)
+    assert [a.url for a in publisher.published] == ["https://a.com/classic"]
+    assert not article().evergreen
+
+
+def test_evergreen_article_already_published_is_dropped():
+    classic = article("https://a.com/classic", published_at=NOW, evergreen=True)
+    history = FakeHistory({classic.key})
+    publisher, _ = run_at([FakeSource([classic])], history=history, max_age_days=2)
+    assert publisher.published == []

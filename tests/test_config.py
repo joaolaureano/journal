@@ -89,7 +89,7 @@ def test_registered_source_type_is_usable(tmp_path, monkeypatch):
         (rss(), "publisher"),
         (
             '[[sources]]\ntype = "carrier-pigeon"\n' + PUBLISHER,
-            r"source #1: unknown type 'carrier-pigeon' \(known: rss\)",
+            r"source #1: unknown type 'carrier-pigeon' \(known: rss, rss-archive\)",
         ),
         (
             rss() + '[[sources]]\ntype = "rss"\nname = "x"\n' + PUBLISHER,
@@ -370,3 +370,29 @@ def test_pool_table(tmp_path):
 def test_invalid_pool_rejected(tmp_path, table, key):
     with pytest.raises(ConfigError, match=key):
         load_config(write(tmp_path, rss() + PUBLISHER + f"[pool]\n{table}\n"))
+
+
+def archive(extra=""):
+    return (
+        '[[sources]]\ntype = "rss-archive"\nname = "The Morning Paper"\n'
+        f'url = "https://blog.acolyer.org/feed/"\n{extra}'
+    )
+
+
+def test_archive_source(tmp_path):
+    from journal.adapters.archive import ArchiveSource
+
+    cfg = load_config(write(tmp_path, archive("pages = 108\n") + PUBLISHER))
+    [source] = cfg.sources
+    assert isinstance(source, ArchiveSource) and source.pages == 108
+
+
+@pytest.mark.parametrize("value", ["0", "true"])
+def test_archive_needs_positive_pages(tmp_path, value):
+    with pytest.raises(ConfigError, match="pages"):
+        load_config(write(tmp_path, archive(f"pages = {value}\n") + PUBLISHER))
+
+
+def test_archive_without_pages_rejected(tmp_path):
+    with pytest.raises(ConfigError, match="pages"):
+        load_config(write(tmp_path, archive() + PUBLISHER))
