@@ -166,12 +166,14 @@ Decidido em 2026-11-27:
 - **Fontes:** revisar e provavelmente reduzir, escolhendo as que se repetem.
 - **Primeiro o "backend"**, local, com testes e fakes, sem chamar a DeepSeek à toa. A
   diagramação e o jornal de referência vêm depois.
-- **Fontes de Política:** g1 política, Congresso em Foco, O Antagonista (direita) e Revista
-  Fórum (esquerda), para ter contraste. Foram medidas em 2026-11-27: o texto vem completo, menos
-  no Congresso em Foco (só resumo), e nenhuma tem paywall. O Antagonista e a Fórum só guardam
-  ~1,5 h no feed, então precisam do coletor de hora em hora. Recusadas: Agência Brasil e Poder360
-  (escolha do dono), Brasil de Fato (só resumo), Brasil 247 (escolha do dono), Gazeta do Povo e
-  CartaCapital (paywall), El País (a edição em português acabou em 2021).
+- **Fontes de Política:** g1 política e Veja política (grande imprensa), JOTA (STF, Congresso e
+  governo), O Antagonista (direita) e Revista Fórum (esquerda), para ter contraste. Foram medidas
+  em 2026-11-27/28 e todas mandam o texto completo no feed. A Veja tem paywall medido no site,
+  mas isso só pesa para quem clica em "Ler na fonte". O Antagonista e a Fórum só guardam ~1,5 h
+  no feed, então precisam do coletor de hora em hora. Recusadas: Congresso em Foco e Brasil de
+  Fato (só resumo; puxar a página seria scraping), Agência Brasil, Poder360 e Brasil 247 (escolha
+  do dono), Folha, Gazeta do Povo e CartaCapital (paywall e sem texto no feed), Agência Câmara
+  (quase não repete as outras), El País (a edição em português acabou em 2021).
 - **Internacional (futuro):** Opera Mundi é candidata.
 
 ## 5. Ordem sugerida das mudanças
