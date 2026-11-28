@@ -191,6 +191,16 @@ kind = "artigo"
 url = "https://jack-clark.net/feed/"
 full_text = true
 
+# Fabio Akita (AkitaOnRails.com), em português: texto completo no feed, sem paywall,
+# robots.txt sem restrição (verificado em 28/11/2026). O LinkedIn dele fica de fora: sem RSS.
+[[sources]]
+type = "rss"
+name = "Fabio Akita"
+section = "Blogs técnicos"
+kind = "artigo"
+url = "https://www.akitaonrails.com/index.xml"
+full_text = true
+
 # --- Matemática (divulgação, para iniciantes) ---
 
 [[sources]]
