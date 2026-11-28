@@ -335,3 +335,38 @@ def test_invalid_summarizer_option(tmp_path, line):
     key = line.split()[0]
     with pytest.raises(ConfigError, match=f"'{key}'"):
         load_config(write(tmp_path, rss() + PUBLISHER + f"[summarizer]\n{line}\n"))
+
+
+def test_paths_wraps_any_source(tmp_path):
+    extra = 'paths = ["/politica/", "/economia/"]\n'
+    cfg = load_config(write(tmp_path, rss(extra=extra) + PUBLISHER))
+    [source] = cfg.sources
+    assert source.paths == ("/politica/", "/economia/") and source.section is None
+
+
+@pytest.mark.parametrize("value", ['["politica"]', "[]", '"/politica/"', "[1]"])
+def test_invalid_paths_rejected(tmp_path, value):
+    with pytest.raises(ConfigError, match="paths"):
+        load_config(write(tmp_path, rss(extra=f"paths = {value}\n") + PUBLISHER))
+
+
+def test_pool_table(tmp_path):
+    assert load_config(write(tmp_path, rss() + PUBLISHER)).pool is None
+    cfg = load_config(write(tmp_path, rss() + PUBLISHER + "[pool]\n"))
+    assert cfg.pool == 48
+    cfg = load_config(write(tmp_path, rss() + PUBLISHER + "[pool]\nhours = 36\n"))
+    assert cfg.pool == 36
+
+
+@pytest.mark.parametrize(
+    ("table", "key"),
+    [
+        ("hours = 0", "hours"),
+        ("hours = true", "hours"),
+        ('hours = "48"', "hours"),
+        ("hour = 48", "hour"),
+    ],
+)
+def test_invalid_pool_rejected(tmp_path, table, key):
+    with pytest.raises(ConfigError, match=key):
+        load_config(write(tmp_path, rss() + PUBLISHER + f"[pool]\n{table}\n"))

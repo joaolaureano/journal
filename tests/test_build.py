@@ -364,3 +364,19 @@ def test_slow_warmup_is_dropped_after_the_timeout():
 def test_no_summarizer_no_warmups():
     publisher, report = build(FakeSource([article(kind="artigo")]))
     assert publisher.published[0].warmup is None and report.warmup_errors == []
+
+
+def test_paths_keep_only_matching_links():
+    from journal.app import Sectioned
+
+    feed = FakeSource(
+        [
+            article("https://www.cnnbrasil.com.br/politica/a"),
+            article("https://www.cnnbrasil.com.br/esportes/b"),
+            article("https://www.cnnbrasil.com.br/politicas/c"),
+        ]
+    )
+    got = Sectioned(feed, "Política", paths=["/politica/"]).fetch()
+    assert [(a.url, a.section) for a in got] == [
+        ("https://www.cnnbrasil.com.br/politica/a", "Política")
+    ]

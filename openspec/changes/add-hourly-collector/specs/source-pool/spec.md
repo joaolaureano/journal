@@ -27,7 +27,7 @@ A missing or unreadable pool entry SHALL count as empty, so the fetch returns th
 - **THEN** that source is reported as failed and its stored items are still available to the next fetch
 
 ### Requirement: Collection without publishing
-The `journal collect` command SHALL fetch every configured source through the pool, with the configuration given by `--config` (default `journal.toml`), and SHALL NOT publish, update the edition history or call the summarizer. It SHALL print each source failure and the number of items stored, and exit with a non-zero status when the configuration has no `[pool]` table, cannot be loaded, or no source fetched successfully.
+The `journal collect` command SHALL fetch every configured source through the pool, with the configuration given by `--config` (default `journal.toml`), and SHALL NOT publish, update the edition history or call the summarizer. It SHALL print each source failure and the number of articles the sources returned through the pool, after `paths`, and exit with a non-zero status when the configuration has no `[pool]` table, cannot be loaded, or no source fetched successfully.
 
 #### Scenario: Hourly collection
 - **WHEN** `journal collect` runs with a `[pool]` table and sources that respond

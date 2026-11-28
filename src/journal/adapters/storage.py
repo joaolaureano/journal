@@ -7,8 +7,9 @@ from typing import Protocol, runtime_checkable
 from journal.ports import PublishError
 
 # Entries that mark a directory as a journal site (articles.json: layout before
-# editions; llm-cache/: AI text cached before the first publish).
-SITE_MARKERS = ("editions.json", "articles.json", "llm-cache")
+# editions; llm-cache/: AI text cached before the first publish; pool/: feeds
+# collected before the first edition).
+SITE_MARKERS = ("editions.json", "articles.json", "llm-cache", "pool")
 
 
 @runtime_checkable

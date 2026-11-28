@@ -103,3 +103,67 @@ def test_summarizer_needs_the_api_key(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
     s = summarizer(cfg, cache="storage")
     assert (s.api_key, s.cache, s._calls_left) == ("k", "storage", 3)
+
+
+def write_feed(path: Path, *items: tuple[str, int]) -> str:
+    """RSS file with (slug, hours ago) items, dated from now so the pool keeps them."""
+    from datetime import UTC, datetime, timedelta
+    from email.utils import format_datetime
+
+    now = datetime.now(UTC)
+    entries = "".join(
+        f"<item><title>{slug}</title><link>https://example.com/{slug}</link>"
+        f"<description>{slug}</description>"
+        f"<pubDate>{format_datetime(now - timedelta(hours=age))}</pubDate></item>"
+        for slug, age in items
+    )
+    path.write_text(
+        f'<?xml version="1.0"?><rss version="2.0"><channel>{entries}</channel></rss>'
+    )
+    return path.as_uri()
+
+
+def pooled_config(tmp_path, url, section):
+    path = tmp_path / "journal.toml"
+    path.write_text(
+        f'[[sources]]\ntype = "rss"\nname = "Feed"\nurl = "{url}"\n'
+        f'section = "{section}"\n'
+        '[publisher]\ntype = "static-site"\nout = "dist"\n[pool]\n'
+    )
+    return str(path)
+
+
+def test_collect_fills_the_pool_without_publishing(tmp_path, capsys):
+    url = write_feed(tmp_path / "feed.xml", ("early", 3))
+    assert main(["collect", "--config", pooled_config(tmp_path, url, "S1")]) == 0
+    out = tmp_path / "dist"
+    assert len(list((out / "pool").iterdir())) == 1
+    assert not (out / "editions.json").exists() and not (out / "index.html").exists()
+    assert "collected 1 articles from 1 of 1 sources" in capsys.readouterr().out
+
+
+def test_build_gets_what_left_the_feed_with_the_current_section(tmp_path):
+    feed = tmp_path / "feed.xml"
+    url = write_feed(feed, ("early", 3))
+    assert main(["collect", "--config", pooled_config(tmp_path, url, "Old")]) == 0
+    write_feed(feed, ("late", 1))  # "early" is gone from the feed
+    assert main(["build", "--config", pooled_config(tmp_path, url, "New")]) == 0
+    index = latest_articles(tmp_path / "dist")
+    assert sorted((a["title"], a["section"]) for a in index) == [
+        ("early", "New"),
+        ("late", "New"),
+    ]
+
+
+def test_collect_without_pool_fails_and_fetches_nothing(tmp_path, capsys):
+    path = config(tmp_path, ("X", (tmp_path / "missing.xml").as_uri()))
+    assert main(["collect", "--config", path]) != 0
+    err = capsys.readouterr().err
+    assert "[pool] is not configured" in err and "missing.xml" not in err
+    assert not (tmp_path / "dist").exists()
+
+
+def test_collect_fails_when_no_source_answers(tmp_path, capsys):
+    path = pooled_config(tmp_path, (tmp_path / "missing.xml").as_uri(), "S")
+    assert main(["collect", "--config", path]) != 0
+    assert "no source fetched successfully" in capsys.readouterr().err

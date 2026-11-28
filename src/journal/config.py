@@ -98,6 +98,7 @@ class Config:
     max_per_section: int | None = None
     timezone: tzinfo = field(default_factory=lambda: ZoneInfo(DEFAULT_TIMEZONE))
     summarizer: dict[str, Any] | None = None  # [summarizer] options; None: no AI text
+    pool: int | None = None  # [pool] hours; None: sources read only from their feeds
 
 
 def load_config(path: str | Path) -> Config:
@@ -131,6 +132,7 @@ def load_config(path: str | Path) -> Config:
         **limits,
         timezone=timezone,
         summarizer=_summarizer(data.get("summarizer"), path),
+        pool=_pool(data.get("pool"), path),
     )
 
 
@@ -164,6 +166,24 @@ def _summarizer(table: Any, path: Path) -> dict[str, Any] | None:
     return dict(table)
 
 
+DEFAULT_POOL_HOURS = 48  # covers Saturday to Monday: there is no Sunday edition
+
+
+def _pool(table: Any, path: Path) -> int | None:
+    """Hours of earlier fetches kept per source, or None without a [pool] table."""
+    if table is None:
+        return None
+    if not isinstance(table, dict):
+        raise ConfigError(f"{path}: [pool] must be a table")
+    for key in table:
+        if key != "hours":
+            raise ConfigError(f"{path}: [pool] unknown option {key!r}")
+    hours = table.get("hours", DEFAULT_POOL_HOURS)
+    if not isinstance(hours, int) or isinstance(hours, bool) or hours <= 0:
+        raise ConfigError(f"{path}: [pool] 'hours' must be a positive integer")
+    return hours
+
+
 def _timezone(name: Any, path: Path) -> tzinfo:
     """IANA name such as 'America/Sao_Paulo'; decides the date of each edition."""
     if not isinstance(name, str):
@@ -175,8 +195,8 @@ def _timezone(name: Any, path: Path) -> tzinfo:
 
 
 def _source(entry: Any, where: str, config_dir: Path) -> SourcePort:
-    """`section` and `kind` are accepted on every source type and handled here."""
-    if not isinstance(entry, dict) or not {"section", "kind"} & entry.keys():
+    """`section`, `kind` and `paths` work on every source type and are handled here."""
+    if not isinstance(entry, dict) or not {"section", "kind", "paths"} & entry.keys():
         return _build(entry, SOURCE_TYPES, "journal.sources", where, config_dir)
     options = dict(entry)
     section = options.pop("section", None)
@@ -185,8 +205,17 @@ def _source(entry: Any, where: str, config_dir: Path) -> SourcePort:
     kind = options.pop("kind", None)
     if kind is not None and kind not in KINDS:
         raise ConfigError(f"{where}: 'kind' must be one of {', '.join(KINDS)}")
+    paths = options.pop("paths", None)
+    if paths is not None and not (
+        isinstance(paths, list)
+        and paths
+        and all(isinstance(p, str) and p.startswith("/") for p in paths)
+    ):
+        raise ConfigError(
+            f"{where}: 'paths' must be a non-empty list of paths starting with /"
+        )
     source = _build(options, SOURCE_TYPES, "journal.sources", where, config_dir)
-    return Sectioned(source, section.strip() if section else None, kind)
+    return Sectioned(source, section.strip() if section else None, kind, paths)
 
 
 LIMITS = ("max_articles", "max_age_days", "max_per_section")

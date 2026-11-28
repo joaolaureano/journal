@@ -89,6 +89,7 @@ timeout = 10                                # opcional, segundos (> 0)
 full_text = false                           # opcional: mostra o texto completo do feed
 section = "Ciência"                         # opcional, vale para qualquer tipo de fonte
 kind = "noticia"                            # opcional: "noticia" (padrão) ou "artigo"
+paths = ["/politica/"]                      # opcional: só links cujo caminho começa assim
 
 [publisher]
 type = "static-site"
@@ -99,6 +100,10 @@ storage = { type = "local", out = "dist" }  # opcional; `out` relativo ao arquiv
 `out = "dist"` direto em `[publisher]` é um atalho para o armazenamento local.
 
 Para adicionar outra fonte RSS, basta outro bloco `[[sources]]`. Nenhum código muda.
+
+`paths` serve para feeds gerais que separam as seções no endereço: com
+`paths = ["/politica/"]`, só ficam os itens de `…/politica/…`, seja qual for o site. O mesmo feed
+pode entrar em mais de uma seção, cada uma com seu `name` e seus `paths`.
 
 Tipos embutidos: fonte `rss`, publisher `static-site`, armazenamento `local` e `s3`. Outros tipos vêm de
 plugins.
@@ -123,6 +128,22 @@ palavras ou frases inteiras ("juros" não casa com "conjuros"). `exclude` vence 
 (`folha.uol.com.br` corta `www1.folha.uol.com.br`, mas `folha.com.br` não corta `minhafolha.com.br`):
 serve para sites com paywall que aparecem dentro de outro feed. Todas as chaves são opcionais. Com ou sem filtro, artigos datados mais de um dia no futuro são
 descartados (data errada no feed). O comando mostra quantos artigos passaram: `published 5 of 996 articles`.
+
+### Coletor de hora em hora (opcional)
+
+Um feed só lista os últimos itens: alguns cobrem só 1,5 h. Com a seção `[pool]`, cada leitura de
+uma fonte guarda o que o feed mostrou e devolve também o que ele mostrou nas últimas `hours` horas.
+O resultado fica no mesmo armazenamento do site, em `pool/`, um arquivo por fonte.
+
+```toml
+[pool]
+hours = 48  # opcional (padrão 48): cobre de sábado a segunda, já que domingo não tem edição
+```
+
+`journal collect --config journal.toml` só lê as fontes e atualiza o pool: não publica nada e não
+chama o modelo de IA. Rodado de hora em hora (na AWS, pela agenda `collect`), ele deixa a edição
+do dia seguinte ver tudo o que cada feed mostrou. `journal build` também atualiza o pool. Sem
+`[pool]`, as fontes são lidas só do feed, como antes.
 
 ### Aquecimento por IA (opcional)
 

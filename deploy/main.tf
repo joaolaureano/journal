@@ -30,6 +30,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "site" {
       noncurrent_days = 30
     }
   }
+
+  # o coletor regrava cada arquivo do pool de hora em hora; versões antigas não servem
+  rule {
+    id     = "expire-old-pool-versions"
+    status = "Enabled"
+    filter {
+      prefix = "pool/"
+    }
+    noncurrent_version_expiration {
+      noncurrent_days = 1
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "site" {
@@ -246,5 +258,22 @@ resource "aws_scheduler_schedule" "daily" {
   target {
     arn      = aws_lambda_function.build.arn
     role_arn = aws_iam_role.scheduler.arn
+  }
+}
+
+# Coleta de hora em hora: guarda no pool o que cada feed mostrou, sem publicar.
+resource "aws_scheduler_schedule" "collect" {
+  name                         = "${var.name}-collect"
+  schedule_expression          = var.collect_schedule_expression
+  schedule_expression_timezone = var.schedule_timezone
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = aws_lambda_function.build.arn
+    role_arn = aws_iam_role.scheduler.arn
+    input    = jsonencode({ action = "collect" })
   }
 }

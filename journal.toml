@@ -6,8 +6,8 @@
 timezone = "America/Sao_Paulo"
 
 # --- Política ---
-# CNN Brasil (/politica/) e Jovem Pan (/politica/) entram com o filtro por endereço.
-# A Fórum só guarda ~1,5 h no feed: até o coletor de hora em hora, ela aparece incompleta.
+# CNN Brasil e Jovem Pan só têm feed geral: `paths` fica só com os links de política.
+# Feeds curtos (a Fórum guarda ~1,5 h) dependem do coletor de hora em hora ([pool]).
 
 [[sources]]
 type = "rss"
@@ -30,8 +30,23 @@ section = "Política"
 url = "https://revistaforum.com.br/feed/"
 full_text = true
 
+[[sources]]
+type = "rss"
+name = "CNN Brasil política"
+section = "Política"
+url = "https://www.cnnbrasil.com.br/feed/"
+full_text = true
+paths = ["/politica/"]
+
+[[sources]]
+type = "rss"
+name = "Jovem Pan política"
+section = "Política"
+url = "https://jovempan.com.br/feed"
+full_text = true
+paths = ["/politica/"]
+
 # --- Economia ---
-# CNN Brasil (/economia/) e Jovem Pan (/economia/) entram com o filtro por endereço.
 # InfoMoney e Money Times guardam 6–7 h no feed: também dependem do coletor.
 
 [[sources]]
@@ -62,8 +77,23 @@ section = "Economia"
 url = "https://www.seudinheiro.com/feed/"
 full_text = true
 
+[[sources]]
+type = "rss"
+name = "CNN Brasil economia"
+section = "Economia"
+url = "https://www.cnnbrasil.com.br/feed/"
+full_text = true
+paths = ["/economia/"]
+
+[[sources]]
+type = "rss"
+name = "Jovem Pan economia"
+section = "Economia"
+url = "https://jovempan.com.br/feed"
+full_text = true
+paths = ["/economia/"]
+
 # --- Mundo ---
-# A CNN Brasil (/internacional/) entra quando houver o filtro por endereço.
 
 [[sources]]
 type = "rss"
@@ -78,6 +108,14 @@ name = "Opera Mundi"
 section = "Mundo"
 url = "https://operamundi.uol.com.br/feed/"
 full_text = true
+
+[[sources]]
+type = "rss"
+name = "CNN Brasil internacional"
+section = "Mundo"
+url = "https://www.cnnbrasil.com.br/feed/"
+full_text = true
+paths = ["/internacional/"]
 
 # --- Blogs técnicos ---
 
@@ -212,6 +250,11 @@ model = "deepseek-flash"
 max_calls = 80           # chamadas pagas por edição; o que está em cache não conta
 max_input_chars = 16000  # texto do artigo enviado, no máximo
 timeout = 180            # segundos para a etapa inteira; o que faltar sai sem
+
+[pool]
+# Guarda o que cada feed mostrou nas últimas `hours` horas (padrão 48), em pool/, para a
+# edição ver o dia inteiro mesmo de feeds curtos. `journal collect` só atualiza o pool.
+hours = 48
 
 [publisher]
 type = "static-site"

@@ -51,3 +51,45 @@ def test_unreadable_key_only_logs(monkeypatch, caplog):
     aws_lambda._load_deepseek_key(FakeSSM())
     assert "DEEPSEEK_API_KEY" not in aws_lambda.os.environ
     assert "ParameterNotFound" in caplog.text
+
+
+class NoSSM:
+    def get_parameter(self, **_):
+        raise AssertionError("a collection must not read the DeepSeek key")
+
+
+def test_collect_event_fills_the_pool_without_the_key(tmp_path, monkeypatch):
+    from test_cli import write_feed
+
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.setenv("JOURNAL_DEEPSEEK_KEY_PARAMETER", "/journal/deepseek-api-key")
+    url = write_feed(tmp_path / "feed.xml", ("early", 2))
+    config = tmp_path / "journal.toml"
+    config.write_text(
+        f'[[sources]]\ntype = "rss"\nname = "F"\nurl = "{url}"\n'
+        '[publisher]\ntype = "static-site"\n[summarizer]\n[pool]\n'
+    )
+    monkeypatch.setenv("JOURNAL_CONFIG", str(config))
+    s3 = FakeS3()
+    storage = S3Storage("b", client=s3)
+    result = aws_lambda.handler(
+        {"action": "collect"}, None, storage=storage, ssm=NoSSM()
+    )
+    assert result == {"collected": 1, "sources": 1, "source_errors": []}
+    keys = {key for _, key in s3.objects}
+    assert len(keys) == 1 and next(iter(keys)).startswith("pool/")
+
+
+def test_other_events_still_build(tmp_path, monkeypatch):
+    config = tmp_path / "journal.toml"
+    config.write_text(
+        '[[sources]]\ntype = "rss"\nname = "F"\n'
+        f'url = "{(FIXTURES / "feed.xml").as_uri()}"\n'
+        '[publisher]\ntype = "static-site"\n'
+    )
+    monkeypatch.setenv("JOURNAL_CONFIG", str(config))
+    s3 = FakeS3()
+    result = aws_lambda.handler(
+        {"action": "other"}, None, storage=S3Storage("b", client=s3)
+    )
+    assert result["published"] > 0 and ("b", "index.html") in s3.objects

@@ -26,8 +26,10 @@ para a etapa que motivou o projeto: usar LLM para curar e escrever as notícias.
              ──► Edition ──► StaticSitePublisher ──► S3 ──► CloudFront
 ```
 
-- **Roda sozinho:** EventBridge Scheduler `journal-daily` chama a Lambda `journal-build` todo dia
-  às 08:00 de São Paulo. Python 3.12, arm64, 256 MB, timeout de 600 s.
+- **Roda sozinho:** EventBridge Scheduler `journal-daily` chama a Lambda `journal-build` de segunda
+  a sábado às 08:00 de São Paulo, e `journal-collect` chama a mesma Lambda no minuto 30 de toda hora
+  com `{"action": "collect"}`, para guardar os feeds no pool. Python 3.12, arm64, 256 MB, timeout
+  de 600 s.
 - **CI:** em todo push na `main`, o GitHub Actions roda ruff e pytest (244 testes), empacota com
   `deploy/build.sh` e atualiza o código da Lambda via OIDC. Uma edição nova só sai na próxima
   execução; para publicar na hora, invoque `journal-build` à mão.

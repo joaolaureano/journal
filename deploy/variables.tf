@@ -16,6 +16,12 @@ variable "schedule_expression" {
   default     = "cron(0 8 ? * MON-SAT *)" # domingo não tem edição
 }
 
+variable "collect_schedule_expression" {
+  description = "Quando coletar os feeds para o pool (sintaxe do EventBridge Scheduler)."
+  type        = string
+  default     = "cron(30 * * * ? *)" # minuto 30: nunca junto com a edição das 08:00
+}
+
 variable "schedule_timezone" {
   description = "Fuso do agendamento; deve bater com o timezone do journal.toml."
   type        = string

@@ -1,11 +1,13 @@
 # Deploy na AWS
 
 Uma Lambda agendada (EventBridge Scheduler, 8h de São Paulo, de segunda a sábado) gera a edição do dia e grava o
-site num bucket S3 privado com versionamento; o CloudFront serve o site. Tudo cabe no free tier
-para uma execução por dia.
+site num bucket S3 privado com versionamento; o CloudFront serve o site. Uma segunda agenda chama
+a mesma Lambda de hora em hora, no minuto 30, só para guardar no pool (`pool/`) o que cada feed
+mostrou, sem publicar. Tudo cabe no free tier.
 
 ```
 EventBridge Scheduler ──(8h seg-sáb, America/Sao_Paulo)──> Lambda (journal.aws_lambda.handler)
+                     └──(:30 de toda hora, {"action": "collect"})──┘
                                                      │  busca as fontes
                                                      ▼
                          CloudFront ──(OAC)──> S3: index.html, edicoes/, editions.json, seen.json
@@ -27,7 +29,7 @@ tofu apply                   # mostra o plano e pede confirmação
 ```
 
 No fim, `site_url` é o endereço do jornal. O CloudFront leva alguns minutos para ficar
-disponível. Variáveis (`name`, `region`, `schedule_expression`, `schedule_timezone`,
+disponível. Variáveis (`name`, `region`, `schedule_expression`, `collect_schedule_expression`, `schedule_timezone`,
 `log_retention_days`, `permissions_boundary`, `github_subject_prefix`) têm padrão em `variables.tf`; mude com `-var` ou um
 `terraform.tfvars`.
 
@@ -88,6 +90,13 @@ aws lambda invoke --function-name "$(cd deploy && tofu output -raw function_name
 
 Rodar de novo no mesmo dia cria uma revisão (`edicoes/AAAA-MM-DD-2/`); nada é sobrescrito.
 
+Só a coleta, sem publicar:
+
+```sh
+aws lambda invoke --function-name "$(cd deploy && tofu output -raw function_name)" \
+  --cli-binary-format raw-in-base64-out --payload '{"action": "collect"}' /dev/stdout
+```
+
 ## Logs
 
 ```sh
@@ -101,7 +110,8 @@ aws logs tail /aws/lambda/journal-build --follow
   `storage = { type = "s3", bucket = "<BucketName>" }` e instale `journal[aws]`.
 - Cache: `index.html`, `edicoes/index.html`, `editions.json` e `seen.json` com 5 minutos; as
   edições, que nunca mudam, com 1 ano.
-- O bucket guarda versões antigas por 30 dias (`index.html` e manifestos também têm histórico).
+- O bucket guarda versões antigas por 30 dias (`index.html` e manifestos também têm histórico);
+  as do `pool/`, regravado de hora em hora, só por 1 dia.
 - Logs ficam 14 dias.
 - Falha: a Lambda tenta mais uma vez. Fontes que falham só aparecem no log; o build só falha se
   nenhuma fonte responder ou se não conseguir gravar no S3.

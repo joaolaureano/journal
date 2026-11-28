@@ -21,7 +21,7 @@ The deployment (OpenTofu configuration in `deploy/`) SHALL create a private, ver
 ## ADDED Requirements
 
 ### Requirement: Collection through the Lambda handler
-When the event is an object whose `action` is `"collect"`, the handler SHALL run the same collection as `journal collect` on the same storage, without reading the summarizer key. It SHALL return the number of items stored and the source failures, and raise when the collection fails.
+When the event is an object whose `action` is `"collect"`, the handler SHALL run the same collection as `journal collect` on the same storage, without reading the summarizer key. It SHALL return the number of articles collected and the source failures, and raise when the collection fails.
 
 #### Scenario: Scheduled collection
 - **WHEN** the handler runs with the event `{"action": "collect"}` and `JOURNAL_BUCKET` set
