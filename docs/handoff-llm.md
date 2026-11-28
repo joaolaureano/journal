@@ -166,14 +166,27 @@ Decidido em 2026-11-27:
 - **Fontes:** revisar e provavelmente reduzir, escolhendo as que se repetem.
 - **Primeiro o "backend"**, local, com testes e fakes, sem chamar a DeepSeek à toa. A
   diagramação e o jornal de referência vêm depois.
-- **Fontes de Política:** g1 política e Veja política (grande imprensa), JOTA (STF, Congresso e
-  governo), O Antagonista (direita) e Revista Fórum (esquerda), para ter contraste. Foram medidas
-  em 2026-11-27/28 e todas mandam o texto completo no feed. A Veja tem paywall medido no site,
-  mas isso só pesa para quem clica em "Ler na fonte". O Antagonista e a Fórum só guardam ~1,5 h
-  no feed, então precisam do coletor de hora em hora. Recusadas: Congresso em Foco e Brasil de
-  Fato (só resumo; puxar a página seria scraping), Agência Brasil, Poder360 e Brasil 247 (escolha
-  do dono), Folha, Gazeta do Povo e CartaCapital (paywall e sem texto no feed), Agência Câmara
-  (quase não repete as outras), El País (a edição em português acabou em 2021).
+- **Regra das fontes (2026-11-28):** o feed precisa mandar o texto completo e o site não pode ter
+  paywall de nenhum tipo, nem o medido, que libera algumas matérias por mês. "Ler na fonte" tem que
+  abrir sempre. Na conferência, a página aberta, sem login, precisa ter o texto do feed e nenhuma
+  marcação de bloqueio (`content_tier` metered/locked, `paywall: ativo`, `meteringExpires`,
+  `tipo-paywall`, `isAccessibleForFree: false`).
+- **Fontes de Política:** g1 política (grande imprensa), JOTA (STF, Congresso e governo; as
+  notícias são abertas, e o JOTA PRO é um produto à parte), O Antagonista (direita) e Revista Fórum
+  (esquerda), para ter contraste. Foram medidas em 2026-11-27/28. O Antagonista e a Fórum só
+  guardam ~1,5 h no feed, então precisam do coletor de hora em hora. Recusadas: Veja e Estadão
+  (paywall medido), Congresso em Foco e Brasil de Fato (só resumo; puxar a página seria scraping),
+  Agência Brasil, Poder360 e Brasil 247 (escolha do dono), Folha, Gazeta do Povo e CartaCapital
+  (paywall e sem texto no feed), Agência Câmara (quase não repete as outras), El País (a edição
+  em português acabou em 2021).
+- **Fontes de Economia:** g1 economia (grande imprensa; o feed guarda ~62 h), InfoMoney, Money
+  Times (quase tudo dele também sai em outra fonte) e Seu Dinheiro. Todas grátis e com texto
+  completo, medidas em 2026-11-28. InfoMoney e Money Times guardam 6–7 h, então também dependem
+  do coletor. O contraste de espectro vem dos feeds gerais do O Antagonista e da Fórum, cujos
+  itens de economia caem no tema quando o LLM classificar. Recusadas: Estadão, Veja e Valor
+  (paywall medido; o Valor também tem ~22% de patrocinado), Exame, NeoFeed, O Antagonista economia
+  e Gazeta do Povo (só resumo), Le Monde Diplomatique e Fórum economia (feed bloqueado), Brazil
+  Journal, Bloomberg Línea e Outras Palavras (quase não repetem as outras).
 - **Internacional (futuro):** Opera Mundi é candidata.
 
 ## 5. Ordem sugerida das mudanças
